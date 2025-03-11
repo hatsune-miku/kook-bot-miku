@@ -18,7 +18,9 @@ export const Env: EnvType = {
     die("环境配置错误：QWEATHER_PRIVATE_KEY"),
   QWeatherKeyId: config.QWEATHER_KID || die("环境配置错误：QWEATHER_KID"),
   QWeatherProjectId:
-    config.QWEATHER_PID || die("环境配置错误：QWEATHER_PROJECT_ID")
+    config.QWEATHER_PID || die("环境配置错误：QWEATHER_PROJECT_ID"),
+  LarkAppId: config.LARK_APP_ID || die("环境配置错误：LARK_APP_ID"),
+  LarkAppSecret: config.LARK_APP_SECRET || die("环境配置错误：LARK_APP_SECRET")
 }
 
 export interface EnvType {
@@ -31,4 +33,6 @@ export interface EnvType {
   QWeatherPrivateKey: string
   QWeatherKeyId: string
   QWeatherProjectId: string
+  LarkAppId: string
+  LarkAppSecret: string
 }

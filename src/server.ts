@@ -11,6 +11,7 @@ import { deinitialize, main } from "./bot"
 import { exit } from "process"
 import { info } from "./utils/logging/logger"
 import { defineRoute } from "./backend/route"
+import { initializeLarkBot } from "./websocket/larksocket"
 
 info("Server Startup")
 
@@ -19,6 +20,7 @@ const port = 6308
 
 expressApp.listen(port, async () => {
   await main()
+  await initializeLarkBot()
   defineRoute(expressApp)
   info(`Server listening at http://localhost:${port}`)
 })
