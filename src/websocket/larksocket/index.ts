@@ -42,7 +42,7 @@ export async function initializeLarkBot() {
           const [branch] = parameters
           Requests.createChannelMessage({
             type: KEventType.KMarkdown,
-            target_id: "9191927090699121",
+            target_id: "9881678244960302",
             content: `(met)1211389071(met) /打包 ${branch}`
           })
           await client.im.v1.message.create({
