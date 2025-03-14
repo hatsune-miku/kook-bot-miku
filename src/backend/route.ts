@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto"
 import { Express } from "express"
+import cors from "cors"
 
 interface Sn {
   m: string
@@ -31,7 +32,7 @@ export function defineRoute(app: Express) {
     })
   })
 
-  app.post("/kook/api/v1/gift-version", (req, res) => {
+  app.post("/kook/api/v1/gift-version", cors(), (req, res) => {
     const { version } = req.body || {}
     if (!version || typeof version !== "string") {
       res.status(400).send("version is required")
@@ -44,7 +45,7 @@ export function defineRoute(app: Express) {
     })
   })
 
-  app.get("/kook/api/v1/gift-version", (req, res) => {
+  app.get("/kook/api/v1/gift-version", cors(), (req, res) => {
     res.json({
       code: 0,
       data: {
