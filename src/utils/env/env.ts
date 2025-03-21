@@ -1,8 +1,6 @@
 import dotenv from "dotenv"
 import { die } from "../server/die"
 
-reloadConfig()
-
 export const Env: EnvType = {} as any
 
 export interface EnvType {
@@ -24,6 +22,7 @@ export function reloadConfig() {
   const result = dotenv.config({ path: ".env" })
   const config = result.parsed ?? {}
 
+  console.log(Env)
   Object.assign(Env, {
     KOOKBaseUrl: config.KOOK_BASE_URL || die("环境配置错误：KOOK_BASE_URL"),
     BotToken: config.BOT_TOKEN || die("环境配置错误：BOT_TOKEN"),
@@ -44,3 +43,5 @@ export function reloadConfig() {
     LarkAppSecret: config.LARK_APP_SECRET
   })
 }
+
+reloadConfig()
