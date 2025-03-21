@@ -21,14 +21,15 @@ import {
   WhoAmIExtendResult as QueryUserResult
 } from "./types"
 import { OpenGatewayProps } from "../../websocket/kwebsocket/types"
-import { Env } from "../env/env"
+import { Env, reloadConfig } from "../env/env"
 import { DateTime } from "luxon"
 import { die } from "../server/die"
 import { MessageLengthUpperBound } from "../config/config"
 import { sleep } from "radash"
-import { createReadStream, openAsBlob } from "fs"
 import { lookup } from "mime-types"
 import { readFile } from "fs/promises"
+
+reloadConfig()
 
 export const BASE_URL = Env.KOOKBaseUrl
 export const AUTHORIZATION = `Bot ${Env.BotToken}`
