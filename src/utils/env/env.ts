@@ -24,7 +24,7 @@ export function reloadConfig() {
   const result = dotenv.config({ path: ".env" })
   const config = result.parsed ?? {}
 
-  Object.assign(config, {
+  Object.assign(Env, {
     KOOKBaseUrl: config.KOOK_BASE_URL || die("环境配置错误：KOOK_BASE_URL"),
     BotToken: config.BOT_TOKEN || die("环境配置错误：BOT_TOKEN"),
     OpenAIKeys: config.OPENAI_API_KEYS?.split(",") || [],
