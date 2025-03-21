@@ -2,8 +2,14 @@ import * as lark from "@larksuiteoapi/node-sdk"
 import { Requests } from "../../utils/krequest/request"
 import { KEventType } from "../kwebsocket/types"
 import { Env } from "../../utils/env/env"
+import { info } from "../../utils/logging/logger"
 
 export async function initializeLarkBot() {
+  if (!Env.LarkAppId || !Env.LarkAppSecret) {
+    info("Lark bot not enabled")
+    return
+  }
+
   const baseConfig = {
     appId: Env.LarkAppId,
     appSecret: Env.LarkAppSecret

@@ -7,9 +7,6 @@ interface Sn {
 }
 
 let snMap = new Map<string, Sn>()
-let giftVersion = "gift_v8"
-
-// https://img.chuanyuapp.com/gift/gift_v8/remoteEntry.js
 
 export function defineRoute(app: Express) {
   app.get("/kook/api/v1", (req, res) => {
@@ -27,31 +24,6 @@ export function defineRoute(app: Express) {
     res.download(filePath, fileName, (err) => {
       if (err) {
         res.status(500).send(err.message)
-      }
-    })
-  })
-
-  app.post("/kook/api/v1/gift-version", (req, res) => {
-    const { version } = req.body || {}
-    if (!version || typeof version !== "string") {
-      res.status(400).send("version is required")
-      return
-    }
-
-    giftVersion = version
-    res.json({
-      code: 0
-    })
-  })
-
-  app.get("/kook/api/v1/gift-version", (req, res) => {
-    res.json({
-      code: 0,
-      data: {
-        template: {
-          name: giftVersion,
-          entry: `https://img.chuanyuapp.com/gift/${giftVersion}/remoteEntry.js`
-        }
       }
     })
   })
