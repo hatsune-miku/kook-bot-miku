@@ -30,7 +30,7 @@ import { createReadStream, openAsBlob } from "fs"
 import { lookup } from "mime-types"
 import { readFile } from "fs/promises"
 
-export const BASE_URL = "https://tttt-www.dev.chuanyuapp.com"
+export const BASE_URL = Env.KOOKBaseUrl
 export const AUTHORIZATION = `Bot ${Env.BotToken}`
 
 export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE"
