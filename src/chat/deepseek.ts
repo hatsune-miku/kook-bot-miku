@@ -77,8 +77,7 @@ export async function chatCompletionWithoutStream(
     while (!functionsFulfilled) {
       const completion = await openai.chat.completions.create({
         messages: messages,
-        model: model,
-        tools: await getChatCompletionTools()
+        model: model
       })
 
       const responseMessage = completion.choices?.[0].message

@@ -2,8 +2,14 @@ import * as lark from "@larksuiteoapi/node-sdk"
 import { Requests } from "../../utils/krequest/request"
 import { KEventType } from "../kwebsocket/types"
 import { Env } from "../../utils/env/env"
+import { info } from "../../utils/logging/logger"
 
 export async function initializeLarkBot() {
+  if (!Env.LarkAppId || !Env.LarkAppSecret) {
+    info("Lark bot not enabled")
+    return
+  }
+
   const baseConfig = {
     appId: Env.LarkAppId,
     appSecret: Env.LarkAppSecret
@@ -42,7 +48,7 @@ export async function initializeLarkBot() {
           const [branch] = parameters
           Requests.createChannelMessage({
             type: KEventType.KMarkdown,
-            target_id: "9191927090699121",
+            target_id: "9881678244960302",
             content: `(met)1211389071(met) /打包 ${branch}`
           })
           await client.im.v1.message.create({
