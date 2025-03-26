@@ -92,6 +92,8 @@ export default class YukiCommandSession {
       authorId: this.context.author.id
     }
 
+    info("Interpreting invocation", this.invocation.parameters)
+
     this.invocation.parsedParameters = this.invocation.parameters.map(
       (parameter) => {
         for (const [key, value] of Object.entries(constantsMap)) {
@@ -266,7 +268,7 @@ export default class YukiCommandSession {
       originalEvent: this.context.event.originalEvent,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.MikuCute, "已定义函数")
-        .addPlainText(`快试试 /yuki /${commandName} 吧`)
+        .addPlainText(`快试试 @miku /yuki /${commandName} 吧`)
         .build()
     })
   }

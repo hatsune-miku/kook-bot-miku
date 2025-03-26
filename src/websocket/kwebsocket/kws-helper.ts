@@ -30,6 +30,7 @@ import { tryit } from "radash"
 export class KWSHelper {
   private options: KWSOptions
 
+  private autoReconnect: boolean
   private pingSenderInterval: NodeJS.Timeout | null = null
   private clearQueueTimeout: NodeJS.Timeout | null = null
   private lastSn: number = 0
@@ -54,6 +55,7 @@ export class KWSHelper {
     this.onTextChannelEvent = options.onTextChannelEvent
     this.onSystemEvent = options.onSystemEvent
     this.onReset = options.onReset
+    this.autoReconnect = options.autoReconnect || false
   }
 
   /**
@@ -514,10 +516,16 @@ export class KWSHelper {
 
   onWebSocketClose(ev: WebSocket.CloseEvent) {
     info("onWebSocketClose", ev.reason)
+    if (this.autoReconnect) {
+      this.startWebsocket()
+    }
   }
 
   onWebSocketError(ev: WebSocket.ErrorEvent) {
     info("onWebSocketError", ev)
+    if (this.autoReconnect) {
+      this.startWebsocket()
+    }
   }
 
   onWebSocketMessage(ev: WebSocket.MessageEvent) {
@@ -586,6 +594,7 @@ export interface KWSHelperOptions {
   onTextChannelEvent: OnTextChannelEvent | null
   onSystemEvent: OnSystemEvent | null
   onReset: OnReset | null
+  autoReconnect?: boolean
 }
 
 export const defaultKWSOptions: KWSOptions = {

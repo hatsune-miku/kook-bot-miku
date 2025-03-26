@@ -52,7 +52,8 @@ export async function main() {
     onSevereError: handleSevereError,
     onTextChannelEvent: handleTextChannelEvent,
     onSystemEvent: handleSystemEvent,
-    onReset: handleReset
+    onReset: handleReset,
+    autoReconnect: true
   })
   helper.startWebsocket()
 

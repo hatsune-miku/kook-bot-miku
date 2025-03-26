@@ -20,7 +20,7 @@ export const toolFunctions: IFunctionTool[] = [
   GetStandardTimeTool,
   QWeatherTool,
   RunLinuxCommandTool,
-  CreateDownloadUrlTool,
+  // CreateDownloadUrlTool,
   DownloadFileTool,
   EvaluatePythonTool,
   ModerationCheckNoticeTextTool,

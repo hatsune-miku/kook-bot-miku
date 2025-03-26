@@ -22,6 +22,6 @@ export enum ChatBotBackend {
   O1Mini = "o1-mini",
   O3Mini = "o3-mini",
   Ernie = "ernie",
-  DeepSeekChat = "deepseek-chat",
-  DeepSeekReasoner = "deepseek-reasoner"
+  DeepSeekV3 = "deepseek-chat",
+  DeepSeekR1 = "deepseek-reasoner"
 }

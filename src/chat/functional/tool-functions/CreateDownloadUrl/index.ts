@@ -33,8 +33,8 @@ export class CreateDownloadUrlTool implements IFunctionTool {
       return "错误的路径"
     }
 
-    const fileName = path.split("/").pop()
-    const fileNameEncoded = encodeURIComponent(fileName)
+    const filePathAfterTmp = path.split("/tmp/").pop()
+    const fileNameEncoded = encodeURIComponent(filePathAfterTmp)
     const downloadUrl = `https://www.k00kapp.cn/kook/api/v1/download?file=${fileNameEncoded}`
     return downloadUrl
   }
