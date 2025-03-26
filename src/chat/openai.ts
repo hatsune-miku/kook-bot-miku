@@ -176,6 +176,9 @@ export async function chatCompletionStreamed(
           noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
         const functionsMerged =
           toolCalls === null && Object.keys(mergedToolCalls).length > 0
+        const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
+
+        console.log({ functionsFulfilled, functionsMerged, functionsMerging })
 
         if (functionsFulfilled) {
           const content = delta.content || ""
@@ -208,7 +211,7 @@ export async function chatCompletionStreamed(
               content: `${result}`
             })
           }
-        } else if (Array.isArray(toolCalls)) {
+        } else if (functionsMerging) {
           for (const toolCallChunk of toolCalls!) {
             const index = toolCallChunk.index
             if (!mergedToolCalls[index]) {
