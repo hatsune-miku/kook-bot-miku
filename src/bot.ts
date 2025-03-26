@@ -7,9 +7,9 @@
  */
 
 import { ContextManager } from "./chat/context-manager"
-import { chatCompletionWithoutStream as chatCompletionWithoutStreamChatGPT } from "./chat/openai"
-import { chatCompletionWithoutStream as chatCompletionWithoutStreamDeepSeek } from "./chat/deepseek"
-import { chatCompletionWithoutStream as chatCompletionWithoutStreamErnie } from "./chat/ernie"
+import { chatCompletionStreamed as chatCompletionChatGpt } from "./chat/openai"
+import { chatCompletionStreamed as chatCompletionDeepSeek } from "./chat/deepseek"
+import { chatCompletionStreamed as chatCompletionErnie } from "./chat/ernie"
 import { ChatDirectivesManager } from "./chat/directives"
 import { shared } from "./global/shared"
 import { extractContent, isExplicitlyMentioningBot } from "./utils/kevent/utils"
@@ -253,35 +253,21 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     contextManager
   )
 
-  const backend =
-    backendConfig === ChatBotBackend.Ernie
-      ? chatCompletionWithoutStreamErnie
-      : backendConfig.startsWith("deepseek")
-      ? (groupChat: boolean, context: ContextUnit[]) =>
-          chatCompletionWithoutStreamDeepSeek(
-            toolFunctionContext,
-            groupChat,
-            context,
-            backendModelName
-          )
-      : (groupChat: boolean, context: ContextUnit[]) =>
-          chatCompletionWithoutStreamChatGPT(
-            toolFunctionContext,
-            groupChat,
-            context,
-            backendModelName
-          )
-  const modelResponse = await backend(isGroupChat, context)
+  let modelMessageAccumulated = ""
+  let lastUpdateErrorMessage = ""
+  let isUpdateMessageSuccess = false
 
-  const performUpdateMessage = () =>
-    Requests.updateChannelMessage({
+  const onMessage = async (message: string) => {
+    modelMessageAccumulated += message
+
+    const result = await Requests.updateChannelMessage({
       msg_id: createdMessage.msg_id,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(
           "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
           ""
         )
-        .addKMarkdownText(modelResponse)
+        .addKMarkdownText(modelMessageAccumulated)
         .build(),
       quote: event.msg_id,
       extra: {
@@ -289,50 +275,86 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         target_id: event.target_id
       }
     })
-
-  const updateResult = await performUpdateMessage()
-  const isUpdateMessageSuccess = updateResult.success && updateResult.code === 0
-  const updateMessageErrorMessage = isUpdateMessageSuccess
-    ? null
-    : updateResult.message
-  const userSideErrorMessage = `刚才的消息没能发送成功，因为【${updateMessageErrorMessage}】~`
-
-  info("model response", modelResponse)
-  contextManager.appendToContext(
-    guildId,
-    channelId,
-    shared.me.id,
-    createdMessage.msg_id,
-    "Miku",
-    "assistant",
-    isUpdateMessageSuccess ? modelResponse : userSideErrorMessage,
-    false
-  )
-
-  if (!isUpdateMessageSuccess) {
-    Requests.updateChannelMessage({
-      msg_id: createdMessage.msg_id,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(
-          "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-          "消息发送失败了！"
-        )
-        .addKMarkdownText(userSideErrorMessage)
-        .build(),
-      quote: event.msg_id,
-      extra: {
-        type: KEventType.KMarkdown,
-        target_id: event.target_id
-      }
-    })
-    error(
-      "Failed to update message",
-      createdMessage.msg_id,
-      "reason:",
-      updateResult.message
-    )
-    return
+    isUpdateMessageSuccess = result.success && result.code === 0
+    if (!isUpdateMessageSuccess) {
+      lastUpdateErrorMessage = result.message
+    }
   }
+
+  const onMessageEnd = () => {
+    info("full model response", modelMessageAccumulated)
+    const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
+
+    if (!isUpdateMessageSuccess) {
+      Requests.updateChannelMessage({
+        msg_id: createdMessage.msg_id,
+        content: CardBuilder.fromTemplate()
+          .addIconWithKMarkdownText(
+            "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+            "消息发送失败了！"
+          )
+          .addKMarkdownText(userSideErrorMessage)
+          .build(),
+        quote: event.msg_id,
+        extra: {
+          type: KEventType.KMarkdown,
+          target_id: event.target_id
+        }
+      })
+      error(
+        "Failed to update message",
+        createdMessage.msg_id,
+        "reason:",
+        lastUpdateErrorMessage
+      )
+      return
+    }
+
+    contextManager.appendToContext(
+      guildId,
+      channelId,
+      shared.me.id,
+      createdMessage.msg_id,
+      "Miku",
+      "assistant",
+      isUpdateMessageSuccess ? modelMessageAccumulated : userSideErrorMessage,
+      false
+    )
+  }
+
+  const backend =
+    backendConfig === ChatBotBackend.Ernie
+      ? chatCompletionErnie
+      : backendConfig.startsWith("deepseek")
+      ? (
+          groupChat: boolean,
+          context: ContextUnit[],
+          onMessage: (message: string) => void,
+          onMessageEnd: () => void
+        ) =>
+          chatCompletionDeepSeek(
+            toolFunctionContext,
+            groupChat,
+            context,
+            backendModelName,
+            onMessage,
+            onMessageEnd
+          )
+      : (
+          groupChat: boolean,
+          context: ContextUnit[],
+          onMessage: (message: string) => void,
+          onMessageEnd: () => void
+        ) =>
+          chatCompletionChatGpt(
+            toolFunctionContext,
+            groupChat,
+            context,
+            backendModelName,
+            onMessage,
+            onMessageEnd
+          )
+  await backend(isGroupChat, context, onMessage, onMessageEnd)
 }
 
 async function handleTextChannelMultimediaMessage(

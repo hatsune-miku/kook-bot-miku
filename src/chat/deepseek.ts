@@ -56,12 +56,14 @@ function makeContext(
   ]
 }
 
-export async function chatCompletionWithoutStream(
+export async function chatCompletionStreamed(
   toolFunctionContext: ToolFunctionContext,
   groupChat: boolean,
   context: ContextUnit[],
-  model: string
-): Promise<string> {
+  model: string,
+  onMessage: (message: string) => void,
+  onMessageEnd: () => void
+) {
   const openai = new OpenAI({
     baseURL: "https://api.deepseek.com",
     apiKey: draw(Env.DeepSeekKeys)!
@@ -92,6 +94,8 @@ export async function chatCompletionWithoutStream(
         !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
 
       if (functionsFulfilled) {
+        onMessage(responseMessage.content || "<无法获取 DeepSeek 的回复>")
+        onMessageEnd()
         return responseMessage.content || "<无法获取 DeepSeek 的回复>"
       }
 

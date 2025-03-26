@@ -67,10 +67,12 @@ function makeContext(
   return [...context]
 }
 
-export async function chatCompletionWithoutStream(
+export async function chatCompletionStreamed(
   groupChat: boolean,
-  context: ContextUnit[]
-): Promise<string> {
+  context: ContextUnit[],
+  onMessage: (message: string) => void,
+  onMessageEnd: () => void
+) {
   let messages = makeContext(groupChat, context)
   try {
     const resp = await client.chat(
@@ -80,9 +82,9 @@ export async function chatCompletionWithoutStream(
       "ERNIE-4.0-Turbo-8K"
     )
     console.log(resp)
-    return resp.result
+    onMessage(resp.result)
+    onMessageEnd()
   } catch (e) {
     console.error(e)
-    return "<与文心一言的连接超时>"
   }
 }

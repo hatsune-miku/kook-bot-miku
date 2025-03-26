@@ -128,12 +128,14 @@ function makeContext(
   ]
 }
 
-export async function chatCompletionWithoutStream(
+export async function chatCompletionStreamed(
   toolFunctionContext: ToolFunctionContext,
   groupChat: boolean,
   context: ContextUnit[],
-  model: string
-): Promise<string> {
+  model: string,
+  onMessage: (message: string) => void,
+  onMessageEnd: () => void
+) {
   const openai = new OpenAI({
     apiKey: draw(Env.OpenAIKeys)!
   })
@@ -146,48 +148,63 @@ export async function chatCompletionWithoutStream(
     let functionCallDepthRemaining = CONSECUTIVE_FUNCTION_CALLS_THRESHOLD
 
     while (!functionsFulfilled) {
-      const completion = await openai.chat.completions.create({
+      const completionStreamed = await openai.chat.completions.create({
         messages: messages,
         model: model,
-        tools: await getChatCompletionTools()
+        tools: await getChatCompletionTools(),
+        stream: true
       })
 
-      const responseMessage = completion.choices?.[0].message
-      if (!responseMessage) {
-        return "<无法获取 OpenAI 的回复>"
-      }
+      let responseMessage = ""
 
-      messages.push(responseMessage)
+      for await (const part of completionStreamed) {
+        const delta = part.choices?.[0].delta
 
-      const toolCalls = responseMessage.tool_calls
-      functionsFulfilled =
-        !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+        if (!delta) {
+          continue
+        }
 
-      if (functionsFulfilled) {
-        return responseMessage.content || "<无法获取 OpenAI 的回复>"
-      }
+        const toolCalls = delta.tool_calls
+        functionsFulfilled =
+          !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
 
-      if (--functionCallDepthRemaining <= 0) {
-        return "<OpenAI 的回复过于复杂，无法处理>"
-      }
+        if (functionsFulfilled) {
+          const content = delta.content || ""
+          onMessage(content)
+          responseMessage += content
+        } else {
+          if (--functionCallDepthRemaining <= 0) {
+            onMessage("<OpenAI 的回复过于复杂，无法处理>")
+            break
+          }
 
-      info(`[Chat] Function calls`, toolCalls)
+          info(`[Chat] Function calls`, toolCalls)
 
-      if (toolCalls && Array.isArray(toolCalls)) {
-        for (const toolCall of toolCalls) {
-          const result = await toolInvoker.invoke(
-            toolCall.function.name,
-            toolCall.function.arguments
-          )
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: `${result}`
-          })
+          if (toolCalls && Array.isArray(toolCalls)) {
+            for (const toolCall of toolCalls) {
+              if (!toolCall?.id || !toolCall.function?.name) {
+                continue
+              }
+              const result = await toolInvoker.invoke(
+                toolCall.function.name,
+                toolCall.function.arguments
+              )
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `${result}`
+              })
+            }
+          }
         }
       }
+
+      onMessageEnd()
+      messages.push({
+        content: responseMessage,
+        role: "assistant"
+      })
     }
-    return "<无法获取 OpenAI 的回复>"
   } catch (e: any) {
     console.error(e)
     return `${e?.message || e || "未知错误"}`
