@@ -62,7 +62,7 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: () => void
+  onMessageEnd: (message: string) => void
 ) {
   const openai = new OpenAI({
     baseURL: "https://api.deepseek.com",
@@ -95,7 +95,7 @@ export async function chatCompletionStreamed(
 
       if (functionsFulfilled) {
         onMessage(responseMessage.content || "<无法获取 DeepSeek 的回复>")
-        onMessageEnd()
+        onMessageEnd(responseMessage.content || "<无法获取 DeepSeek 的回复>")
         return responseMessage.content || "<无法获取 DeepSeek 的回复>"
       }
 

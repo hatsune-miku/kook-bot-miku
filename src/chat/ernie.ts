@@ -2,7 +2,6 @@ import { ChatCompletion, setEnvVariable } from "@baiducloud/qianfan"
 import { Env } from "../utils/env/env"
 import { ContextUnit } from "./types"
 import { ChatCompletionMessageParam } from "openai/resources"
-import { info } from "../utils/logging/logger"
 
 setEnvVariable("QIANFAN_ACCESS_KEY", Env.ErnieAccessKey)
 setEnvVariable("QIANFAN_SECRET_KEY", Env.ErnieSecretKey)
@@ -71,7 +70,7 @@ export async function chatCompletionStreamed(
   groupChat: boolean,
   context: ContextUnit[],
   onMessage: (message: string) => void,
-  onMessageEnd: () => void
+  onMessageEnd: (message: string) => void
 ) {
   let messages = makeContext(groupChat, context)
   try {
@@ -83,7 +82,7 @@ export async function chatCompletionStreamed(
     )
     console.log(resp)
     onMessage(resp.result)
-    onMessageEnd()
+    onMessageEnd(resp.result)
   } catch (e) {
     console.error(e)
   }

@@ -134,7 +134,7 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: () => void
+  onMessageEnd: (message: string) => void
 ) {
   const openai = new OpenAI({
     apiKey: draw(Env.OpenAIKeys)!
@@ -216,7 +216,7 @@ export async function chatCompletionStreamed(
         }
       }
 
-      onMessageEnd()
+      onMessageEnd(responseMessage)
       messages.push({
         content: responseMessage,
         role: "assistant"

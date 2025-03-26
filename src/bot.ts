@@ -309,10 +309,11 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     })
   }
 
-  const onMessageEnd = async () => {
+  const onMessageEnd = async (message: string) => {
     queue.stop()
     let lastUpdateErrorMessage = ""
 
+    modelMessageAccumulated = message
     info("update final message", modelMessageAccumulated)
     const result = await Requests.updateChannelMessage({
       msg_id: createdMessage.msg_id,
@@ -370,7 +371,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           groupChat: boolean,
           context: ContextUnit[],
           onMessage: (message: string) => void,
-          onMessageEnd: () => void
+          onMessageEnd: (message: string) => void
         ) =>
           chatCompletionDeepSeek(
             toolFunctionContext,
@@ -384,7 +385,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           groupChat: boolean,
           context: ContextUnit[],
           onMessage: (message: string) => void,
-          onMessageEnd: () => void
+          onMessageEnd: (message: string) => void
         ) =>
           chatCompletionChatGpt(
             toolFunctionContext,
