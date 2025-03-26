@@ -163,7 +163,6 @@ export async function chatCompletionStreamed(
 
       for await (const part of completionStreamed) {
         const delta = part.choices?.[0]?.delta
-        const stopReason = part.choices?.[0]?.finish_reason
 
         if (!delta) {
           continue
@@ -228,14 +227,6 @@ export async function chatCompletionStreamed(
                 toolCallChunk!.function!.arguments || ""
             }
           }
-        }
-
-        if (
-          stopReason === "content_filter" ||
-          stopReason === "length" ||
-          stopReason === "stop"
-        ) {
-          break
         }
       }
     }
