@@ -35,6 +35,7 @@ import {
   CreateChannelMessageResult,
   KResponseExt
 } from "./utils/krequest/types"
+import { isPromise } from "radash"
 
 ConfigUtils.initialize()
 
@@ -254,11 +255,47 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   )
 
   let modelMessageAccumulated = ""
-  let lastUpdateErrorMessage = ""
-  let isUpdateMessageSuccess = false
+  let updatePromiseChain: any = []
+  let messageIndex = 0
 
   const onMessage = async (message: string) => {
     modelMessageAccumulated += message
+    const currentPromise = new Promise((resolve) => {
+      const updateMessage = () => {
+        Requests.updateChannelMessage({
+          msg_id: createdMessage.msg_id,
+          content: CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(
+              "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+              ""
+            )
+            .addKMarkdownText(modelMessageAccumulated)
+            .build(),
+          quote: event.msg_id,
+          extra: {
+            type: KEventType.KMarkdown,
+            target_id: event.target_id
+          }
+        })
+          .then(resolve)
+          .catch(resolve)
+      }
+      // await last update promise
+      const lastPromise = updatePromiseChain[messageIndex - 1]
+      if (lastPromise && isPromise(lastPromise)) {
+        lastPromise.then(updateMessage)
+      } else {
+        updateMessage()
+      }
+    })
+    updatePromiseChain.push(currentPromise)
+    messageIndex++
+  }
+
+  const onMessageEnd = async () => {
+    let lastUpdateErrorMessage = ""
+
+    await Promise.all(updatePromiseChain)
 
     const result = await Requests.updateChannelMessage({
       msg_id: createdMessage.msg_id,
@@ -275,13 +312,11 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         target_id: event.target_id
       }
     })
-    isUpdateMessageSuccess = result.success && result.code === 0
+    const isUpdateMessageSuccess = result.success && result.code === 0
     if (!isUpdateMessageSuccess) {
       lastUpdateErrorMessage = result.message
     }
-  }
 
-  const onMessageEnd = () => {
     info("full model response", modelMessageAccumulated)
     const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
 
