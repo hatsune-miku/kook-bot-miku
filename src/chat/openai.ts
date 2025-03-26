@@ -160,10 +160,19 @@ export async function chatCompletionStreamed(
       let responseMessage = ""
 
       for await (const part of completionStreamed) {
-        const delta = part.choices?.[0].delta
+        const delta = part.choices?.[0]?.delta
+        const stopReason = part.choices?.[0]?.finish_reason
 
         if (!delta) {
           continue
+        }
+
+        if (
+          stopReason === "content_filter" ||
+          stopReason === "length" ||
+          stopReason === "stop"
+        ) {
+          break
         }
 
         const toolCalls = delta.tool_calls
@@ -175,6 +184,7 @@ export async function chatCompletionStreamed(
           mergedChunks.push(content)
           if (mergedChunks.length >= 3) {
             const content = mergedChunks.join("")
+            info(`[Chat] Merged chunks`, content)
             onMessage(content)
             mergedChunks = []
           }
@@ -214,6 +224,7 @@ export async function chatCompletionStreamed(
     }
 
     if (mergedChunks.length > 0) {
+      info(`[Chat] Final merged chunks`, mergedChunks)
       const content = mergedChunks.join("")
       onMessage(content)
     }
