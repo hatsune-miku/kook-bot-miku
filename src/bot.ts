@@ -310,6 +310,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const onMessageEnd = async () => {
+    queue.stop()
     let lastUpdateErrorMessage = ""
 
     info("update final message", modelMessageAccumulated)
