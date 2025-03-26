@@ -156,6 +156,7 @@ export async function chatCompletionStreamed(
       })
 
       let responseMessage = ""
+      let mergedChunks = []
 
       for await (const part of completionStreamed) {
         const delta = part.choices?.[0].delta
@@ -170,7 +171,12 @@ export async function chatCompletionStreamed(
 
         if (functionsFulfilled) {
           const content = delta.content || ""
-          onMessage(content)
+          mergedChunks.push(content)
+          if (mergedChunks.length >= 3) {
+            const content = mergedChunks.join("")
+            onMessage(content)
+            mergedChunks = []
+          }
           responseMessage += content
         } else {
           if (--functionCallDepthRemaining <= 0) {
@@ -199,6 +205,10 @@ export async function chatCompletionStreamed(
         }
       }
 
+      if (mergedChunks.length > 0) {
+        const content = mergedChunks.join("")
+        onMessage(content)
+      }
       onMessageEnd()
       messages.push({
         content: responseMessage,
