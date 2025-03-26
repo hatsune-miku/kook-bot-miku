@@ -36,6 +36,7 @@ import {
   KResponseExt
 } from "./utils/krequest/types"
 import { isPromise } from "radash"
+import { TaskQueue } from "./utils/algorithm/task-queue"
 
 ConfigUtils.initialize()
 
@@ -256,8 +257,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   )
 
   let modelMessageAccumulated = ""
-  let updatePromiseChain: any = []
-  let messageIndex = 0
 
   contextManager.appendToContext(
     guildId,
@@ -269,14 +268,16 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     initialResponse,
     false
   )
+  const queue = new TaskQueue()
   const onMessage = async (message: string) => {
     if (message === "") {
       return
     }
     modelMessageAccumulated += message
-    const currentPromise = new Promise((resolve) => {
-      const updateMessage = () => {
-        Requests.updateChannelMessage({
+    queue.submit(async () => {
+      try {
+        info("update message part", modelMessageAccumulated.length)
+        const result = await Requests.updateChannelMessage({
           msg_id: createdMessage.msg_id,
           content: CardBuilder.fromTemplate()
             .addIconWithKMarkdownText(
@@ -291,40 +292,25 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
             target_id: event.target_id
           }
         })
-          .then(() => {
-            info("update message", messageIndex)
-            contextManager.updateExistingContext(
-              guildId,
-              channelId,
-              shared.me.id,
-              createdMessage.msg_id,
-              "Miku",
-              "assistant",
-              modelMessageAccumulated,
-              false
-            )
-            resolve(null)
-          })
-          .catch(() => {
-            resolve(null)
-          })
-      }
-      // await last update promise
-      const lastPromise = updatePromiseChain[messageIndex - 1]
-      if (lastPromise && isPromise(lastPromise)) {
-        lastPromise.then(() => updateMessage())
-      } else {
-        updateMessage()
-      }
+
+        if (result.success && result.code === 0) {
+          contextManager.updateExistingContext(
+            guildId,
+            channelId,
+            shared.me.id,
+            createdMessage.msg_id,
+            "Miku",
+            "assistant",
+            modelMessageAccumulated,
+            false
+          )
+        }
+      } catch {}
     })
-    updatePromiseChain.push(currentPromise)
-    messageIndex++
   }
 
   const onMessageEnd = async () => {
     let lastUpdateErrorMessage = ""
-
-    await Promise.all(updatePromiseChain)
 
     info("update final message", modelMessageAccumulated)
     const result = await Requests.updateChannelMessage({
