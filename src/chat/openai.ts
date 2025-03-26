@@ -8,8 +8,9 @@
 
 import OpenAI from "openai"
 import { Env } from "../utils/env/env"
-import { draw } from "radash"
+import { draw, merge } from "radash"
 import {
+  ChatCompletion,
   ChatCompletionContentPart,
   ChatCompletionMessageParam
 } from "openai/resources"
@@ -19,8 +20,7 @@ import { getChatCompletionTools } from "./functional/tool-functions/dispatch"
 import { ToolFunctionContext } from "./functional/context"
 import { ToolFunctionInvoker } from "./functional/tool-function"
 import { KCardMessageElement, KCardMessageSubElement } from "../events"
-
-const CONSECUTIVE_FUNCTION_CALLS_THRESHOLD = 12
+import { Completions } from "openai/resources/chat"
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   const normalUnit: ChatCompletionMessageParam = {
@@ -145,9 +145,8 @@ export async function chatCompletionStreamed(
 
   try {
     let functionsFulfilled = false
-    let functionCallDepthRemaining = CONSECUTIVE_FUNCTION_CALLS_THRESHOLD
-
     let mergedChunks = []
+    let responseMessage = ""
 
     while (!functionsFulfilled) {
       const completionStreamed = await openai.chat.completions.create({
@@ -157,7 +156,10 @@ export async function chatCompletionStreamed(
         stream: true
       })
 
-      let responseMessage = ""
+      let mergedToolCalls: Record<
+        number,
+        Completions.ChatCompletionChunk.Choice.Delta.ToolCall
+      > = {}
 
       for await (const part of completionStreamed) {
         const delta = part.choices?.[0]?.delta
@@ -167,19 +169,34 @@ export async function chatCompletionStreamed(
           continue
         }
 
-        if (
-          stopReason === "content_filter" ||
-          stopReason === "length" ||
-          stopReason === "stop"
-        ) {
-          break
-        }
-
         const toolCalls = delta.tool_calls
         functionsFulfilled =
           !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+        const functionsMerged =
+          functionsFulfilled && Object.keys(mergedToolCalls).length > 0
 
-        if (functionsFulfilled) {
+        if (functionsMerged) {
+          info(`[Chat] Function calls`, mergedToolCalls)
+
+          for (const toolCall of Object.values(mergedToolCalls)) {
+            if (
+              !toolCall?.id ||
+              !toolCall.function?.name ||
+              !toolCall.function?.arguments
+            ) {
+              continue
+            }
+            const result = await toolInvoker.invoke(
+              toolCall.function.name,
+              toolCall.function.arguments
+            )
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: `${result}`
+            })
+          }
+        } else if (functionsFulfilled) {
           const content = delta.content || ""
           mergedChunks.push(content)
           if (mergedChunks.length >= 3) {
@@ -190,37 +207,26 @@ export async function chatCompletionStreamed(
           }
           responseMessage += content
         } else {
-          if (--functionCallDepthRemaining <= 0) {
-            onMessage("<OpenAI 的回复过于复杂，无法处理>")
-            break
-          }
-
-          info(`[Chat] Function calls`, toolCalls)
-
-          if (toolCalls && Array.isArray(toolCalls)) {
-            for (const toolCall of toolCalls) {
-              if (!toolCall?.id || !toolCall.function?.name) {
-                continue
-              }
-              const result = await toolInvoker.invoke(
-                toolCall.function.name,
-                toolCall.function.arguments
-              )
-              messages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: `${result}`
-              })
+          for (const toolCallChunk of toolCalls!) {
+            const index = toolCallChunk.index
+            if (!mergedToolCalls[index]) {
+              mergedToolCalls[index] = toolCallChunk
+              mergedToolCalls[index].function ||= { arguments: "" }
+            } else {
+              mergedToolCalls[index]!.function!.arguments +=
+                toolCallChunk!.function!.arguments || ""
             }
           }
         }
-      }
 
-      onMessageEnd(responseMessage)
-      messages.push({
-        content: responseMessage,
-        role: "assistant"
-      })
+        if (
+          stopReason === "content_filter" ||
+          stopReason === "length" ||
+          stopReason === "stop"
+        ) {
+          break
+        }
+      }
     }
 
     if (mergedChunks.length > 0) {
@@ -228,6 +234,11 @@ export async function chatCompletionStreamed(
       const content = mergedChunks.join("")
       onMessage(content)
     }
+    onMessageEnd(responseMessage)
+    messages.push({
+      content: responseMessage,
+      role: "assistant"
+    })
   } catch (e: any) {
     console.error(e)
     return `${e?.message || e || "未知错误"}`
