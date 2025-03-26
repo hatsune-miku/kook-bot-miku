@@ -147,6 +147,8 @@ export async function chatCompletionStreamed(
     let functionsFulfilled = false
     let functionCallDepthRemaining = CONSECUTIVE_FUNCTION_CALLS_THRESHOLD
 
+    let mergedChunks = []
+
     while (!functionsFulfilled) {
       const completionStreamed = await openai.chat.completions.create({
         messages: messages,
@@ -156,7 +158,6 @@ export async function chatCompletionStreamed(
       })
 
       let responseMessage = ""
-      let mergedChunks = []
 
       for await (const part of completionStreamed) {
         const delta = part.choices?.[0].delta
@@ -205,15 +206,16 @@ export async function chatCompletionStreamed(
         }
       }
 
-      if (mergedChunks.length > 0) {
-        const content = mergedChunks.join("")
-        onMessage(content)
-      }
       onMessageEnd()
       messages.push({
         content: responseMessage,
         role: "assistant"
       })
+    }
+
+    if (mergedChunks.length > 0) {
+      const content = mergedChunks.join("")
+      onMessage(content)
     }
   } catch (e: any) {
     console.error(e)
