@@ -345,6 +345,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       return
     }
 
+    info("Appending to context", modelMessageAccumulated)
     contextManager.appendToContext(
       guildId,
       channelId,
