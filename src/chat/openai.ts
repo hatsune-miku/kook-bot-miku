@@ -170,10 +170,12 @@ export async function chatCompletionStreamed(
         }
 
         const toolCalls = delta.tool_calls
-        functionsFulfilled =
+        const noToolCallsPresent =
           !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+        functionsFulfilled =
+          noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
         const functionsMerged =
-          functionsFulfilled && Object.keys(mergedToolCalls).length > 0
+          toolCalls === null && Object.keys(mergedToolCalls).length > 0
 
         if (functionsMerged) {
           info(`[Chat] Function calls`, mergedToolCalls)
