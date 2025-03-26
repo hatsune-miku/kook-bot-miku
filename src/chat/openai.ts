@@ -177,7 +177,17 @@ export async function chatCompletionStreamed(
         const functionsMerged =
           toolCalls === null && Object.keys(mergedToolCalls).length > 0
 
-        if (functionsMerged) {
+        if (functionsFulfilled) {
+          const content = delta.content || ""
+          mergedChunks.push(content)
+          if (mergedChunks.length >= 3) {
+            const content = mergedChunks.join("")
+            info(`[Chat] Merged chunks`, content)
+            onMessage(content)
+            mergedChunks = []
+          }
+          responseMessage += content
+        } else if (functionsMerged) {
           info(`[Chat] Function calls`, mergedToolCalls)
 
           for (const toolCall of Object.values(mergedToolCalls)) {
@@ -198,17 +208,7 @@ export async function chatCompletionStreamed(
               content: `${result}`
             })
           }
-        } else if (functionsFulfilled) {
-          const content = delta.content || ""
-          mergedChunks.push(content)
-          if (mergedChunks.length >= 3) {
-            const content = mergedChunks.join("")
-            info(`[Chat] Merged chunks`, content)
-            onMessage(content)
-            mergedChunks = []
-          }
-          responseMessage += content
-        } else {
+        } else if (Array.isArray(toolCalls)) {
           for (const toolCallChunk of toolCalls!) {
             const index = toolCallChunk.index
             if (!mergedToolCalls[index]) {
