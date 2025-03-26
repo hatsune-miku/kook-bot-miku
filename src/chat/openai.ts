@@ -197,8 +197,21 @@ export async function chatCompletionStreamed(
           responseMessage += content
         } else if (functionsMerged) {
           info(`[Chat] Function calls`, mergedToolCalls)
+          const mergedToolCallsArray = Object.values(mergedToolCalls)
 
-          for (const toolCall of Object.values(mergedToolCalls)) {
+          messages.push({
+            role: "assistant",
+            tool_calls: mergedToolCallsArray.map((toolCall) => ({
+              id: toolCall.id!,
+              function: {
+                name: toolCall.function?.name || "",
+                arguments: toolCall.function?.arguments || ""
+              },
+              type: toolCall.type!
+            }))
+          })
+
+          for (const toolCall of mergedToolCallsArray) {
             if (
               !toolCall?.id ||
               !toolCall.function?.name ||
