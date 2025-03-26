@@ -174,7 +174,7 @@ export async function chatCompletionStreamed(
         functionsFulfilled =
           noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
         const functionsMerged =
-          toolCalls === null && Object.keys(mergedToolCalls).length > 0
+          noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
         const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
 
         console.log({
