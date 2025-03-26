@@ -96,6 +96,39 @@ export class ContextManager {
     })
   }
 
+  updateExistingContext(
+    guildId: string,
+    channelId: string,
+    userId: string,
+    messageId: string,
+    displayName: string,
+    role: ContextUnit["role"],
+    content: ContextUnit["content"],
+    freeChat: ContextUnit["freeChat"]
+  ) {
+    const context = this.getContext(guildId, channelId, userId)
+    const existingContext = context.find((unit) => unit.messageId === messageId)
+
+    if (!existingContext) {
+      return
+    }
+
+    existingContext.name = displayName
+    existingContext.role = role
+    existingContext.content = content
+    existingContext.timestamp = Date.now()
+    existingContext.freeChat = freeChat
+
+    ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
+      const userIdToContextUnits = config.userIdToContextUnits ?? {}
+      userIdToContextUnits[userId] = context
+      return {
+        ...config,
+        userIdToContextUnits: userIdToContextUnits
+      }
+    })
+  }
+
   setContext(
     guildId: string,
     channelId: string,

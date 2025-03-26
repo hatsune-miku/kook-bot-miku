@@ -218,13 +218,14 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
+  const initialResponse = "miku打字中..."
   const sendResult = await Requests.createChannelMessage({
     type: KEventType.Card,
     target_id: event.target_id,
     content: CardBuilder.fromTemplate()
       .addIconWithKMarkdownText(
         "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-        "miku打字中..."
+        initialResponse
       )
       .build(),
     quote: event.msg_id
@@ -258,6 +259,16 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   let updatePromiseChain: any = []
   let messageIndex = 0
 
+  contextManager.appendToContext(
+    guildId,
+    channelId,
+    shared.me.id,
+    createdMessage.msg_id,
+    "Miku",
+    "assistant",
+    initialResponse,
+    false
+  )
   const onMessage = async (message: string) => {
     modelMessageAccumulated += message
     const currentPromise = new Promise((resolve) => {
@@ -277,8 +288,22 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
             target_id: event.target_id
           }
         })
-          .then(resolve)
-          .catch(resolve)
+          .then(() => {
+            contextManager.updateExistingContext(
+              guildId,
+              channelId,
+              shared.me.id,
+              createdMessage.msg_id,
+              "Miku",
+              "assistant",
+              modelMessageAccumulated,
+              false
+            )
+            resolve(null)
+          })
+          .catch(() => {
+            resolve(null)
+          })
       }
       // await last update promise
       const lastPromise = updatePromiseChain[messageIndex - 1]
@@ -342,20 +367,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         "reason:",
         lastUpdateErrorMessage
       )
-      return
     }
-
-    info("Appending to context", modelMessageAccumulated)
-    contextManager.appendToContext(
-      guildId,
-      channelId,
-      shared.me.id,
-      createdMessage.msg_id,
-      "Miku",
-      "assistant",
-      isUpdateMessageSuccess ? modelMessageAccumulated : userSideErrorMessage,
-      false
-    )
   }
 
   const backend =
