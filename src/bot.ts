@@ -270,6 +270,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     false
   )
   const onMessage = async (message: string) => {
+    if (message === "") {
+      return
+    }
     modelMessageAccumulated += message
     const currentPromise = new Promise((resolve) => {
       const updateMessage = () => {
@@ -289,6 +292,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           }
         })
           .then(() => {
+            info("update message", messageIndex)
             contextManager.updateExistingContext(
               guildId,
               channelId,
@@ -308,7 +312,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       // await last update promise
       const lastPromise = updatePromiseChain[messageIndex - 1]
       if (lastPromise && isPromise(lastPromise)) {
-        lastPromise.then(updateMessage)
+        lastPromise.then(() => updateMessage())
       } else {
         updateMessage()
       }
@@ -322,6 +326,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
     await Promise.all(updatePromiseChain)
 
+    info("update final message", modelMessageAccumulated)
     const result = await Requests.updateChannelMessage({
       msg_id: createdMessage.msg_id,
       content: CardBuilder.fromTemplate()
