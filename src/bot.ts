@@ -24,8 +24,7 @@ import {
   KSystemEventExtra,
   KTextChannelExtra
 } from "./websocket/kwebsocket/types"
-import { EventEmitter } from "stream"
-import { Events, RespondToUserParameters } from "./events"
+import { botEventEmitter, Events, RespondToUserParameters } from "./events"
 import { displayNameFromUser, isTrustedUser } from "./utils"
 import ConfigUtils from "./utils/config/config"
 import { ChatBotBackend, ContextUnit, GroupChatStrategy } from "./chat/types"
@@ -35,12 +34,10 @@ import {
   CreateChannelMessageResult,
   KResponseExt
 } from "./utils/krequest/types"
-import { isPromise } from "radash"
 import { TaskQueue } from "./utils/algorithm/task-queue"
 
 ConfigUtils.initialize()
 
-const botEventEmitter = new EventEmitter()
 const contextManager = new ContextManager()
 const roleManager = new GuildRoleManager()
 const directivesManager = new ChatDirectivesManager(botEventEmitter)
@@ -475,4 +472,9 @@ function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
   }
 }
 
-function handleReset() {}
+function handleReset() {
+  botEventEmitter.emit("send-lark-message", {
+    title: "Miku Event",
+    message: "Server: Reset"
+  })
+}

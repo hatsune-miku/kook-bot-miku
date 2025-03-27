@@ -6,10 +6,16 @@
  * @Description   : Magic. Don't touch.
  */
 
+import { botEventEmitter } from "../../events"
 import { KResponseExt } from "../krequest/types"
 import { error } from "../logging/logger"
 
 export function die(reason: string): never {
+  botEventEmitter.emit("send-lark-message", {
+    title: "Miku Event",
+    message: "Severe Error: " + reason
+  })
+
   error(reason)
   error("Exiting...")
   process.exit(1)

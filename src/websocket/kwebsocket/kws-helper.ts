@@ -23,6 +23,7 @@ import WebSocket from "ws"
 import { decompressKMessage } from "../../utils/deflate/deflate"
 import { KMessageQueue } from "../../utils/pqueue/kmqueue"
 import { tryit } from "radash"
+import { botEventEmitter } from "../../events"
 
 /**
  * KOOK WebSocket connection helper
@@ -512,10 +513,19 @@ export class KWSHelper {
 
   onWebSocketOpen(ev: WebSocket.Event) {
     info("onWebSocketOpen", ev)
+    botEventEmitter.emit("send-lark-message", {
+      title: "Miku Event",
+      message: "Socket Open"
+    })
   }
 
   onWebSocketClose(ev: WebSocket.CloseEvent) {
     info("onWebSocketClose", ev.reason)
+    botEventEmitter.emit("send-lark-message", {
+      title: "Miku Event",
+      message: "Socket Closed"
+    })
+
     if (this.autoReconnect) {
       this.startWebsocket()
     }
@@ -523,6 +533,11 @@ export class KWSHelper {
 
   onWebSocketError(ev: WebSocket.ErrorEvent) {
     info("onWebSocketError", ev)
+    botEventEmitter.emit("send-lark-message", {
+      title: "Miku Event",
+      message: "Socket Error"
+    })
+
     if (this.autoReconnect) {
       this.startWebsocket()
     }

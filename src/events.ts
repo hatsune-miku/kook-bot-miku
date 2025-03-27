@@ -1,3 +1,4 @@
+import { EventEmitter } from "stream"
 import { KEvent, KTextChannelExtra } from "./websocket/kwebsocket/types"
 
 export const Events = {
@@ -45,3 +46,5 @@ export interface KCardMessageElement {
 }
 
 export type KCardMessage = [KCardMessageElement]
+
+export const botEventEmitter = new EventEmitter()
