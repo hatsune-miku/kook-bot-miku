@@ -8,9 +8,8 @@
 
 import OpenAI from "openai"
 import { Env } from "../utils/env/env"
-import { draw, merge } from "radash"
+import { draw } from "radash"
 import {
-  ChatCompletion,
   ChatCompletionContentPart,
   ChatCompletionMessageParam
 } from "openai/resources"
