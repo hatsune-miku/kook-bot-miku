@@ -8,6 +8,7 @@ export interface EnvType {
   BotToken: string
   OpenAIKeys: string[]
   OpenAIBaseUrl: string
+  ProxyUrl: string
   DeepSeekKeys: string[]
   StableDiffusionKeys: string[]
   ErnieAccessKey: string
@@ -29,6 +30,7 @@ export function reloadConfig() {
     BotToken: config.BOT_TOKEN || die("环境配置错误：BOT_TOKEN"),
     OpenAIKeys: config.OPENAI_API_KEYS?.split(",") || [],
     OpenAIBaseUrl: config.OPENAI_API_BASE_URL,
+    ProxyUrl: config.PROXY_URL,
     DeepSeekKeys: config.DEEPSEEK_API_KEYS?.split(",") || [],
     StableDiffusionKeys: config.STABLE_DIFFUSION_API_KEYS?.split(",") || [],
     ErnieAccessKey:

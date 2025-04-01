@@ -21,6 +21,7 @@ import { ToolFunctionContext } from "./functional/context"
 import { ToolFunctionInvoker } from "./functional/tool-function"
 import { KCardMessageElement, KCardMessageSubElement } from "../events"
 import { Completions } from "openai/resources/chat"
+import { HttpProxyAgent } from "http-proxy-agent"
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   const normalUnit: ChatCompletionMessageParam = {
@@ -139,7 +140,8 @@ export async function chatCompletionStreamed(
 ) {
   const openai = new OpenAI({
     apiKey: draw(Env.OpenAIKeys)!,
-    baseURL: Env.OpenAIBaseUrl || undefined
+    baseURL: Env.OpenAIBaseUrl || undefined,
+    httpAgent: Env.ProxyUrl ? new HttpProxyAgent(Env.ProxyUrl) : undefined
   })
 
   let messages = makeContext(groupChat, context)
