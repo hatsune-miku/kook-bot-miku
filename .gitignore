@@ -1,5 +1,6 @@
 node_modules
 .env
+.env-ttt
 .env-tttt
 config.json
 dist

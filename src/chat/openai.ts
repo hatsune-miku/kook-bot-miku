@@ -138,7 +138,8 @@ export async function chatCompletionStreamed(
   onMessageEnd: (message: string) => void
 ) {
   const openai = new OpenAI({
-    apiKey: draw(Env.OpenAIKeys)!
+    apiKey: draw(Env.OpenAIKeys)!,
+    baseURL: Env.OpenAIBaseUrl || undefined
   })
 
   let messages = makeContext(groupChat, context)

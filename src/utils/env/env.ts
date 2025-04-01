@@ -7,6 +7,7 @@ export interface EnvType {
   KOOKBaseUrl: string
   BotToken: string
   OpenAIKeys: string[]
+  OpenAIBaseUrl: string
   DeepSeekKeys: string[]
   StableDiffusionKeys: string[]
   ErnieAccessKey: string
@@ -27,6 +28,7 @@ export function reloadConfig() {
     KOOKBaseUrl: config.KOOK_BASE_URL || die("环境配置错误：KOOK_BASE_URL"),
     BotToken: config.BOT_TOKEN || die("环境配置错误：BOT_TOKEN"),
     OpenAIKeys: config.OPENAI_API_KEYS?.split(",") || [],
+    OpenAIBaseUrl: config.OPENAI_API_BASE_URL,
     DeepSeekKeys: config.DEEPSEEK_API_KEYS?.split(",") || [],
     StableDiffusionKeys: config.STABLE_DIFFUSION_API_KEYS?.split(",") || [],
     ErnieAccessKey:
