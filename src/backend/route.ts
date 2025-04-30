@@ -28,6 +28,9 @@ export function defineRoute(app: Express) {
     })
   })
 
+  app.get("/kook/api/v1/prize-draw", (req, res) => {
+  })
+
   app.post("/snr/:id", (req, res) => {
     const { id } = req.params || {}
     const { ua } = req.body || {}

@@ -6,6 +6,7 @@
  * @Description   : Magic. Don't touch.
  */
 
+import { CardBuilder } from "../../helpers/card-helper"
 import { KEventType } from "../../websocket/kwebsocket/types"
 
 /**
@@ -19,6 +20,12 @@ export interface KResponse<ResultType> {
   code: number
   message: string
   data: ResultType
+}
+
+export interface KResponseWeak<ResultType = undefined> {
+  code: number
+  message?: string
+  data?: ResultType
 }
 
 export interface KResponseHeader {
@@ -67,6 +74,12 @@ export interface CreateChannelMessageProps {
   nonce?: string
 
   temp_target_id?: string
+}
+
+export interface CreateChannelPrivateMessageProps {
+  cardBuilder: CardBuilder
+  channelId: string
+  targetUserId: string
 }
 
 export interface EditChannelMessageProps {

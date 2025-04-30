@@ -110,6 +110,13 @@ export class CardBuilder {
     return this
   }
 
+  addDivider() {
+    this.modules.push({
+      type: "divider"
+    })
+    return this
+  }
+
   addHourCountDown(endAt: number) {
     this.modules.push({
       type: "countdown",

@@ -1,6 +1,11 @@
 import { EventEmitter } from "stream"
 import { error, info, warn } from "../utils/logging/logger"
-import { KEvent, KTextChannelExtra, KUser } from "../websocket/kwebsocket/types"
+import {
+  KEvent,
+  KEventType,
+  KTextChannelExtra,
+  KUser
+} from "../websocket/kwebsocket/types"
 import { Events, KCardMessage, RespondToUserParameters } from "../events"
 import { displayNameFromUser, isTrustedUser } from "../utils"
 import { RequestMethod, Requests } from "../utils/krequest/request"
@@ -15,6 +20,7 @@ import {
   CreateChannelMessageResult,
   KResponseExt
 } from "../utils/krequest/types"
+import { createPrize, createPrizeCard } from "../backend/controllers/prize"
 
 export class ChatDirectivesManager implements IChatDirectivesManager {
   private guildIdToUserIdToProperties = new Map<
@@ -536,6 +542,85 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     })
   }
 
+  async handleRoll(event: ParseEventResultValid) {
+    const parameters = event.parameter?.split(" ") || []
+    const extract = (
+      parameters: string[],
+      subject: string,
+      defaultValue: string
+    ): string => {
+      try {
+        return (
+          parameters.find((p) => p.startsWith(`${subject}=`))?.split("=")[1] ||
+          defaultValue
+        )
+      } catch {
+        return defaultValue
+      }
+    }
+    const prizeName = extract(parameters, "prize-name", "")
+    const prizeCount = parseInt(extract(parameters, "prize-count", ""))
+    const untilDate = extract(parameters, "until", "")
+
+    info(parameters, {
+      prizeName,
+      prizeCount,
+      untilDate
+    })
+
+    if (!prizeName || !prizeCount || !untilDate || isNaN(prizeCount)) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "参数不合法"
+      })
+      return
+    }
+
+    if (untilDate.length !== "20070831120000".length) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "截止时间格式不合法，应该是 YYYYMMDDHHMMSS"
+      })
+      return
+    }
+
+    const year = parseInt(untilDate.slice(0, 4))
+    const month = parseInt(untilDate.slice(4, 6)) - 1
+    const day = parseInt(untilDate.slice(6, 8))
+    const hour = parseInt(untilDate.slice(8, 10))
+    const minute = parseInt(untilDate.slice(10, 12))
+    const second = parseInt(untilDate.slice(12, 14))
+    const untilDateParsed = new Date(year, month, day, hour, minute, second)
+    if (untilDateParsed.getTime() < Date.now()) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "截止时间必须在当前时间之后"
+      })
+      return
+    }
+
+    const prize = createPrize({
+      prizeName,
+      prizeCount,
+      validUntil: untilDateParsed,
+      guildId: event.originalEvent.extra.guild_id,
+      channelId: event.originalEvent.target_id
+    })
+    if (!prize) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "创建奖品失败"
+      })
+      return
+    }
+
+    Requests.createChannelMessage({
+      type: KEventType.Card,
+      target_id: event.originalEvent.target_id,
+      content: createPrizeCard(prize)
+    })
+  }
+
   async handleSubcommand(event: ParseEventResultValid) {
     return yukiSubCommandHandler(this, event)
   }
@@ -845,6 +930,15 @@ function prepareBuiltinDirectives(
       defaultValue: undefined,
       permissionGroups: ["admin"],
       handler: manager.showWhitelist.bind(manager)
+    },
+    {
+      triggerWord: "roll",
+      parameterDescription:
+        "prize-name=<prize-name> prize-count=<prize-count> until=YYYYMMDDHHMMSS",
+      description: "发起抽奖",
+      defaultValue: undefined,
+      permissionGroups: ["admin"],
+      handler: manager.handleRoll.bind(manager)
     },
     {
       triggerWord: "yuki",

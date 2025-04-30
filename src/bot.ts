@@ -19,6 +19,8 @@ import { die } from "./utils/server/die"
 import { GuildRoleManager } from "./websocket/kwebsocket/guild-role-manager"
 import { KWSHelper } from "./websocket/kwebsocket/kws-helper"
 import {
+  KCardButtonExtra,
+  KCardButtonValue,
   KEvent,
   KEventType,
   KSystemEventExtra,
@@ -28,13 +30,14 @@ import { botEventEmitter, Events, RespondToUserParameters } from "./events"
 import { displayNameFromUser, isTrustedUser } from "./utils"
 import ConfigUtils from "./utils/config/config"
 import { ChatBotBackend, ContextUnit, GroupChatStrategy } from "./chat/types"
-import { CardBuilder } from "./helpers/card-helper"
+import { CardBuilder, CardIcons } from "./helpers/card-helper"
 import { ToolFunctionContext } from "./chat/functional/context"
 import {
   CreateChannelMessageResult,
   KResponseExt
 } from "./utils/krequest/types"
 import { TaskQueue } from "./utils/algorithm/task-queue"
+import { drawPrize } from "./backend/controllers/prize"
 
 ConfigUtils.initialize()
 
@@ -428,6 +431,39 @@ async function handleTextChannelMultimediaMessage(
   info("extra", event.extra)
 }
 
+async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
+  let value: KCardButtonValue
+
+  if (!event.extra?.body?.user_info) {
+    info("No user info in event")
+    return
+  }
+
+  const eventBody = event.extra.body
+
+  try {
+    value = JSON.parse(eventBody.value || "{}")
+  } catch (e) {
+    info("Failed to parse card button value", e)
+    return
+  }
+
+  switch (value.kind) {
+    case "prize-draw": {
+      const prizeId = value.args[0]
+      const result = drawPrize(prizeId, eventBody.user_info)
+      const cardBuilder = CardBuilder.fromTemplate()
+        .addIconWithKMarkdownText(CardIcons.MikuCute, "参与成功")
+        .addKMarkdownText(result.message || "祝你好运！")
+      Requests.createChannelPrivateMessage({
+        channelId: eventBody.target_id,
+        targetUserId: eventBody.user_info.id,
+        cardBuilder
+      })
+    }
+  }
+}
+
 async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>) {
   switch (event.type) {
     case KEventType.KMarkdown:
@@ -468,6 +504,11 @@ function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
         )
       }
       break
+    }
+
+    case "message_btn_click": {
+      info("Button clicked", extra.body)
+      dispatchCardButtonEvent(event as KEvent<KCardButtonExtra>)
     }
   }
 }

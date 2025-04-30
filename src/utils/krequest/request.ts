@@ -18,9 +18,10 @@ import {
   QuerySelfResult,
   KResponseHeader,
   QuerySelfExtendProps as QueryUserProps,
-  WhoAmIExtendResult as QueryUserResult
+  WhoAmIExtendResult as QueryUserResult,
+  CreateChannelPrivateMessageProps
 } from "./types"
-import { OpenGatewayProps } from "../../websocket/kwebsocket/types"
+import { KEventType, OpenGatewayProps } from "../../websocket/kwebsocket/types"
 import { Env, reloadConfig } from "../env/env"
 import { DateTime } from "luxon"
 import { die } from "../server/die"
@@ -208,6 +209,27 @@ export class Requests {
     }
     info(props)
     return this.request(`/api/v3/message/create`, "POST", props)
+  }
+
+  static async createChannelPrivateMessage({
+    cardBuilder,
+    targetUserId,
+    channelId
+  }: CreateChannelPrivateMessageProps): Promise<
+    KResponseExt<CreateChannelMessageResult>
+  > {
+    const cardContent = cardBuilder
+      .addDivider()
+      .addKMarkdownText(
+        `(met)${targetUserId}(met)(font)，这条消息仅你可见。(font)[secondary]`
+      )
+      .build()
+    return this.createChannelMessage({
+      type: KEventType.Card,
+      target_id: channelId,
+      temp_target_id: targetUserId,
+      content: cardContent
+    })
   }
 
   static async updateChannelMessage(

@@ -155,7 +155,9 @@ export interface KTextChannelExtra {
 }
 
 // https://developer.kookapp.cn/doc/event/event-introduction
-export type KSystemEventExtra = KDeletedMessageSystemEventExtra
+export type KSystemEventExtra =
+  | KDeletedMessageSystemEventExtra
+  | KCardButtonExtra
 
 export interface KDeletedMessageSystemEventExtra {
   type: "deleted_message"
@@ -164,4 +166,20 @@ export interface KDeletedMessageSystemEventExtra {
     channel_id: string
     channel_type: number
   }
+}
+
+export interface KCardButtonExtra {
+  type: "message_btn_click"
+  body: {
+    msg_id: string
+    user_id: string
+    value: string
+    target_id: string
+    user_info: KUser
+  }
+}
+
+export interface KCardButtonValue {
+  kind: string
+  args: string[]
 }
