@@ -461,6 +461,7 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
         targetUserId: eventBody.user_info.id,
         cardBuilder
       })
+      break
     }
 
     case "vote-submit": {
@@ -478,6 +479,7 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
           })
         }
       )
+      break
     }
   }
 }
