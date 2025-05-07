@@ -38,6 +38,7 @@ import {
 } from "./utils/krequest/types"
 import { TaskQueue } from "./utils/algorithm/task-queue"
 import { drawPrize } from "./backend/controllers/prize"
+import { submitVote } from "./backend/controllers/vote"
 
 ConfigUtils.initialize()
 
@@ -453,13 +454,30 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
       const prizeId = value.args[0]
       const result = drawPrize(prizeId, eventBody.user_info)
       const cardBuilder = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, "参与成功")
+        .addIconWithKMarkdownText(CardIcons.MikuCute, "抽奖通知！")
         .addKMarkdownText(result.message || "祝你好运！")
       Requests.createChannelPrivateMessage({
         channelId: eventBody.target_id,
         targetUserId: eventBody.user_info.id,
         cardBuilder
       })
+    }
+
+    case "vote-submit": {
+      const voteId = value.args[0]
+      const optionTitle = value.args[1]
+      submitVote(voteId, eventBody.user_info, optionTitle).then(
+        ({ message }) => {
+          const cardBuilder = CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(CardIcons.MikuCute, "投票通知！")
+            .addKMarkdownText(message)
+          Requests.createChannelPrivateMessage({
+            channelId: eventBody.target_id,
+            targetUserId: eventBody.user_info.id,
+            cardBuilder
+          })
+        }
+      )
     }
   }
 }

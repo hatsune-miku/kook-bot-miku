@@ -21,6 +21,11 @@ import {
   KResponseExt
 } from "../utils/krequest/types"
 import { createPrize, createPrizeCard } from "../backend/controllers/prize"
+import {
+  extractParameter,
+  parseParameterDate
+} from "./utils/extract-parameters"
+import { createVote } from "../backend/controllers/vote"
 
 export class ChatDirectivesManager implements IChatDirectivesManager {
   private guildIdToUserIdToProperties = new Map<
@@ -542,31 +547,52 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     })
   }
 
+  async handleVote(event: ParseEventResultValid) {
+    const parameters = event.parameter?.split(" ") || []
+    const title = extractParameter(parameters, "title", "")
+    const until = extractParameter(parameters, "until", "")
+    const options = extractParameter(parameters, "options", "")
+
+    if (!title || !options || !until) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "参数不合法"
+      })
+      return
+    }
+
+    const optionsArray = options.split(",")
+    if (optionsArray.length < 2) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "选项数量不合法"
+      })
+      return
+    }
+
+    const untilDateParsed = parseParameterDate(until)
+    if (!untilDateParsed) {
+      this.respondToUser({
+        originalEvent: event.originalEvent,
+        content: "截止时间格式不合法，应该是 YYYYMMDDHHMMSS"
+      })
+      return
+    }
+
+    createVote({
+      title,
+      options: optionsArray,
+      guildId: event.originalEvent.extra.guild_id,
+      channelId: event.originalEvent.target_id,
+      validUntil: untilDateParsed!
+    })
+  }
+
   async handleRoll(event: ParseEventResultValid) {
     const parameters = event.parameter?.split(" ") || []
-    const extract = (
-      parameters: string[],
-      subject: string,
-      defaultValue: string
-    ): string => {
-      try {
-        return (
-          parameters.find((p) => p.startsWith(`${subject}=`))?.split("=")[1] ||
-          defaultValue
-        )
-      } catch {
-        return defaultValue
-      }
-    }
-    const prizeName = extract(parameters, "prize-name", "")
-    const prizeCount = parseInt(extract(parameters, "prize-count", ""))
-    const untilDate = extract(parameters, "until", "")
-
-    info(parameters, {
-      prizeName,
-      prizeCount,
-      untilDate
-    })
+    const prizeName = extractParameter(parameters, "prize-name", "")
+    const prizeCount = parseInt(extractParameter(parameters, "prize-count", ""))
+    const untilDate = extractParameter(parameters, "until", "")
 
     if (!prizeName || !prizeCount || !untilDate || isNaN(prizeCount)) {
       this.respondToUser({
@@ -576,22 +602,15 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       return
     }
 
-    if (untilDate.length !== "20070831120000".length) {
+    const untilDateParsed = parseParameterDate(untilDate)
+    if (!untilDateParsed) {
       this.respondToUser({
         originalEvent: event.originalEvent,
         content: "截止时间格式不合法，应该是 YYYYMMDDHHMMSS"
       })
       return
     }
-
-    const year = parseInt(untilDate.slice(0, 4))
-    const month = parseInt(untilDate.slice(4, 6)) - 1
-    const day = parseInt(untilDate.slice(6, 8))
-    const hour = parseInt(untilDate.slice(8, 10))
-    const minute = parseInt(untilDate.slice(10, 12))
-    const second = parseInt(untilDate.slice(12, 14))
-    const untilDateParsed = new Date(year, month, day, hour, minute, second)
-    if (untilDateParsed.getTime() < Date.now()) {
+    if (untilDateParsed!.getTime() < Date.now()) {
       this.respondToUser({
         originalEvent: event.originalEvent,
         content: "截止时间必须在当前时间之后"
@@ -602,7 +621,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     const prize = createPrize({
       prizeName,
       prizeCount,
-      validUntil: untilDateParsed,
+      validUntil: untilDateParsed!,
       guildId: event.originalEvent.extra.guild_id,
       channelId: event.originalEvent.target_id
     })
@@ -939,6 +958,15 @@ function prepareBuiltinDirectives(
       defaultValue: undefined,
       permissionGroups: ["admin"],
       handler: manager.handleRoll.bind(manager)
+    },
+    {
+      triggerWord: "vote",
+      parameterDescription:
+        "title=<title> until=YYYYMMDDHHMMSS options=<option1>[,<option2>,...]",
+      description: "发起投票",
+      defaultValue: undefined,
+      permissionGroups: ["admin"],
+      handler: manager.handleVote.bind(manager)
     },
     {
       triggerWord: "yuki",
