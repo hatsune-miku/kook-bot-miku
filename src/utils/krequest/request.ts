@@ -29,6 +29,8 @@ import { MessageLengthUpperBound } from "../config/config"
 import { sleep } from "radash"
 import { lookup } from "mime-types"
 import { readFile } from "fs/promises"
+import { ContextManager } from "../../chat/context-manager"
+import { shared } from "../../global/shared"
 
 reloadConfig()
 
@@ -43,6 +45,12 @@ const bucketToSpeedLimitIndication = new Map<string, KRateLimitHeader | null>()
 let disabledUntil: number = 0
 
 export class Requests {
+  static contextManager: ContextManager | null = null
+
+  static registerContextManager(contextManager: ContextManager) {
+    Requests.contextManager = contextManager
+  }
+
   static async request<T>(
     url: string,
     method: RequestMethod,
@@ -202,13 +210,38 @@ export class Requests {
   }
 
   static async createChannelMessage(
-    props: CreateChannelMessageProps
+    props: CreateChannelMessageProps,
+    guildId?: string
   ): Promise<KResponseExt<CreateChannelMessageResult>> {
     if (props.content.length > MessageLengthUpperBound) {
       return this.createChannelMessageChunk(props)
     }
     info(props)
-    return this.request(`/api/v3/message/create`, "POST", props)
+    const result: KResponseExt<CreateChannelMessageResult> = await this.request(
+      `/api/v3/message/create`,
+      "POST",
+      props
+    )
+    if (guildId && result.code === 0 && result.data?.msg_id) {
+      info(
+        "Appending context",
+        guildId,
+        props.target_id,
+        shared.me.id,
+        props.content
+      )
+      Requests.contextManager?.appendToContext(
+        guildId,
+        props.target_id,
+        shared.me.id,
+        result.data.msg_id,
+        "Miku",
+        "assistant",
+        props.content,
+        false
+      )
+    }
+    return result
   }
 
   static async createChannelPrivateMessage({
@@ -233,7 +266,8 @@ export class Requests {
   }
 
   static async updateChannelMessage(
-    props: EditChannelMessageProps
+    props: EditChannelMessageProps,
+    guildId?: string
   ): Promise<KResponseExt<{}>> {
     if (props.content.length > MessageLengthUpperBound) {
       return this.createChannelMessageChunk({
@@ -242,7 +276,24 @@ export class Requests {
         ...props
       })
     }
-    return this.request(`/api/v3/message/update`, "POST", props)
+    const result: KResponseExt<{}> = await this.request(
+      `/api/v3/message/update`,
+      "POST",
+      props
+    )
+    if (result.code === 0 && guildId) {
+      Requests.contextManager?.updateExistingContext(
+        guildId,
+        props.extra.target_id,
+        shared.me.id,
+        props.msg_id,
+        "Miku",
+        "assistant",
+        props.content,
+        false
+      )
+    }
+    return result
   }
 
   static async uploadFile(path: string): Promise<[string, number]> {

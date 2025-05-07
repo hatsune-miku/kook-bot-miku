@@ -75,11 +75,14 @@ export async function initializeLarkBot() {
 
         if (directive === "打包") {
           const [branch] = parameters
-          Requests.createChannelMessage({
-            type: KEventType.KMarkdown,
-            target_id: "9881678244960302",
-            content: `(met)1211389071(met) /打包 ${branch}`
-          })
+          Requests.createChannelMessage(
+            {
+              type: KEventType.KMarkdown,
+              target_id: "9881678244960302",
+              content: `(met)1211389071(met) /打包 ${branch}`
+            },
+            "9497223449100660"
+          )
           await sendMessage(
             "已通知打包嘟嘟",
             `大概 5 分钟后目标分支 (${branch}) 即可打包完成。网址：https://gz-www.dev.chuanyuapp.com/`

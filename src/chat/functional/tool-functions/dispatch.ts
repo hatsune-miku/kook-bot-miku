@@ -6,11 +6,9 @@ import { EvaluateJavaScriptTool } from "./EvaluateJavaScript"
 import { GetStandardTimeTool } from "./GetStandardTime"
 import { QWeatherTool } from "./QWeather"
 import { RunLinuxCommandTool } from "./RunLinuxCommand"
-import { CreateDownloadUrlTool } from "./CreateDownloadUrl"
 import { DownloadFileTool } from "./DownloadFile"
 import { EvaluatePythonTool } from "./EvaluatePython"
 import { ModerationCheckNoticeTextTool } from "./PromptModerationCheck"
-import { DrawImageTool } from "./DrawImage"
 import { SendFileTool } from "./SendFile"
 import { DrawImageStableDiffusionTool } from "./DrawImageStableDiffusion"
 
@@ -20,11 +18,9 @@ export const toolFunctions: IFunctionTool[] = [
   GetStandardTimeTool,
   QWeatherTool,
   RunLinuxCommandTool,
-  // CreateDownloadUrlTool,
   DownloadFileTool,
   EvaluatePythonTool,
   ModerationCheckNoticeTextTool,
-  // DrawImageTool,
   DrawImageStableDiffusionTool,
   SendFileTool
 ].map((Tool) => new Tool())

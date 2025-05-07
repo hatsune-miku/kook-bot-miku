@@ -37,8 +37,16 @@ import {
   KResponseExt
 } from "./utils/krequest/types"
 import { TaskQueue } from "./utils/algorithm/task-queue"
-import { drawPrize } from "./backend/controllers/prize"
-import { submitVote } from "./backend/controllers/vote"
+import {
+  drawPrize,
+  loadActivePrizes,
+  saveActivePrizes
+} from "./backend/controllers/prize"
+import {
+  loadActiveVotes,
+  saveActiveVotes,
+  submitVote
+} from "./backend/controllers/vote"
 
 ConfigUtils.initialize()
 
@@ -47,6 +55,7 @@ const roleManager = new GuildRoleManager()
 const directivesManager = new ChatDirectivesManager(botEventEmitter)
 
 directivesManager.setContextManager(contextManager)
+Requests.registerContextManager(contextManager)
 
 export async function main() {
   await tryPrepareBotInformation()
@@ -66,10 +75,14 @@ export async function main() {
     handleRespondCardMessageToUserEvent
   )
 
+  loadActiveVotes()
+  loadActivePrizes()
   info("Initialization OK")
 }
 
 export function deinitialize() {
+  saveActiveVotes()
+  saveActivePrizes()
   ConfigUtils.persist()
 }
 
@@ -77,12 +90,16 @@ async function handleRespondToUserEvent(
   event: RespondToUserParameters,
   callback?: (result: KResponseExt<CreateChannelMessageResult>) => void
 ) {
-  const result = await Requests.createChannelMessage({
-    type: KEventType.KMarkdown,
-    target_id: event.originalEvent.target_id,
-    content: event.content,
-    quote: event.originalEvent.msg_id
-  })
+  const withContext = event.withContext ?? true
+  const result = await Requests.createChannelMessage(
+    {
+      type: KEventType.KMarkdown,
+      target_id: event.originalEvent.target_id,
+      content: event.content,
+      quote: event.originalEvent.msg_id
+    },
+    withContext ? event.originalEvent.extra?.guild_id : undefined
+  )
 
   callback?.(result)
   if (!result.success) {
@@ -99,12 +116,17 @@ async function handleRespondCardMessageToUserEvent(
   event: RespondToUserParameters,
   callback?: (result: KResponseExt<CreateChannelMessageResult>) => void
 ) {
-  const result = await Requests.createChannelMessage({
-    type: KEventType.Card,
-    target_id: event.originalEvent.target_id,
-    content: event.content,
-    quote: event.originalEvent.msg_id
-  })
+  const withContext = event.withContext ?? true
+  info("Responding card message to user", event, withContext)
+  const result = await Requests.createChannelMessage(
+    {
+      type: KEventType.Card,
+      target_id: event.originalEvent.target_id,
+      content: event.content,
+      quote: event.originalEvent.msg_id
+    },
+    withContext ? event.originalEvent.extra?.guild_id : undefined
+  )
 
   callback?.(result)
   if (!result.success) {
@@ -152,9 +174,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   const myRoles = await roleManager.getMyRolesAt(guildId, shared.me.id)
   const isSentByMe = event.author_id == shared.me.id
 
-  if (isSentByMe) {
-    return
-  }
   const content = extractContent(event)
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
@@ -169,11 +188,15 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       guildId
     ) || calledByTrustedUser
 
+  if (isSentByMe) {
+    return
+  }
+
   if (isMentioningMe && !whitelisted) {
     await Requests.createChannelMessage({
       type: KEventType.KMarkdown,
       target_id: event.target_id,
-      content: `miku 机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
+      content: `miku机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
       quote: event.msg_id
     })
     return
@@ -185,6 +208,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     directivesManager.isAllowOmittingMentioningMeEnabled(guildId, channelId)
   ) {
     // Process directives
+    info("Processing directives for", displayName, "with content", content)
     directivesManager.tryInitializeForUser(guildId, author)
     const parsedEvent = await directivesManager.tryParseEvent(content, event)
     if (parsedEvent.shouldIntercept) {
@@ -198,7 +222,19 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       parsedEvent.mentionRoleIds = parsedEvent.mentionRoleIds.filter(
         (rid) => !myRoles.includes(rid)
       )
-      directivesManager.dispatchDirectives(parsedEvent)
+
+      directivesManager.dispatchDirectives(parsedEvent, () => {
+        contextManager.appendToContext(
+          guildId,
+          channelId,
+          author.id,
+          event.msg_id,
+          isSentByMe ? "Miku" : author.nickname,
+          isSentByMe ? "assistant" : "user",
+          content,
+          !isMentioningMe
+        )
+      })
       return
     }
   }
@@ -209,8 +245,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     channelId,
     author.id,
     event.msg_id,
-    author.nickname,
-    "user",
+    isSentByMe ? "Miku" : author.nickname,
+    isSentByMe ? "assistant" : "user",
     content,
     !isMentioningMe
   )
@@ -220,18 +256,21 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  const initialResponse = "miku打字中..."
-  const sendResult = await Requests.createChannelMessage({
-    type: KEventType.Card,
-    target_id: event.target_id,
-    content: CardBuilder.fromTemplate()
-      .addIconWithKMarkdownText(
-        "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-        initialResponse
-      )
-      .build(),
-    quote: event.msg_id
-  })
+  const initialResponse = "Miku打字中..."
+  const sendResult = await Requests.createChannelMessage(
+    {
+      type: KEventType.Card,
+      target_id: event.target_id,
+      content: CardBuilder.fromTemplate()
+        .addIconWithKMarkdownText(
+          "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+          initialResponse
+        )
+        .build(),
+      quote: event.msg_id
+    },
+    guildId
+  )
 
   if (!sendResult.success) {
     error("Failed to respond to", displayName, "reason:", sendResult.message)
@@ -258,17 +297,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   )
 
   let modelMessageAccumulated = ""
-
-  contextManager.appendToContext(
-    guildId,
-    channelId,
-    shared.me.id,
-    createdMessage.msg_id,
-    "Miku",
-    "assistant",
-    initialResponse,
-    false
-  )
   const queue = new TaskQueue()
   const onMessage = async (message: string) => {
     if (message === "") {
@@ -278,7 +306,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     queue.submit(async () => {
       try {
         info("update message part", modelMessageAccumulated.length)
-        const result = await Requests.updateChannelMessage({
+        await Requests.updateChannelMessage({
           msg_id: createdMessage.msg_id,
           content: CardBuilder.fromTemplate()
             .addIconWithKMarkdownText(
@@ -293,19 +321,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
             target_id: event.target_id
           }
         })
-
-        if (result.success && result.code === 0) {
-          contextManager.updateExistingContext(
-            guildId,
-            channelId,
-            shared.me.id,
-            createdMessage.msg_id,
-            "Miku",
-            "assistant",
-            modelMessageAccumulated,
-            false
-          )
-        }
       } catch {}
     })
   }

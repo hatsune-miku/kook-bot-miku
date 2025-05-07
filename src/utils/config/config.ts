@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync } from "fs"
-import { get } from "radash"
 import {
   ChatBotBackend,
   ContextUnit,
@@ -118,4 +117,5 @@ export interface GlobalScopeConfig {
     [guildId: string]: GuildScopeConfig | undefined
   }
   whiteListedGuildIds?: Record<string, string>
+  miscellaneous?: any
 }

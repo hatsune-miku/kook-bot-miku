@@ -7,6 +7,8 @@ import {
 import { CardIcons } from "../../helpers/card-helper"
 import { Requests } from "../../utils/krequest/request"
 import { EditChannelMessageProps } from "../../utils/krequest/types"
+import ConfigUtils from "../../utils/config/config"
+import { info } from "../../utils/logging/logger"
 
 export interface VoteOption {
   title: string
@@ -33,8 +35,60 @@ export interface CreateVotePayload {
 
 const activeVotes: Vote[] = []
 
+export function saveActiveVotes() {
+  ConfigUtils.updateGlobalConfig((config) => {
+    config.miscellaneous ||= {}
+    config.miscellaneous.activeVotes = activeVotes.map((v) => ({
+      ...v,
+      validUntil: v.validUntil.getTime()
+    }))
+    return config
+  })
+  info(`Saved ${activeVotes.length} active votes.`)
+}
+
+export function loadActiveVotes() {
+  const config = ConfigUtils.getGlobalConfig()
+  activeVotes.length = 0
+  const savedActiveVotes = config.miscellaneous?.activeVotes || []
+  for (const vote of savedActiveVotes) {
+    activeVotes.push({
+      ...vote,
+      validUntil: new Date(vote.validUntil)
+    })
+    rescheduleVote(vote.id)
+  }
+  info(`Loaded ${activeVotes.length} active votes.`)
+}
+
 export function getVote(voteId: string): Vote | undefined {
   return activeVotes.find((v) => v.id === voteId)
+}
+
+export function rescheduleVote(voteId: string) {
+  const vote = getVote(voteId)
+  if (!vote) {
+    return
+  }
+  scheduleJob(vote.validUntil, () => {
+    if (!vote.msgId) {
+      return
+    }
+
+    const index = activeVotes.indexOf(vote)
+    if (index === -1) {
+      return
+    }
+    activeVotes.splice(index, 1)
+    Requests.updateChannelMessage({
+      msg_id: vote.msgId,
+      content: createVoteCard(null, vote, false, true),
+      extra: {
+        type: KEventType.Card,
+        target_id: vote.channelId
+      }
+    })
+  })
 }
 
 export function createVote(payload: CreateVotePayload): Vote {
@@ -48,34 +102,19 @@ export function createVote(payload: CreateVotePayload): Vote {
     validUntil: payload.validUntil
   }
   activeVotes.push(vote)
-  Requests.createChannelMessage({
-    type: KEventType.Card,
-    target_id: vote.channelId,
-    content: createVoteCard(null, vote, false, false)
-  }).then((response) => {
+  Requests.createChannelMessage(
+    {
+      type: KEventType.Card,
+      target_id: vote.channelId,
+      content: createVoteCard(null, vote, false, false)
+    },
+    payload.guildId
+  ).then((response) => {
     if (response.code !== 0 || !response.data?.msg_id) {
       return
     }
     registerVoteMsgId(vote.id, response.data.msg_id)
-    scheduleJob(vote.validUntil, () => {
-      if (!vote.msgId) {
-        return
-      }
-
-      const index = activeVotes.indexOf(vote)
-      if (index === -1) {
-        return
-      }
-      activeVotes.splice(index, 1)
-      Requests.updateChannelMessage({
-        msg_id: vote.msgId,
-        content: createVoteCard(null, vote, false, true),
-        extra: {
-          type: KEventType.Card,
-          target_id: vote.channelId
-        }
-      })
-    })
+    rescheduleVote(vote.id)
   })
   return vote
 }

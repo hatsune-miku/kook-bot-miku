@@ -279,7 +279,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     if (mixedContext.length === 0) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "当前频道的对话上下文为空~"
+        content: "当前频道的对话上下文为空~",
+        withContext: false
       })
       return
     }
@@ -293,7 +294,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
               unit.content.slice(0, 16) + "..."
             }`
         )
-        .join("\n\n")
+        .join("\n\n"),
+      withContext: false
     })
   }
 
@@ -312,7 +314,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       .join("\n==========\n")
     this.respondToUser({
       originalEvent: event.originalEvent,
-      content: content
+      content: content,
+      withContext: false
     })
   }
 
@@ -393,7 +396,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 ChatGPT (${backend})`
+        content: `已切换至 ChatGPT (${backend})`,
+        withContext: false
       })
     } else if (backend?.startsWith("deepseek")) {
       ConfigUtils.updateChannelConfig(
@@ -408,7 +412,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 DeepSeek (${backend})`
+        content: `已切换至 DeepSeek (${backend})`,
+        withContext: false
       })
     } else if (backend === ChatBotBackend.Ernie) {
       ConfigUtils.updateChannelConfig(
@@ -423,7 +428,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "已切换至文心一言 (ERNIE-4.0-Turbo-8K)"
+        content: "已切换至文心一言 (ERNIE-4.0-Turbo-8K)",
+        withContext: false
       })
     } else {
       const channelName = event.originalEvent.extra.channel_name
@@ -432,7 +438,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         originalEvent: event.originalEvent,
         content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
           channelConfig.backend ?? ChatBotBackend.GPT4o
-        }，可选: ${Object.values(ChatBotBackend).join(", ")}`
+        }，可选: ${Object.values(ChatBotBackend).join(", ")}`,
+        withContext: false
       })
     }
   }
@@ -441,7 +448,8 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     if (!event.parameter) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "context 不能为空~"
+        content: "context 不能为空~",
+        withContext: false
       })
       return
     }
@@ -459,14 +467,16 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         if (!event.parameter) {
           this.respondToUser({
             originalEvent: event.originalEvent,
-            content: "context 内容为空~"
+            content: "context 内容为空~",
+            withContext: false
           })
           return
         }
       } catch {
         this.respondToUser({
           originalEvent: event.originalEvent,
-          content: "context 下载失败~"
+          content: "context 下载失败~",
+          withContext: false
         })
         return
       }
@@ -483,13 +493,15 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已设置对话上下文，共 ${context.length} 条对话`
+        content: `已设置对话上下文，共 ${context.length} 条对话`,
+        withContext: false
       })
       this.handlePrintContext(event)
     } catch (e) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "context 解析失败~"
+        content: "context 解析失败~",
+        withContext: false
       })
     }
   }
@@ -501,8 +513,10 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       originalEvent: event.originalEvent,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.MikuCute, `已开启新的对话上下文`)
-        .build()
+        .build(),
+      withContext: false
     })
+    info("Obliviate", guildId, channelId)
     this.contextManager?.removeContext(guildId, channelId)
   }
 
@@ -633,11 +647,15 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       return
     }
 
-    Requests.createChannelMessage({
-      type: KEventType.Card,
-      target_id: event.originalEvent.target_id,
-      content: createPrizeCard(prize)
-    })
+    info("Creating prize card", prize)
+    Requests.createChannelMessage(
+      {
+        type: KEventType.Card,
+        target_id: event.originalEvent.target_id,
+        content: createPrizeCard(prize)
+      },
+      prize.guildId
+    )
   }
 
   async handleSubcommand(event: ParseEventResultValid) {
@@ -793,7 +811,10 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     }
   }
 
-  dispatchDirectives(parsedEvent: ParseEventResultValid): boolean {
+  dispatchDirectives(
+    parsedEvent: ParseEventResultValid,
+    onContextReady?: () => void
+  ): boolean {
     const { directive } = parsedEvent
     const builtinDirectives = prepareBuiltinDirectives(this)
     const directiveItem = builtinDirectives.find(
@@ -819,6 +840,12 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       }
     }
     directiveItem.handler(parsedEvent)
+
+    const withContext = directiveItem.withContext ?? true
+    if (withContext) {
+      onContextReady?.()
+    }
+
     return true
   }
 }
@@ -874,7 +901,8 @@ function prepareBuiltinDirectives(
       description: "(调试限定) 输出当前频道的对话上下文",
       defaultValue: undefined,
       permissionGroups: ["developer"],
-      handler: manager.handlePrintContext.bind(manager)
+      handler: manager.handlePrintContext.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "help",
@@ -882,7 +910,8 @@ function prepareBuiltinDirectives(
       description: "查看帮助",
       defaultValue: undefined,
       permissionGroups: ["everyone"],
-      handler: manager.handleHelp.bind(manager)
+      handler: manager.handleHelp.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "eval",
@@ -900,7 +929,8 @@ function prepareBuiltinDirectives(
       ).join(", ")}`,
       defaultValue: undefined,
       permissionGroups: ["admin"],
-      handler: manager.handleSwitchAIBackend.bind(manager)
+      handler: manager.handleSwitchAIBackend.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "set_context",
@@ -908,7 +938,8 @@ function prepareBuiltinDirectives(
       description: "设置当前频道的对话上下文",
       defaultValue: undefined,
       permissionGroups: ["admin"],
-      handler: manager.handleSetContext.bind(manager)
+      handler: manager.handleSetContext.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "obliviate",
@@ -916,7 +947,8 @@ function prepareBuiltinDirectives(
       description: "遗忘当前服务器的当前频道对应的上下文",
       defaultValue: undefined,
       permissionGroups: ["admin"],
-      handler: manager.handleObliviate.bind(manager)
+      handler: manager.handleObliviate.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "new",
@@ -924,7 +956,8 @@ function prepareBuiltinDirectives(
       description: "遗忘当前服务器的当前频道对应的上下文",
       defaultValue: undefined,
       permissionGroups: ["admin"],
-      handler: manager.handleObliviate.bind(manager)
+      handler: manager.handleObliviate.bind(manager),
+      withContext: false
     },
     {
       triggerWord: "whitelist",
@@ -1013,4 +1046,5 @@ export interface ChatDirectiveItem {
   defaultValue: string | undefined
   permissionGroups: string[]
   handler: ChatDirectiveHandler
+  withContext?: boolean
 }

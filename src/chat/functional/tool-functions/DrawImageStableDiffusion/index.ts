@@ -54,7 +54,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     } = await context.directivesManager.respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, `miku画画中...`)
+        .addIconWithKMarkdownText(CardIcons.MikuHappy, `Miku画画中...`)
         .build()
     })
 
@@ -120,10 +120,10 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     if (result.code !== 0) {
       updateMessage(
         CardIcons.MikuHappy,
-        `miku已绘画完成，但是发送消息失败\n\n\`${result.message}\``
+        `Miku已绘画完成，但是发送消息失败\n\n\`${result.message}\``
       )
     } else {
-      const message = `miku已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
+      const message = `Miku已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
       updateMessage(CardIcons.MikuHappy, message)
       context.contextManager.appendToContext(
         guildId,

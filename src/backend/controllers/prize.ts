@@ -10,6 +10,7 @@ import { CardBuilder, CardIcons } from "../../helpers/card-helper"
 import { normalizeTime } from "../utils/time"
 import { shuffle } from "radash"
 import { info } from "../../utils/logging/logger"
+import ConfigUtils from "../../utils/config/config"
 
 export interface CreatePrizePayload {
   prizeName: string
@@ -26,18 +27,41 @@ export interface Prize extends CreatePrizePayload {
 
 const activePrizes: Prize[] = []
 
-export function createPrize(payload: CreatePrizePayload): Prize {
-  const uuid = crypto.randomUUID()
-  const prize: Prize = {
-    id: uuid,
-    users: [],
-    ...payload
-  }
-  activePrizes.push(prize)
-  scheduleJob(prize.validUntil, () => {
-    info(`开奖时间到，奖品ID: ${uuid}`)
+export function saveActivePrizes() {
+  ConfigUtils.updateGlobalConfig((config) => {
+    config.miscellaneous ||= {}
+    config.miscellaneous.activePrizes = activePrizes.map((p) => ({
+      ...p,
+      validUntil: p.validUntil.getTime()
+    }))
+    return config
+  })
+  info(`Saved ${activePrizes.length} active prizes.`)
+}
 
-    const result = openPrize(uuid)
+export function loadActivePrizes() {
+  const config = ConfigUtils.getGlobalConfig()
+  activePrizes.length = 0
+  const savedActivePrizes = config.miscellaneous?.activePrizes || []
+  for (const prize of savedActivePrizes) {
+    activePrizes.push({
+      ...prize,
+      validUntil: new Date(prize.validUntil)
+    })
+    reschedulePrize(prize.id)
+  }
+  info(`Loaded ${activePrizes.length} active prizes.`)
+}
+
+export function reschedulePrize(prizeId: string) {
+  const prize = activePrizes.find((p) => p.id === prizeId)
+  if (!prize) {
+    return
+  }
+  scheduleJob(prize.validUntil, () => {
+    info(`开奖时间到，奖品ID: ${prizeId}`)
+
+    const result = openPrize(prizeId)
     info(`开奖结果: ${JSON.stringify(result)}`)
 
     if (result.code === 0) {
@@ -49,18 +73,32 @@ export function createPrize(payload: CreatePrizePayload): Prize {
         .map((u) => `(met)${u.id}(met)`)
         .join(", ")
 
-      Requests.createChannelMessage({
-        type: KEventType.Card,
-        target_id: prize.channelId,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuHappy, "开奖啦！")
-          .addKMarkdownText(
-            `恭喜 ${winnersMetMessage} 获得 ${prize.prizeName}x1！`
-          )
-          .build()
-      })
+      Requests.createChannelMessage(
+        {
+          type: KEventType.Card,
+          target_id: prize.channelId,
+          content: CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(CardIcons.MikuHappy, "开奖啦！")
+            .addKMarkdownText(
+              `恭喜 ${winnersMetMessage} 获得 ${prize.prizeName}x1！`
+            )
+            .build()
+        },
+        prize.guildId
+      )
     }
   })
+}
+
+export function createPrize(payload: CreatePrizePayload): Prize {
+  const uuid = crypto.randomUUID()
+  const prize: Prize = {
+    id: uuid,
+    users: [],
+    ...payload
+  }
+  activePrizes.push(prize)
+  reschedulePrize(prize.id)
   return prize
 }
 
