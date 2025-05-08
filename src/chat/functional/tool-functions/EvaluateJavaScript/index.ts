@@ -1,9 +1,9 @@
 import { ChatCompletionTool } from "openai/resources"
 import { IFunctionTool } from "../dispatch"
 import { ToolFunctionContext } from "../../context"
-import { CardBuilder, CardIcons } from "../../../../helpers/card-helper"
 import { sleep } from "radash"
 import { info } from "../../../../utils/logging/logger"
+import { createCodeBlock } from "../../../../backend/controllers/code"
 
 export class EvaluateJavaScriptTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
@@ -33,16 +33,17 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     info(`[Chat] Evaluate js expression`, params)
     const { expression, showCommand = true } = params
 
-    if (showCommand) {
-      const card = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(
-          CardIcons.MikuCute,
-          `已执行 JavaScript 代码:\n\`\`\`js\n${expression}\n\`\`\``
-        )
-        .build()
-      context.directivesManager.respondCardMessageToUser({
-        originalEvent: context.event,
-        content: card
+    if (
+      showCommand &&
+      context.event?.extra?.guild_id &&
+      context.event?.target_id
+    ) {
+      createCodeBlock({
+        guildId: context.event.extra.guild_id,
+        channelId: context.event.target_id,
+        code: expression,
+        language: "JavaScript",
+        markdownCodeLanguage: "js"
       })
       await sleep(100)
     }

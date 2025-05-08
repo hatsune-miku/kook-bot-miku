@@ -1,5 +1,5 @@
 import { scheduleJob } from "node-schedule"
-import { KResponse, KResponseWeak } from "../../utils/krequest/types"
+import { KResponseWeak } from "../../utils/krequest/types"
 import {
   KCardButtonValue,
   KEventType,

@@ -1,12 +1,11 @@
 import { ChatCompletionTool } from "openai/resources"
 import { IFunctionTool } from "../dispatch"
 import { ToolFunctionContext } from "../../context"
-import { CardBuilder, CardIcons } from "../../../../helpers/card-helper"
 import { sleep } from "radash"
 import { info } from "../../../../utils/logging/logger"
-import { RunLinuxCommandTool } from "../RunLinuxCommand"
 import { execSync } from "child_process"
 import { writeFileSync } from "fs"
+import { createCodeBlock } from "../../../../backend/controllers/code"
 
 export class EvaluatePythonTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
@@ -36,16 +35,17 @@ export class EvaluatePythonTool implements IFunctionTool {
     info(`[Chat] Evaluate Python expression`, params)
     const { code, showCommand = true } = params
 
-    if (showCommand) {
-      const card = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(
-          CardIcons.MikuCute,
-          `已执行 Python 代码:\n\`\`\`python3\n${code}\n\`\`\``
-        )
-        .build()
-      context.directivesManager.respondCardMessageToUser({
-        originalEvent: context.event,
-        content: card
+    if (
+      showCommand &&
+      context.event?.extra?.guild_id &&
+      context.event?.target_id
+    ) {
+      createCodeBlock({
+        guildId: context.event.extra.guild_id,
+        channelId: context.event.target_id,
+        code: code,
+        language: "Python",
+        markdownCodeLanguage: "python"
       })
       await sleep(100)
     }

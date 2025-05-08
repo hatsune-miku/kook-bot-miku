@@ -47,6 +47,7 @@ import {
   saveActiveVotes,
   submitVote
 } from "./backend/controllers/vote"
+import { viewCodeBlock } from "./backend/controllers/code"
 
 ConfigUtils.initialize()
 
@@ -494,6 +495,12 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
           })
         }
       )
+      break
+    }
+
+    case "code-view": {
+      const codeBlockId = value.args[0]
+      viewCodeBlock(eventBody.user_info, eventBody.target_id, codeBlockId)
       break
     }
   }
