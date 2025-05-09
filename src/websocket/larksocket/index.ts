@@ -81,7 +81,9 @@ export async function initializeLarkBot() {
               target_id: "9881678244960302",
               content: `(met)1211389071(met) /打包 ${branch}`
             },
-            "9497223449100660"
+            {
+              guildId: "9497223449100660"
+            }
           )
           await sendMessage(
             "已通知打包嘟嘟",

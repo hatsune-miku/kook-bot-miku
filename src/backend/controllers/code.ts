@@ -33,11 +33,14 @@ export function createCodeBlock(payload: CreateCodeBlockPayload): CodeBlock {
     ...payload
   }
   activeCodeBlocks.push(codeBlock)
-  Requests.createChannelMessage({
-    type: KEventType.Card,
-    target_id: payload.channelId,
-    content: createCodeExecutedMessageCard(codeBlock)
-  })
+  Requests.createChannelMessage(
+    {
+      type: KEventType.Card,
+      target_id: payload.channelId,
+      content: createCodeExecutedMessageCard(codeBlock)
+    },
+    { guildId: payload.guildId }
+  )
   return codeBlock
 }
 

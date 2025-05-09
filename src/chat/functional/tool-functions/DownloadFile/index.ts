@@ -63,17 +63,20 @@ export class DownloadFileTool implements IFunctionTool {
     }
 
     const updateMessage = (iconUrl: string, content: string) => {
-      Requests.updateChannelMessage({
-        msg_id: sendResult.msg_id,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(iconUrl, content)
-          .build(),
-        quote: context.event.msg_id,
-        extra: {
-          type: KEventType.KMarkdown,
-          target_id: context.event.target_id
-        }
-      })
+      Requests.updateChannelMessage(
+        {
+          msg_id: sendResult.msg_id,
+          content: CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(iconUrl, content)
+            .build(),
+          quote: context.event.msg_id,
+          extra: {
+            type: KEventType.KMarkdown,
+            target_id: context.event.target_id
+          }
+        },
+        { guildId: context.event.extra.guild_id, originalTextContent: content }
+      )
     }
 
     const targetPath = `/tmp/${fileName}`

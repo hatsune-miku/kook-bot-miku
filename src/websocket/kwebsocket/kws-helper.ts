@@ -377,8 +377,6 @@ export class KWSHelper {
       return
     }
 
-    info("Received event with sn=", sn)
-
     // 跳号发生
     if (sn - this.lastSn > 1) {
       warn("Jumped serial number detected", "lastSn=", this.lastSn, "sn=", sn)

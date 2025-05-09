@@ -91,7 +91,6 @@ async function handleRespondToUserEvent(
   event: RespondToUserParameters,
   callback?: (result: KResponseExt<CreateChannelMessageResult>) => void
 ) {
-  const withContext = event.withContext ?? true
   const result = await Requests.createChannelMessage(
     {
       type: KEventType.KMarkdown,
@@ -99,7 +98,7 @@ async function handleRespondToUserEvent(
       content: event.content,
       quote: event.originalEvent.msg_id
     },
-    withContext ? event.originalEvent.extra?.guild_id : undefined
+    event.withContext
   )
 
   callback?.(result)
@@ -117,8 +116,6 @@ async function handleRespondCardMessageToUserEvent(
   event: RespondToUserParameters,
   callback?: (result: KResponseExt<CreateChannelMessageResult>) => void
 ) {
-  const withContext = event.withContext ?? true
-  info("Responding card message to user", event, withContext)
   const result = await Requests.createChannelMessage(
     {
       type: KEventType.Card,
@@ -126,7 +123,7 @@ async function handleRespondCardMessageToUserEvent(
       content: event.content,
       quote: event.originalEvent.msg_id
     },
-    withContext ? event.originalEvent.extra?.guild_id : undefined
+    event.withContext
   )
 
   callback?.(result)
@@ -270,7 +267,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         .build(),
       quote: event.msg_id
     },
-    guildId
+    { guildId, originalTextContent: initialResponse }
   )
 
   if (!sendResult.success) {
@@ -307,21 +304,24 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     queue.submit(async () => {
       try {
         info("update message part", modelMessageAccumulated.length)
-        await Requests.updateChannelMessage({
-          msg_id: createdMessage.msg_id,
-          content: CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(
-              "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-              ""
-            )
-            .addKMarkdownText(modelMessageAccumulated)
-            .build(),
-          quote: event.msg_id,
-          extra: {
-            type: KEventType.KMarkdown,
-            target_id: event.target_id
-          }
-        })
+        await Requests.updateChannelMessage(
+          {
+            msg_id: createdMessage.msg_id,
+            content: CardBuilder.fromTemplate()
+              .addIconWithKMarkdownText(
+                "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+                ""
+              )
+              .addKMarkdownText(modelMessageAccumulated)
+              .build(),
+            quote: event.msg_id,
+            extra: {
+              type: KEventType.KMarkdown,
+              target_id: event.target_id
+            }
+          },
+          { guildId, originalTextContent: modelMessageAccumulated }
+        )
       } catch {}
     })
   }
@@ -332,21 +332,24 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
     modelMessageAccumulated = message
     info("update final message", modelMessageAccumulated)
-    const result = await Requests.updateChannelMessage({
-      msg_id: createdMessage.msg_id,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(
-          "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-          ""
-        )
-        .addKMarkdownText(modelMessageAccumulated)
-        .build(),
-      quote: event.msg_id,
-      extra: {
-        type: KEventType.KMarkdown,
-        target_id: event.target_id
-      }
-    })
+    const result = await Requests.updateChannelMessage(
+      {
+        msg_id: createdMessage.msg_id,
+        content: CardBuilder.fromTemplate()
+          .addIconWithKMarkdownText(
+            "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+            ""
+          )
+          .addKMarkdownText(modelMessageAccumulated)
+          .build(),
+        quote: event.msg_id,
+        extra: {
+          type: KEventType.KMarkdown,
+          target_id: event.target_id
+        }
+      },
+      { guildId, originalTextContent: modelMessageAccumulated }
+    )
     const isUpdateMessageSuccess = result.success && result.code === 0
     if (!isUpdateMessageSuccess) {
       lastUpdateErrorMessage = result.message
@@ -356,21 +359,24 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
 
     if (!isUpdateMessageSuccess) {
-      Requests.updateChannelMessage({
-        msg_id: createdMessage.msg_id,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(
-            "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-            "消息发送失败了！"
-          )
-          .addKMarkdownText(userSideErrorMessage)
-          .build(),
-        quote: event.msg_id,
-        extra: {
-          type: KEventType.KMarkdown,
-          target_id: event.target_id
-        }
-      })
+      Requests.updateChannelMessage(
+        {
+          msg_id: createdMessage.msg_id,
+          content: CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(
+              "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
+              "消息发送失败了！"
+            )
+            .addKMarkdownText(userSideErrorMessage)
+            .build(),
+          quote: event.msg_id,
+          extra: {
+            type: KEventType.KMarkdown,
+            target_id: event.target_id
+          }
+        },
+        { guildId, originalTextContent: userSideErrorMessage }
+      )
       error(
         "Failed to update message",
         createdMessage.msg_id,

@@ -80,14 +80,17 @@ export function rescheduleVote(voteId: string) {
       return
     }
     activeVotes.splice(index, 1)
-    Requests.updateChannelMessage({
-      msg_id: vote.msgId,
-      content: createVoteCard(null, vote, false, true),
-      extra: {
-        type: KEventType.Card,
-        target_id: vote.channelId
-      }
-    })
+    Requests.updateChannelMessage(
+      {
+        msg_id: vote.msgId,
+        content: createVoteCard(null, vote, false, true),
+        extra: {
+          type: KEventType.Card,
+          target_id: vote.channelId
+        }
+      },
+      { guildId: vote.guildId }
+    )
   })
 }
 
@@ -108,7 +111,7 @@ export function createVote(payload: CreateVotePayload): Vote {
       target_id: vote.channelId,
       content: createVoteCard(null, vote, false, false)
     },
-    payload.guildId
+    { guildId: payload.guildId }
   ).then((response) => {
     if (response.code !== 0 || !response.data?.msg_id) {
       return
@@ -131,7 +134,9 @@ async function synchronizeVoteCard(currentUser: KUser | null, vote: Vote) {
       target_id: vote.channelId
     }
   }
-  await Requests.updateChannelMessage(updateChannelMessagePayload)
+  await Requests.updateChannelMessage(updateChannelMessagePayload, {
+    guildId: vote.guildId
+  })
 
   if (currentUser) {
     updateChannelMessagePayload.content = createVoteCard(
@@ -141,7 +146,9 @@ async function synchronizeVoteCard(currentUser: KUser | null, vote: Vote) {
       false
     )
     updateChannelMessagePayload.temp_target_id = currentUser.id
-    await Requests.updateChannelMessage(updateChannelMessagePayload)
+    await Requests.updateChannelMessage(updateChannelMessagePayload, {
+      guildId: vote.guildId
+    })
   }
 }
 

@@ -19,7 +19,8 @@ import {
   KResponseHeader,
   QuerySelfExtendProps as QueryUserProps,
   WhoAmIExtendResult as QueryUserResult,
-  CreateChannelPrivateMessageProps
+  CreateChannelPrivateMessageProps,
+  ContextProps
 } from "./types"
 import { KEventType, OpenGatewayProps } from "../../websocket/kwebsocket/types"
 import { Env, reloadConfig } from "../env/env"
@@ -211,7 +212,7 @@ export class Requests {
 
   static async createChannelMessage(
     props: CreateChannelMessageProps,
-    guildId?: string
+    { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<CreateChannelMessageResult>> {
     if (props.content.length > MessageLengthUpperBound) {
       return this.createChannelMessageChunk(props)
@@ -228,7 +229,7 @@ export class Requests {
         guildId,
         props.target_id,
         shared.me.id,
-        props.content
+        originalTextContent
       )
       Requests.contextManager?.appendToContext(
         guildId,
@@ -237,7 +238,7 @@ export class Requests {
         result.data.msg_id,
         "Miku",
         "assistant",
-        props.content,
+        originalTextContent ?? props.content,
         false
       )
     }
@@ -267,7 +268,7 @@ export class Requests {
 
   static async updateChannelMessage(
     props: EditChannelMessageProps,
-    guildId?: string
+    { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<{}>> {
     if (props.content.length > MessageLengthUpperBound) {
       return this.createChannelMessageChunk({
@@ -289,7 +290,7 @@ export class Requests {
         props.msg_id,
         "Miku",
         "assistant",
-        props.content,
+        originalTextContent ?? props.content,
         false
       )
     }

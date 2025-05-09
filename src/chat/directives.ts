@@ -279,8 +279,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     if (mixedContext.length === 0) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "当前频道的对话上下文为空~",
-        withContext: false
+        content: "当前频道的对话上下文为空~"
       })
       return
     }
@@ -294,8 +293,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
               unit.content.slice(0, 16) + "..."
             }`
         )
-        .join("\n\n"),
-      withContext: false
+        .join("\n\n")
     })
   }
 
@@ -314,8 +312,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       .join("\n==========\n")
     this.respondToUser({
       originalEvent: event.originalEvent,
-      content: content,
-      withContext: false
+      content: content
     })
   }
 
@@ -396,8 +393,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 ChatGPT (${backend})`,
-        withContext: false
+        content: `已切换至 ChatGPT (${backend})`
       })
     } else if (backend?.startsWith("deepseek")) {
       ConfigUtils.updateChannelConfig(
@@ -412,8 +408,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 DeepSeek (${backend})`,
-        withContext: false
+        content: `已切换至 DeepSeek (${backend})`
       })
     } else if (backend === ChatBotBackend.Ernie) {
       ConfigUtils.updateChannelConfig(
@@ -428,8 +423,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "已切换至文心一言 (ERNIE-4.0-Turbo-8K)",
-        withContext: false
+        content: "已切换至文心一言 (ERNIE-4.0-Turbo-8K)"
       })
     } else {
       const channelName = event.originalEvent.extra.channel_name
@@ -438,8 +432,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         originalEvent: event.originalEvent,
         content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
           channelConfig.backend ?? ChatBotBackend.GPT4o
-        }，可选: ${Object.values(ChatBotBackend).join(", ")}`,
-        withContext: false
+        }，可选: ${Object.values(ChatBotBackend).join(", ")}`
       })
     }
   }
@@ -448,8 +441,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     if (!event.parameter) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "context 不能为空~",
-        withContext: false
+        content: "context 不能为空~"
       })
       return
     }
@@ -467,16 +459,14 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         if (!event.parameter) {
           this.respondToUser({
             originalEvent: event.originalEvent,
-            content: "context 内容为空~",
-            withContext: false
+            content: "context 内容为空~"
           })
           return
         }
       } catch {
         this.respondToUser({
           originalEvent: event.originalEvent,
-          content: "context 下载失败~",
-          withContext: false
+          content: "context 下载失败~"
         })
         return
       }
@@ -493,15 +483,13 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       )
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: `已设置对话上下文，共 ${context.length} 条对话`,
-        withContext: false
+        content: `已设置对话上下文，共 ${context.length} 条对话`
       })
       this.handlePrintContext(event)
     } catch (e) {
       this.respondToUser({
         originalEvent: event.originalEvent,
-        content: "context 解析失败~",
-        withContext: false
+        content: "context 解析失败~"
       })
     }
   }
@@ -513,8 +501,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       originalEvent: event.originalEvent,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.MikuCute, `已开启新的对话上下文`)
-        .build(),
-      withContext: false
+        .build()
     })
     info("Obliviate", guildId, channelId)
     this.contextManager?.removeContext(guildId, channelId)
@@ -654,7 +641,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         target_id: event.originalEvent.target_id,
         content: createPrizeCard(prize)
       },
-      prize.guildId
+      { guildId: prize.guildId }
     )
   }
 

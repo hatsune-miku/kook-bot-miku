@@ -58,17 +58,20 @@ export class DrawImageTool implements IFunctionTool {
     })
 
     const updateMessage = (iconUrl: string, content: string) => {
-      Requests.updateChannelMessage({
-        msg_id: sendResult.msg_id,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(iconUrl, content)
-          .build(),
-        quote: context.event.msg_id,
-        extra: {
-          type: KEventType.KMarkdown,
-          target_id: context.event.target_id
-        }
-      })
+      Requests.updateChannelMessage(
+        {
+          msg_id: sendResult.msg_id,
+          content: CardBuilder.fromTemplate()
+            .addIconWithKMarkdownText(iconUrl, content)
+            .build(),
+          quote: context.event.msg_id,
+          extra: {
+            type: KEventType.KMarkdown,
+            target_id: context.event.target_id
+          }
+        },
+        { guildId, originalTextContent: content }
+      )
     }
 
     const result = await openai.images.generate({

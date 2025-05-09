@@ -84,7 +84,7 @@ export function reschedulePrize(prizeId: string) {
             )
             .build()
         },
-        prize.guildId
+        { guildId: prize.guildId }
       )
     }
   })

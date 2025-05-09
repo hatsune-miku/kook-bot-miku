@@ -19,6 +19,7 @@ export interface EnvType {
   LarkAppId: string
   LarkAppSecret: string
   PublicArchivePath: string
+  LogLevel: string
 }
 
 export function reloadConfig() {
@@ -46,7 +47,8 @@ export function reloadConfig() {
       config.QWEATHER_PID || die("环境配置错误：QWEATHER_PROJECT_ID"),
     LarkAppId: config.LARK_APP_ID,
     LarkAppSecret: config.LARK_APP_SECRET,
-    PublicArchivePath: config.PUBLIC_ARCHIVE_PATH
+    PublicArchivePath: config.PUBLIC_ARCHIVE_PATH,
+    LogLevel: config.LOG_LEVEL || "info"
   })
 }
 

@@ -9,7 +9,10 @@ export const Events = {
 export interface RespondToUserParameters {
   originalEvent: KEvent<KTextChannelExtra>
   content: string
-  withContext?: boolean
+  withContext?: {
+    guildId: string
+    originalTextContent: string
+  }
 }
 
 export type KCardSize = "sm" | "md" | "lg"

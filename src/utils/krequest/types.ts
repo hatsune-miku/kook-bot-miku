@@ -137,3 +137,8 @@ export interface WhoAmIExtendResult {
   joined_at: number
   active_time: number
 }
+
+export interface ContextProps {
+  guildId?: string
+  originalTextContent?: string
+}
