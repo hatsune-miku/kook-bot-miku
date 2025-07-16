@@ -66,26 +66,41 @@ export function reschedulePrize(prizeId: string) {
 
     if (result.code === 0) {
       const winners = result.data
-      if (!winners) {
+      if (winners === null || winners === undefined) {
         return
       }
-      const winnersMetMessage = winners
-        .map((u) => `(met)${u.id}(met)`)
-        .join(", ")
 
-      Requests.createChannelMessage(
-        {
-          type: KEventType.Card,
-          target_id: prize.channelId,
-          content: CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(CardIcons.MikuHappy, "开奖啦！")
-            .addKMarkdownText(
-              `恭喜 ${winnersMetMessage} 获得 ${prize.prizeName}x1！`
-            )
-            .build()
-        },
-        { guildId: prize.guildId }
-      )
+      if (winners.length === 0) {
+        Requests.createChannelMessage(
+          {
+            type: KEventType.Card,
+            target_id: prize.channelId,
+            content: CardBuilder.fromTemplate()
+              .addIconWithKMarkdownText(CardIcons.MikuSad, "开奖啦！")
+              .addKMarkdownText(`没有中奖者，请重新参与！`)
+              .build()
+          },
+          { guildId: prize.guildId }
+        )
+      } else {
+        const winnersMetMessage = winners
+          .map((u) => `(met)${u.id}(met)`)
+          .join(", ")
+
+        Requests.createChannelMessage(
+          {
+            type: KEventType.Card,
+            target_id: prize.channelId,
+            content: CardBuilder.fromTemplate()
+              .addIconWithKMarkdownText(CardIcons.MikuHappy, "开奖啦！")
+              .addKMarkdownText(
+                `恭喜 ${winnersMetMessage} 获得 ${prize.prizeName}x1！`
+              )
+              .build()
+          },
+          { guildId: prize.guildId }
+        )
+      }
     }
   })
 }

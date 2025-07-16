@@ -418,7 +418,16 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
             onMessage,
             onMessageEnd
           )
-  await backend(isGroupChat, context, onMessage, onMessageEnd)
+
+  try {
+    await backend(isGroupChat, context, onMessage, onMessageEnd)
+  } catch {
+    try {
+      await backend(isGroupChat, context, onMessage, onMessageEnd)
+    } catch {
+      error("Failed to respond to", displayName, "reason:", "unknown")
+    }
+  }
 }
 
 async function handleTextChannelMultimediaMessage(

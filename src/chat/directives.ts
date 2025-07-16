@@ -289,9 +289,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       content: mixedContext
         .map(
           (unit) =>
-            `${unit.name} (id=${unit.id})说：${
-              unit.content.slice(0, 16) + "..."
-            }`
+            `${unit.name} (id=${unit.id})说：${unit.content.slice(0, 32)}`
         )
         .join("\n\n")
     })
@@ -337,10 +335,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
 
     const method = parameters[0]
     const endpoint = parameters[1]
-    const args = parameters
-      .slice(2)
-      .join(" ")
-      .replace(/\\\\\"/g, '\\"')
+    const args = parameters.slice(2).join(" ").replace(/\\\\"/g, '\\"')
     let parsed: unknown
 
     try {
