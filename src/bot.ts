@@ -182,9 +182,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   )
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
   const whitelisted =
-    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {}).hasOwnProperty(
-      guildId
-    ) || calledByTrustedUser
+    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] ||
+    calledByTrustedUser
 
   if (isSentByMe) {
     return
@@ -238,6 +237,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const shouldIncludeFreeChat = groupChatStrategy === GroupChatStrategy.Normal
+
+  info("Appending to context", author.nickname, content)
   contextManager.appendToContext(
     guildId,
     channelId,

@@ -31,7 +31,7 @@ export class ContextManager {
       }
     }
     units.sort((a, b) => a.timestamp - b.timestamp)
-    const limit = includesFreeChat ? 24 : 12
+    const limit = includesFreeChat ? 12 : 12
     if (units.length > limit) {
       return units.slice(units.length - limit)
     }
@@ -82,8 +82,8 @@ export class ContextManager {
       freeChat: freeChat
     })
 
-    if (context.length > 64) {
-      context.splice(64)
+    if (context.length > 12) {
+      context.splice(0, context.length - 12)
     }
 
     ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {

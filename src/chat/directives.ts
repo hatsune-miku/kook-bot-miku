@@ -289,9 +289,13 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       content: mixedContext
         .map(
           (unit) =>
-            `${unit.name} (id=${unit.id})说：${unit.content.slice(0, 32)}`
+            `${unit.name} (${unit.id}): ${
+              unit.content.length > 32
+                ? unit.content.slice(0, 32) + "..."
+                : unit.content
+            }`
         )
-        .join("\n\n")
+        .join("\n")
     })
   }
 
@@ -688,10 +692,11 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
   }
 
   getGroupChatStrategy(guildId: string, channelId: string): GroupChatStrategy {
-    return (
-      ConfigUtils.getChannelConfig(guildId, channelId).groupChatStrategy ??
-      GroupChatStrategy.Normal
-    )
+    return GroupChatStrategy.Normal
+    // return (
+    //   ConfigUtils.getChannelConfig(guildId, channelId).groupChatStrategy ??
+    //   GroupChatStrategy.Normal
+    // )
   }
 
   isAllowOmittingMentioningMeEnabled(guildId: string, channelId: string) {
