@@ -373,6 +373,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     if (
       [
         ChatBotBackend.GPT4,
+        ChatBotBackend.GPT5,
         ChatBotBackend.GPT4o,
         ChatBotBackend.GPT4Turbo,
         ChatBotBackend.O1,
