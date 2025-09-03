@@ -37,7 +37,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
           required: ["prompt", "negative_prompt"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

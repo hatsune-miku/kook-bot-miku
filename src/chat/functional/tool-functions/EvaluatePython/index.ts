@@ -27,7 +27,7 @@ export class EvaluatePythonTool implements IFunctionTool {
           required: ["code"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

@@ -25,7 +25,7 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
           required: ["expression"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

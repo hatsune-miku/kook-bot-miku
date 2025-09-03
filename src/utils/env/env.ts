@@ -11,6 +11,7 @@ export interface EnvType {
   ProxyUrl: string
   DeepSeekKeys: string[]
   StableDiffusionKeys: string[]
+  VolcKeys: string[]
   ErnieAccessKey: string
   ErnieSecretKey: string
   QWeatherPrivateKey: string
@@ -35,6 +36,7 @@ export function reloadConfig() {
     ProxyUrl: config.PROXY_URL,
     DeepSeekKeys: config.DEEPSEEK_API_KEYS?.split(",") || [],
     StableDiffusionKeys: config.STABLE_DIFFUSION_API_KEYS?.split(",") || [],
+    VolcKeys: config.VOLC_API_KEYS?.split(",") || [],
     ErnieAccessKey:
       config.ERNIE_ACCESS_KEY || die("环境配置错误：ERNIE_ACCESS_KEY"),
     ErnieSecretKey:

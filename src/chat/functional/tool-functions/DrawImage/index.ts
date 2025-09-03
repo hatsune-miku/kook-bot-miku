@@ -32,7 +32,7 @@ export class DrawImageTool implements IFunctionTool {
           required: ["prompt"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

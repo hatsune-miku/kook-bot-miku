@@ -21,7 +21,7 @@ export class SetCountdownTool implements IFunctionTool {
           required: ["time"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

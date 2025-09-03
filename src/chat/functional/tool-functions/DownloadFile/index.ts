@@ -32,7 +32,7 @@ export class DownloadFileTool implements IFunctionTool {
           required: ["url", "fileName"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

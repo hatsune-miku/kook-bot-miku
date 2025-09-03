@@ -431,7 +431,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
       this.respondToUser({
         originalEvent: event.originalEvent,
         content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
-          channelConfig.backend ?? ChatBotBackend.GPT4o
+          channelConfig.backend ?? ChatBotBackend.DeepSeekV31Volc
         }，可选: ${Object.values(ChatBotBackend).join(", ")}`
       })
     }
@@ -688,7 +688,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
   getChatBotBackend(guildId: string, channelId: string): ChatBotBackend {
     return (
       ConfigUtils.getChannelConfig(guildId, channelId).backend ??
-      ChatBotBackend.GPT4o
+      ChatBotBackend.DeepSeekV31Volc
     )
   }
 

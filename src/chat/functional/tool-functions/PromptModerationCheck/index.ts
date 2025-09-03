@@ -27,7 +27,7 @@ export class ModerationCheckNoticeTextTool implements IFunctionTool {
           required: ["confidence", "originalPrompt"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

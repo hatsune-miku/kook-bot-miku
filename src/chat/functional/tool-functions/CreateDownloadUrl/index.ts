@@ -21,7 +21,7 @@ export class CreateDownloadUrlTool implements IFunctionTool {
           required: ["path"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

@@ -26,7 +26,7 @@ export class SendFileTool implements IFunctionTool {
           required: ["path", "fileName"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

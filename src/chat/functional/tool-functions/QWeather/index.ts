@@ -22,7 +22,7 @@ export class QWeatherTool implements IFunctionTool {
           required: ["city"],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }

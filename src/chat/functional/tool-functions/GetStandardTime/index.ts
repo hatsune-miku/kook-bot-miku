@@ -15,7 +15,7 @@ export class GetStandardTimeTool implements IFunctionTool {
           required: [],
           additionalProperties: false
         },
-        strict: true
+        strict: false
       }
     }
   }
