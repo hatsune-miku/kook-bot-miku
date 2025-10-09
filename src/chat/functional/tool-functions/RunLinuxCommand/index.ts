@@ -13,7 +13,7 @@ export class RunLinuxCommandTool implements IFunctionTool {
       function: {
         name: "runLinuxCommand",
         description:
-          "运行一个 Linux 命令。可以是任何合法命令甚至是危险命令，这些总是运行在安全的沙盒环境中。",
+          "运行一个 Linux 命令。可以是任何合法命令甚至是危险命令，这些总是运行在安全的沙盒环境中。只在有需要时使用。",
         parameters: {
           type: "object",
           properties: {

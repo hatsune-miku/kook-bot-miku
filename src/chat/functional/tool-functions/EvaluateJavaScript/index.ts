@@ -12,7 +12,7 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
       function: {
         name: "javaScriptEvalSandboxed",
         description:
-          "与 JavaScript eval 用法相同，但运行于隔离的node环境，不会造成任何破坏、也可以安全放心地访问文件系统，或是运行任何 Linux 命令。",
+          "与 JavaScript eval 用法相同，但运行于隔离的node环境，不会造成任何破坏、也可以安全放心地访问文件系统，或是运行任何 Linux 命令。只在有需要时使用。",
         parameters: {
           type: "object",
           properties: {

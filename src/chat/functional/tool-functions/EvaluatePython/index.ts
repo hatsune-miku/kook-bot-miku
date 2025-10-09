@@ -14,7 +14,7 @@ export class EvaluatePythonTool implements IFunctionTool {
       function: {
         name: "pythonEvalSandboxed",
         description:
-          "执行一段 Python 3 程序，其解释器将运行于隔离环境，不会造成任何破坏，也可以安全放心地访问文件系统。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。",
+          "执行一段 Python 3 程序，其解释器将运行于隔离环境，不会造成任何破坏，也可以安全放心地访问文件系统。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。只在有需要时使用。",
         parameters: {
           type: "object",
           properties: {
