@@ -8,7 +8,6 @@ import { QWeatherTool } from "./QWeather"
 import { RunLinuxCommandTool } from "./RunLinuxCommand"
 import { DownloadFileTool } from "./DownloadFile"
 import { EvaluatePythonTool } from "./EvaluatePython"
-import { ModerationCheckNoticeTextTool } from "./PromptModerationCheck"
 import { SendFileTool } from "./SendFile"
 import { DrawImageStableDiffusionTool } from "./DrawImageStableDiffusion"
 
@@ -20,7 +19,6 @@ export const toolFunctions: IFunctionTool[] = [
   RunLinuxCommandTool,
   DownloadFileTool,
   EvaluatePythonTool,
-  ModerationCheckNoticeTextTool,
   DrawImageStableDiffusionTool,
   SendFileTool
 ].map((Tool) => new Tool())
