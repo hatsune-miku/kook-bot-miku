@@ -72,14 +72,8 @@ function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   try {
     processModules(modules, (src) => {
       ;(result.content as Array<ChatCompletionContentPart>).push({
-        type: "image_url",
-        image_url: {
-          url: src
-        }
-      })
-      ;(result.content as Array<ChatCompletionContentPart>).push({
         type: "text",
-        text: "url of image above: " + src
+        text: "image url attached: " + src
       })
     })
     if ((result.content as Array<ChatCompletionContentPart>).length === 0) {
@@ -102,7 +96,7 @@ function makeContext(
         role: "system",
         content: `请你作为KOOK平台的活泼群聊成员Miku参与讨论，以最后一条消息为最高优先级。注意：
           - 直接开始回答，不要带"Miku(id=xxx)说:"的前缀
-          - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，当你可以直接运行命令来解决问题时，则直接运行，而不必提供指导
+          - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
           - 只在必要的时候（如确实需要计算或处理数据，或用户需要）才执行代码或命令
           - 下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件
           - 如有需要，请在 /tmp 下存放任何临时文件
