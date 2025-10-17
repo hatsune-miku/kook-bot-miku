@@ -145,119 +145,114 @@ export async function chatCompletionStreamed(
   const messages = makeContext(groupChat, context)
   const toolInvoker = new ToolFunctionInvoker(toolFunctionContext)
 
-  try {
-    let functionsFulfilled = false
-    let mergedChunks = []
-    let responseMessage = ""
+  let functionsFulfilled = false
+  let mergedChunks = []
+  let responseMessage = ""
 
-    while (!functionsFulfilled) {
-      const completionStreamed = await openai.chat.completions.create({
-        messages,
-        model,
-        tools: await getChatCompletionTools(),
-        stream: true
+  while (!functionsFulfilled) {
+    const completionStreamed = await openai.chat.completions.create({
+      messages,
+      model,
+      tools: await getChatCompletionTools(),
+      stream: true
+    })
+
+    const mergedToolCalls: Record<
+      number,
+      Completions.ChatCompletionChunk.Choice.Delta.ToolCall
+    > = {}
+
+    for await (const part of completionStreamed) {
+      const delta = part.choices?.[0]?.delta
+
+      if (!delta) {
+        continue
+      }
+
+      const toolCalls = delta.tool_calls
+      const noToolCallsPresent =
+        !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+      functionsFulfilled =
+        noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
+      const functionsMerged =
+        noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
+      const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
+
+      console.log({
+        functionsFulfilled,
+        functionsMerged,
+        functionsMerging,
+        mergedToolCalls,
+        toolCalls
       })
 
-      const mergedToolCalls: Record<
-        number,
-        Completions.ChatCompletionChunk.Choice.Delta.ToolCall
-      > = {}
-
-      for await (const part of completionStreamed) {
-        const delta = part.choices?.[0]?.delta
-
-        if (!delta) {
-          continue
+      if (functionsFulfilled) {
+        const content = delta.content || ""
+        mergedChunks.push(content)
+        if (mergedChunks.length >= 3) {
+          const content = mergedChunks.join("")
+          info(`[Chat] Merged chunks`, content)
+          onMessage(content)
+          mergedChunks = []
         }
+        responseMessage += content
+      } else if (functionsMerged) {
+        info(`[Chat] Function calls`, mergedToolCalls)
+        const mergedToolCallsArray = Object.values(mergedToolCalls)
 
-        const toolCalls = delta.tool_calls
-        const noToolCallsPresent =
-          !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
-        functionsFulfilled =
-          noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
-        const functionsMerged =
-          noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
-        const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
-
-        console.log({
-          functionsFulfilled,
-          functionsMerged,
-          functionsMerging,
-          mergedToolCalls,
-          toolCalls
+        messages.push({
+          role: "assistant",
+          tool_calls: mergedToolCallsArray.map((toolCall) => ({
+            id: toolCall.id!,
+            function: {
+              name: toolCall.function?.name || "",
+              arguments: toolCall.function?.arguments || ""
+            },
+            type: toolCall.type!
+          }))
         })
 
-        if (functionsFulfilled) {
-          const content = delta.content || ""
-          mergedChunks.push(content)
-          if (mergedChunks.length >= 3) {
-            const content = mergedChunks.join("")
-            info(`[Chat] Merged chunks`, content)
-            onMessage(content)
-            mergedChunks = []
+        for (const toolCall of mergedToolCallsArray) {
+          if (
+            !toolCall?.id ||
+            !toolCall.function?.name ||
+            !toolCall.function?.arguments
+          ) {
+            continue
           }
-          responseMessage += content
-        } else if (functionsMerged) {
-          info(`[Chat] Function calls`, mergedToolCalls)
-          const mergedToolCallsArray = Object.values(mergedToolCalls)
-
+          const result = await toolInvoker.invoke(
+            toolCall.function.name,
+            toolCall.function.arguments
+          )
           messages.push({
-            role: "assistant",
-            tool_calls: mergedToolCallsArray.map((toolCall) => ({
-              id: toolCall.id!,
-              function: {
-                name: toolCall.function?.name || "",
-                arguments: toolCall.function?.arguments || ""
-              },
-              type: toolCall.type!
-            }))
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: `${result}`
           })
-
-          for (const toolCall of mergedToolCallsArray) {
-            if (
-              !toolCall?.id ||
-              !toolCall.function?.name ||
-              !toolCall.function?.arguments
-            ) {
-              continue
-            }
-            const result = await toolInvoker.invoke(
-              toolCall.function.name,
-              toolCall.function.arguments
-            )
-            messages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: `${result}`
-            })
-          }
-        } else if (functionsMerging) {
-          for (const toolCallChunk of toolCalls!) {
-            const index = toolCallChunk.index
-            if (!mergedToolCalls[index]) {
-              mergedToolCalls[index] = toolCallChunk
-              mergedToolCalls[index].function ||= { arguments: "" }
-            } else {
-              mergedToolCalls[index]!.function!.arguments +=
-                toolCallChunk!.function!.arguments || ""
-            }
+        }
+      } else if (functionsMerging) {
+        for (const toolCallChunk of toolCalls!) {
+          const index = toolCallChunk.index
+          if (!mergedToolCalls[index]) {
+            mergedToolCalls[index] = toolCallChunk
+            mergedToolCalls[index].function ||= { arguments: "" }
+          } else {
+            mergedToolCalls[index]!.function!.arguments +=
+              toolCallChunk!.function!.arguments || ""
           }
         }
       }
     }
-
-    if (mergedChunks.length > 0) {
-      info(`[Chat] Final merged chunks`, mergedChunks)
-      const content = mergedChunks.join("")
-      onMessage(content)
-    }
-    onMessageEnd(responseMessage)
-    messages.push({
-      content: responseMessage,
-      role: "assistant"
-    })
-  } catch (e: any) {
-    console.error(e)
-    return `${e?.message || e || "未知错误"}`
   }
+
+  if (mergedChunks.length > 0) {
+    info(`[Chat] Final merged chunks`, mergedChunks)
+    const content = mergedChunks.join("")
+    onMessage(content)
+  }
+  onMessageEnd(responseMessage)
+  messages.push({
+    content: responseMessage,
+    role: "assistant"
+  })
 }
