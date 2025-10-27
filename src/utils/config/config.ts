@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs'
 
-import { ChatBotBackend, ContextUnit, GroupChatStrategy } from '../../chat/types'
+import { ChatBotBackend, ContextUnit } from '../../chat/types'
 import { info } from '../logging/logger'
 
 export const MessageLengthUpperBound = Math.round(4000 * 0.9)
@@ -97,7 +97,6 @@ export interface GuildScopeConfig {
 export interface ChannelScopeConfig {
   backend?: ChatBotBackend
   userIdToContextUnits?: Record<string, ContextUnit[]>
-  groupChatStrategy?: GroupChatStrategy
   allowOmittingMentioningMe?: boolean
 }
 

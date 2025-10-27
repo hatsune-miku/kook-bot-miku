@@ -13,7 +13,7 @@ import { chatCompletionStreamed as chatCompletionDeepSeek } from './chat/deepsee
 import { ChatDirectivesManager } from './chat/directives'
 import { ToolFunctionContext } from './chat/functional/context'
 import { chatCompletionStreamed as chatCompletionChatGpt } from './chat/openai'
-import { ChatBotBackend, ContextUnit, GroupChatStrategy } from './chat/types'
+import { ChatBotBackend, ContextUnit } from './chat/types'
 import { Events, RespondToUserParameters, botEventEmitter } from './events'
 import { DisplayName, shared } from './global/shared'
 import { CardBuilder, CardIcons } from './helpers/card-helper'
@@ -150,7 +150,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
   const isMentioningMe = isExplicitlyMentioningBot(event, shared.me.id, myRoles)
-  const groupChatStrategy = directivesManager.getGroupChatStrategy(guildId, channelId)
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
   const whitelisted = (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] || calledByTrustedUser
 
@@ -198,8 +197,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
   }
 
-  const shouldIncludeFreeChat = groupChatStrategy === GroupChatStrategy.Normal
-
   info('Appending to context', author.nickname, content)
   contextManager.appendToContext(
     guildId,
@@ -237,11 +234,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     info('Successfully responded to', displayName, sendResult, sendResult.data)
   }
 
-  const isGroupChat = groupChatStrategy !== GroupChatStrategy.Off
   const createdMessage = sendResult.data
-  const context = isGroupChat
-    ? contextManager.getMixedContext(guildId, channelId, shouldIncludeFreeChat)
-    : contextManager.getContext(guildId, channelId, author.id)
+  const context = contextManager.getMixedContext(guildId, channelId, true)
 
   const backendModelName = directivesManager.getChatBotBackend(guildId, channelId)
   const backendConfig = directivesManager.getChatBotBackend(guildId, channelId)
@@ -331,24 +325,16 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const backend = backendConfig.startsWith('deepseek')
-    ? (
-        groupChat: boolean,
-        context: ContextUnit[],
-        onMessage: (message: string) => void,
-        onMessageEnd: (message: string) => void
-      ) => chatCompletionDeepSeek(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
-    : (
-        groupChat: boolean,
-        context: ContextUnit[],
-        onMessage: (message: string) => void,
-        onMessageEnd: (message: string) => void
-      ) => chatCompletionChatGpt(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
+    ? (context: ContextUnit[], onMessage: (message: string) => void, onMessageEnd: (message: string) => void) =>
+        chatCompletionDeepSeek(toolFunctionContext, context, backendModelName, onMessage, onMessageEnd)
+    : (context: ContextUnit[], onMessage: (message: string) => void, onMessageEnd: (message: string) => void) =>
+        chatCompletionChatGpt(toolFunctionContext, context, backendModelName, onMessage, onMessageEnd)
 
   try {
-    await backend(isGroupChat, context, onMessage, onMessageEnd)
+    await backend(context, onMessage, onMessageEnd)
   } catch {
     try {
-      await backend(isGroupChat, context, onMessage, onMessageEnd)
+      await backend(context, onMessage, onMessageEnd)
     } catch {
       error('Failed to respond to', displayName, 'reason:', 'unknown')
     }

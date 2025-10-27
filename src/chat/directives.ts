@@ -3,7 +3,7 @@ import { EventEmitter } from 'stream'
 
 import { ContextManager } from './context-manager'
 import { IChatDirectivesManager } from './interfaces'
-import { ChatBotBackend, ContextUnit, GroupChatStrategy } from './types'
+import { ChatBotBackend, ContextUnit } from './types'
 import { extractParameter, parseParameterDate } from './utils/extract-parameters'
 import yukiSubCommandHandler from './yuki/handler'
 
@@ -34,36 +34,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     return new Promise((resolve) => {
       this.eventEmitter.emit(Events.RespondCardMessageToUser, params, resolve)
     })
-  }
-
-  handleGroupChat(event: ParseEventResultValid) {
-    const guildId = event.originalEvent.extra.guild_id
-    const channelId = event.originalEvent.target_id
-
-    if (event.parameter === 'normal') {
-      this.setGroupChatStrategy(guildId, channelId, GroupChatStrategy.Normal)
-      this.respondToUser({
-        originalEvent: event.originalEvent,
-        content: '好欸！已启用群聊模式！',
-      })
-    } else if (event.parameter === 'legacy') {
-      this.setGroupChatStrategy(guildId, channelId, GroupChatStrategy.Legacy)
-      this.respondToUser({
-        originalEvent: event.originalEvent,
-        content: '已启用传统群聊模式！仅@我的消息会被计算。',
-      })
-    } else if (event.parameter === 'off') {
-      this.setGroupChatStrategy(guildId, channelId, GroupChatStrategy.Off)
-      this.respondToUser({
-        originalEvent: event.originalEvent,
-        content: '好！已关闭群聊模式！',
-      })
-    } else {
-      this.respondToUser({
-        originalEvent: event.originalEvent,
-        content: '参数不合法，应该输入 normal, legacy 或者 off',
-      })
-    }
   }
 
   async handleAssignRole(event: ParseEventResultValid) {
@@ -586,15 +556,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     })
   }
 
-  setGroupChatStrategy(guildId: string, channelId: string, strategy: GroupChatStrategy) {
-    ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
-      return {
-        ...config,
-        groupChatStrategy: strategy,
-      }
-    })
-  }
-
   setAllowOmittingMentioningMe(guildId: string, channelId: string, enabled: boolean) {
     ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
       return {
@@ -606,14 +567,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
 
   getChatBotBackend(guildId: string, channelId: string): ChatBotBackend {
     return ConfigUtils.getChannelConfig(guildId, channelId).backend ?? ChatBotBackend.DeepSeekV31Volc
-  }
-
-  getGroupChatStrategy(guildId: string, channelId: string): GroupChatStrategy {
-    return GroupChatStrategy.Normal
-    // return (
-    //   ConfigUtils.getChannelConfig(guildId, channelId).groupChatStrategy ??
-    //   GroupChatStrategy.Normal
-    // )
   }
 
   isAllowOmittingMentioningMeEnabled(guildId: string, channelId: string) {
@@ -743,14 +696,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
 
 function prepareBuiltinDirectives(manager: ChatDirectivesManager): ChatDirectiveItem[] {
   return [
-    {
-      triggerWord: 'groupchat',
-      parameterDescription: 'normal|legacy|off',
-      description: '群聊模式。启用后，在当前频道下，各人与机器人的对话将不再隔离。机器人能够分辨哪句话是谁说的。',
-      defaultValue: 'normal',
-      permissionGroups: ['admin'],
-      handler: manager.handleGroupChat.bind(manager),
-    },
     {
       triggerWord: 'assign',
       parameterDescription: '<role> @user',

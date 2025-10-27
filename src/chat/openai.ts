@@ -91,39 +91,29 @@ function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   }
 }
 
-function makeContext(groupChat: boolean, context: ContextUnit[]): ChatCompletionMessageParam[] {
-  if (groupChat) {
-    const units = context.map(mapContextUnit)
-    return [
-      {
-        role: 'system',
-        content: `请你作为KOOK平台的活泼群聊成员${DisplayName}参与讨论，以最后一条消息为最高优先级。注意：
-          - 直接开始回答，不要带"${DisplayName}(id=xxx)说:"的前缀
-          - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
-          - 下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件
-          - 如有需要，请在 /tmp 下存放任何临时文件
-          - 若需要输出 Markdown，则下列额外规则适用：
-              - 不能使用 #, ##, ###
-              - 不能使用表格语法
-              - 必须使用半角括号
-              - 支持 (spl)文字点击后显示(spl) 语法来显示带有剧透的内容
-              - 支持 (met)对方整数id(met) 语法来提及（@）对方，例如 (met)123456(met)`,
-      },
-      ...(units as ChatCompletionMessageParam[]),
-    ]
-  }
+function makeContext(context: ContextUnit[]): ChatCompletionMessageParam[] {
+  const units = context.map(mapContextUnit)
   return [
     {
       role: 'system',
-      content: '你是ChatGPT，作为某即时通讯平台的Bot，为用户提供简短的解答。',
+      content: `请你作为KOOK平台的活泼群聊成员${DisplayName}参与讨论，以最后一条消息为最高优先级。注意：
+        - 直接开始回答，不要带"${DisplayName}(id=xxx)说:"的前缀
+        - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
+        - 下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件
+        - 如有需要，请在 /tmp 下存放任何临时文件
+        - 若需要输出 Markdown，则下列额外规则适用：
+            - 不能使用 #, ##, ###
+            - 不能使用表格语法
+            - 必须使用半角括号
+            - 支持 (spl)文字点击后显示(spl) 语法来显示带有剧透的内容
+            - 支持 (met)对方整数id(met) 语法来提及（@）对方，例如 (met)123456(met)`,
     },
-    ...context,
+    ...(units as ChatCompletionMessageParam[]),
   ]
 }
 
 export async function chatCompletionStreamed(
   toolFunctionContext: ToolFunctionContext,
-  groupChat: boolean,
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
@@ -135,7 +125,7 @@ export async function chatCompletionStreamed(
     httpAgent: Env.ProxyUrl ? new HttpProxyAgent(Env.ProxyUrl) : undefined,
   })
 
-  const messages = makeContext(groupChat, context)
+  const messages = makeContext(context)
   const toolInvoker = new ToolFunctionInvoker(toolFunctionContext)
 
   let functionsFulfilled = false
