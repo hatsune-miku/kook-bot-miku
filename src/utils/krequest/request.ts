@@ -27,7 +27,7 @@ import {
 } from './types'
 
 import { ContextManager } from '../../chat/context-manager'
-import { shared } from '../../global/shared'
+import { DisplayName, shared } from '../../global/shared'
 import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
@@ -214,7 +214,7 @@ export class Requests {
         props.target_id,
         shared.me.id,
         result.data.msg_id,
-        'Miku',
+        DisplayName,
         'assistant',
         originalTextContent ?? props.content,
         false
@@ -258,7 +258,7 @@ export class Requests {
         props.extra.target_id,
         shared.me.id,
         props.msg_id,
-        'Miku',
+        DisplayName,
         'assistant',
         originalTextContent ?? props.content,
         false

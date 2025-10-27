@@ -3,6 +3,7 @@ import http from 'http'
 import https from 'https'
 import { ChatCompletionTool } from 'openai/resources'
 
+import { DisplayName } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
 import { Requests } from '../../../../utils/krequest/request'
 import { info } from '../../../../utils/logging/logger'
@@ -51,7 +52,7 @@ export class DownloadFileTool implements IFunctionTool {
     } = await context.directivesManager.respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, `Miku收到了链接\n\n\`${url}\``)
+        .addIconWithKMarkdownText(CardIcons.IconHappy, `${DisplayName}收到了链接\n\n\`${url}\``)
         .build(),
     })
 
@@ -79,7 +80,7 @@ export class DownloadFileTool implements IFunctionTool {
 
     return new Promise<string>((resolve) => {
       const timeout = setTimeout(() => {
-        updateMessage(CardIcons.MikuCry, `下载文件超时了`)
+        updateMessage(CardIcons.IconCry, `下载文件超时了`)
         stream.close()
         resolve('下载文件超时')
       }, 60000)
@@ -91,23 +92,23 @@ export class DownloadFileTool implements IFunctionTool {
           response.pipe(stream)
 
           stream.on('open', () => {
-            updateMessage(CardIcons.MikuCute, `Miku正在下载文件\n\n\`${url}\``)
+            updateMessage(CardIcons.IconCute, `${DisplayName}正在下载文件\n\n\`${url}\``)
           })
           stream.on('error', (e) => {
             clearTimeout(timeout)
             info(`[DownloadFile] Error`, e)
-            updateMessage(CardIcons.MikuCry, `下载文件失败了`)
+            updateMessage(CardIcons.IconCry, `下载文件失败了`)
             resolve('下载文件失败')
           })
           stream.on('finish', () => {
             clearTimeout(timeout)
-            updateMessage(CardIcons.MikuHappy, `Miku已收到文件\n\n\`${url}\``)
+            updateMessage(CardIcons.IconHappy, `${DisplayName}已收到文件\n\n\`${url}\``)
             resolve(targetPath)
           })
         })
         .on('error', (e) => {
           info(`[DownloadFile] Error`, e)
-          updateMessage(CardIcons.MikuCry, `下载文件失败了`)
+          updateMessage(CardIcons.IconCry, `下载文件失败了`)
           resolve('下载文件失败')
         })
     })

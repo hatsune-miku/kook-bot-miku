@@ -4,7 +4,7 @@ import fetch from 'node-fetch'
 import { ChatCompletionTool } from 'openai/resources'
 import { draw } from 'radash'
 
-import { shared } from '../../../../global/shared'
+import { DisplayName, shared } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
 import { Env } from '../../../../utils/env/env'
 import { Requests } from '../../../../utils/krequest/request'
@@ -52,7 +52,9 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       data: sendResult,
     } = await context.directivesManager.respondCardMessageToUser({
       originalEvent: context.event,
-      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.MikuHappy, `Miku画画中...`).build(),
+      content: CardBuilder.fromTemplate()
+        .addIconWithKMarkdownText(CardIcons.IconHappy, `${DisplayName}画画中...`)
+        .build(),
     })
 
     if (code !== 0) {
@@ -113,16 +115,16 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       content: CardBuilder.fromTemplate().addImage(url).build(),
     })
     if (result.code !== 0) {
-      updateMessage(CardIcons.MikuHappy, `Miku已绘画完成，但是发送消息失败\n\n\`${result.message}\``)
+      updateMessage(CardIcons.IconHappy, `${DisplayName}已绘画完成，但是发送消息失败\n\n\`${result.message}\``)
     } else {
-      const message = `Miku已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
-      updateMessage(CardIcons.MikuHappy, message)
+      const message = `${DisplayName}已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
+      updateMessage(CardIcons.IconHappy, message)
       context.contextManager.appendToContext(
         guildId,
         channelId,
         shared.me.id,
         sendResult.msg_id,
-        'Miku',
+        DisplayName,
         'assistant',
         message,
         true

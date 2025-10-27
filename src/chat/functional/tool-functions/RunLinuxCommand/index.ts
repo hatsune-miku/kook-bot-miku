@@ -36,7 +36,7 @@ export class RunLinuxCommandTool implements IFunctionTool {
 
     if (showCommand) {
       const card = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, `已执行:\n\`\`\`bash\n${expression}\n\`\`\``)
+        .addIconWithKMarkdownText(CardIcons.IconCute, `已执行:\n\`\`\`bash\n${expression}\n\`\`\``)
         .build()
       context.directivesManager.respondCardMessageToUser({
         originalEvent: context.event,

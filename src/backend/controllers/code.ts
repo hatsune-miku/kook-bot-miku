@@ -49,7 +49,7 @@ export function viewCodeBlock(currentUser: KUser, channelId: string, id: string)
   const codeBlock = getCodeBlock(id)
   if (!codeBlock) {
     Requests.createChannelPrivateMessage({
-      cardBuilder: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.MikuSad, '代码数据已被清理'),
+      cardBuilder: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.IconSad, '代码数据已被清理'),
       targetUserId: currentUser.id,
       channelId: channelId,
     })
@@ -57,7 +57,7 @@ export function viewCodeBlock(currentUser: KUser, channelId: string, id: string)
   }
   Requests.createChannelPrivateMessage({
     cardBuilder: CardBuilder.fromTemplate()
-      .addIconWithKMarkdownText(CardIcons.MikuCute, `代码语言：${codeBlock.language}`)
+      .addIconWithKMarkdownText(CardIcons.IconCute, `代码语言：${codeBlock.language}`)
       .addKMarkdownText(`\`\`\`${codeBlock.markdownCodeLanguage}\n${codeBlock.code}\`\`\``),
     targetUserId: currentUser.id,
     channelId: channelId,
@@ -82,7 +82,7 @@ export function createCodeExecutedMessageCard(codeBlock: CodeBlock): string {
           accessory: {
             type: 'image',
             size: 'lg',
-            src: CardIcons.MikuCute,
+            src: CardIcons.IconCute,
           },
         },
         {

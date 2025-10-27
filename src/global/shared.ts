@@ -8,3 +8,5 @@ export interface SharedType {
 export const shared: SharedType = {
   me: QuerySelfDefault,
 }
+
+export const DisplayName = 'Miku'

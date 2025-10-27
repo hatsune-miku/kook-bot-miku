@@ -22,7 +22,6 @@ export enum ChatBotBackend {
   O1 = 'o1',
   O1Mini = 'o1-mini',
   O3Mini = 'o3-mini',
-  Ernie = 'ernie',
   DeepSeekV3 = 'deepseek-chat',
   DeepSeekR1 = 'deepseek-reasoner',
   DeepSeekV31Volc = 'deepseek-v3-1-250821',

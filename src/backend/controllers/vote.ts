@@ -256,7 +256,7 @@ export function createVoteCard(currentUser: KUser | null, vote: Vote, privateMes
           mode: 'left',
           accessory: {
             type: 'image',
-            src: CardIcons.MikuHappy,
+            src: CardIcons.IconHappy,
             size: 'sm',
           },
         },

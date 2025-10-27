@@ -41,7 +41,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '未找到该函数')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '未找到该函数')
           .addPlainText('请确保你输入了一个正确的函数名')
           .build(),
       })
@@ -62,7 +62,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '执行函数失败了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '执行函数失败了')
           .addPlainText('请确保你输入了一个合法的函数体')
           .build(),
       })
@@ -112,20 +112,20 @@ export default class YukiCommandSession {
     this.chatManager.respondCardMessageToUser({
       originalEvent: this.context.event.originalEvent,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, '指令说明~')
+        .addIconWithKMarkdownText(CardIcons.IconCute, '指令说明~')
         .addPlainText('/yuki 系列指令是用来执行一些自动化操作的。')
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, '/yuki /define [函数名] [函数体]')
+        .addIconWithKMarkdownText(CardIcons.IconHappy, '/yuki /define [函数名] [函数体]')
         .addKMarkdownText('定义一个函数，函数体是另一个指令，例如 `/yuki /define /query_me /query $authorId$`。')
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, '/yuki /sleep [毫秒数]')
+        .addIconWithKMarkdownText(CardIcons.IconHappy, '/yuki /sleep [毫秒数]')
         .addKMarkdownText('等待，例如 `/yuki /sleep 1000`。')
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, '/yuki /script ["指令1", "指令2", ...]')
+        .addIconWithKMarkdownText(CardIcons.IconHappy, '/yuki /script ["指令1", "指令2", ...]')
         .addKMarkdownText('顺序执行若干指令，例如 `/yuki /script ["/sleep 1000", "/query_me"]`。')
         .build(),
     })
     this.chatManager.respondCardMessageToUser({
       originalEvent: this.context.event.originalEvent,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, '可用的宏~')
+        .addIconWithKMarkdownText(CardIcons.IconCute, '可用的宏~')
         .addPlainText('$currentGuildId$: 当前服务器 ID')
         .addPlainText('$currentChannelId$: 当前频道 ID')
         .addPlainText('$authorId$: 当前用户 ID')
@@ -141,7 +141,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '延时指令出错了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '延时指令出错了')
           .addPlainText('请确保你输入了一个合法的数字')
           .build(),
       })
@@ -156,7 +156,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '执行脚本失败了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '执行脚本失败了')
           .addPlainText('请确保你输入了一个合法脚本')
           .build(),
       })
@@ -174,7 +174,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '执行脚本失败了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '执行脚本失败了')
           .addPlainText('解析脚本失败')
           .build(),
       })
@@ -210,7 +210,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '定义函数失败了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '定义函数失败了')
           .addPlainText('请确保你输入了函数名和函数体')
           .build(),
       })
@@ -221,7 +221,7 @@ export default class YukiCommandSession {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCry, '定义函数失败了')
+          .addIconWithKMarkdownText(CardIcons.IconCry, '定义函数失败了')
           .addPlainText('函数名不能包含空格')
           .build(),
       })
@@ -236,8 +236,8 @@ export default class YukiCommandSession {
     this.chatManager.respondCardMessageToUser({
       originalEvent: this.context.event.originalEvent,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, '已定义函数')
-        .addPlainText(`快试试 @miku /yuki /${commandName} 吧`)
+        .addIconWithKMarkdownText(CardIcons.IconCute, '已定义函数')
+        .addPlainText(`快试试 @我 /yuki /${commandName} 吧`)
         .build(),
     })
   }

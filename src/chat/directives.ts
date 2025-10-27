@@ -162,7 +162,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     })
   }
 
-  async handleSwitchUsingNamespaceMiku(event: ParseEventResultValid) {
+  async handleSwitchUsingNamespace(event: ParseEventResultValid) {
     const guildId = event.originalEvent.extra.guild_id
     const channelId = event.originalEvent.target_id
 
@@ -354,17 +354,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
         originalEvent: event.originalEvent,
         content: `已切换至 DeepSeek (${backend})`,
       })
-    } else if (backend === ChatBotBackend.Ernie) {
-      ConfigUtils.updateChannelConfig(event.originalEvent.extra.guild_id, event.originalEvent.target_id, (config) => {
-        return {
-          ...config,
-          backend: backend as ChatBotBackend,
-        }
-      })
-      this.respondToUser({
-        originalEvent: event.originalEvent,
-        content: '已切换至文心一言 (ERNIE-4.0-Turbo-8K)',
-      })
     } else {
       const channelName = event.originalEvent.extra.channel_name
       const channelId = event.originalEvent.target_id
@@ -439,7 +428,7 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     const channelId = event.originalEvent.target_id
     this.respondCardMessageToUser({
       originalEvent: event.originalEvent,
-      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.MikuCute, `已开启新的对话上下文`).build(),
+      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.IconCute, `已开启新的对话上下文`).build(),
     })
     info('Obliviate', guildId, channelId)
     this.contextManager?.removeContext(guildId, channelId)
@@ -779,12 +768,12 @@ function prepareBuiltinDirectives(manager: ChatDirectivesManager): ChatDirective
       handler: manager.handleRevokeRole.bind(manager),
     },
     {
-      triggerWord: 'using_namespace_miku',
+      triggerWord: 'using_namespace',
       parameterDescription: 'on|off',
       description: '是否允许省略"@我"而直接使用指令',
       defaultValue: undefined,
       permissionGroups: ['everyone'],
-      handler: manager.handleSwitchUsingNamespaceMiku.bind(manager),
+      handler: manager.handleSwitchUsingNamespace.bind(manager),
     },
     {
       triggerWord: 'query',

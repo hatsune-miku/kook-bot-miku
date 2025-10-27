@@ -21,6 +21,7 @@ import {
 } from './types'
 
 import { botEventEmitter } from '../../events'
+import { DisplayName } from '../../global/shared'
 import { decompressKMessage } from '../../utils/deflate/deflate'
 import { Requests } from '../../utils/krequest/request'
 import { error, info, warn } from '../../utils/logging/logger'
@@ -462,7 +463,7 @@ export class KWSHelper {
   onWebSocketOpen(ev: WebSocket.Event) {
     info('onWebSocketOpen', ev)
     botEventEmitter.emit('send-lark-message', {
-      title: 'Miku Event',
+      title: `${DisplayName} Event`,
       message: 'Socket Open',
     })
   }
@@ -470,7 +471,7 @@ export class KWSHelper {
   onWebSocketClose(ev: WebSocket.CloseEvent) {
     info('onWebSocketClose', ev.reason)
     botEventEmitter.emit('send-lark-message', {
-      title: 'Miku Event',
+      title: `${DisplayName} Event`,
       message: 'Socket Closed',
     })
 
@@ -482,7 +483,7 @@ export class KWSHelper {
   onWebSocketError(ev: WebSocket.ErrorEvent) {
     info('onWebSocketError', ev)
     botEventEmitter.emit('send-lark-message', {
-      title: 'Miku Event',
+      title: `${DisplayName} Event`,
       message: 'Socket Error',
     })
 

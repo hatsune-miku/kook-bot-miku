@@ -18,6 +18,7 @@ import { getChatCompletionTools } from './functional/tool-functions/dispatch'
 import { ContextUnit } from './types'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
+import { DisplayName } from '../global/shared'
 import { Env } from '../utils/env/env'
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
@@ -96,8 +97,8 @@ function makeContext(groupChat: boolean, context: ContextUnit[]): ChatCompletion
     return [
       {
         role: 'system',
-        content: `请你作为KOOK平台的活泼群聊成员Miku参与讨论，以最后一条消息为最高优先级。注意：
-          - 直接开始回答，不要带"Miku(id=xxx)说:"的前缀
+        content: `请你作为KOOK平台的活泼群聊成员${DisplayName}参与讨论，以最后一条消息为最高优先级。注意：
+          - 直接开始回答，不要带"${DisplayName}(id=xxx)说:"的前缀
           - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
           - 下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件
           - 如有需要，请在 /tmp 下存放任何临时文件

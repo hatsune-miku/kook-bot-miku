@@ -73,7 +73,7 @@ export function reschedulePrize(prizeId: string) {
             type: KEventType.Card,
             target_id: prize.channelId,
             content: CardBuilder.fromTemplate()
-              .addIconWithKMarkdownText(CardIcons.MikuSad, '开奖啦！')
+              .addIconWithKMarkdownText(CardIcons.IconSad, '开奖啦！')
               .addKMarkdownText(`没有中奖者，请重新参与！`)
               .build(),
           },
@@ -87,7 +87,7 @@ export function reschedulePrize(prizeId: string) {
             type: KEventType.Card,
             target_id: prize.channelId,
             content: CardBuilder.fromTemplate()
-              .addIconWithKMarkdownText(CardIcons.MikuHappy, '开奖啦！')
+              .addIconWithKMarkdownText(CardIcons.IconHappy, '开奖啦！')
               .addKMarkdownText(`恭喜 ${winnersMetMessage} 获得 ${prize.prizeName}x1！`)
               .build(),
           },
@@ -155,7 +155,7 @@ export function createPrizeCard(prize: Prize) {
           mode: 'left',
           accessory: {
             type: 'image',
-            src: CardIcons.MikuCute,
+            src: CardIcons.IconCute,
             size: 'sm',
           },
         },

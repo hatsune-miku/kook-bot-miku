@@ -11,12 +11,11 @@ import { loadActiveVotes, saveActiveVotes, submitVote } from './backend/controll
 import { ContextManager } from './chat/context-manager'
 import { chatCompletionStreamed as chatCompletionDeepSeek } from './chat/deepseek'
 import { ChatDirectivesManager } from './chat/directives'
-import { chatCompletionStreamed as chatCompletionErnie } from './chat/ernie'
 import { ToolFunctionContext } from './chat/functional/context'
 import { chatCompletionStreamed as chatCompletionChatGpt } from './chat/openai'
 import { ChatBotBackend, ContextUnit, GroupChatStrategy } from './chat/types'
 import { Events, RespondToUserParameters, botEventEmitter } from './events'
-import { shared } from './global/shared'
+import { DisplayName, shared } from './global/shared'
 import { CardBuilder, CardIcons } from './helpers/card-helper'
 import { displayNameFromUser, isTrustedUser } from './utils'
 import { TaskQueue } from './utils/algorithm/task-queue'
@@ -163,7 +162,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     await Requests.createChannelMessage({
       type: KEventType.KMarkdown,
       target_id: event.target_id,
-      content: `miku机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
+      content: `${DisplayName}机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
       quote: event.msg_id,
     })
     return
@@ -189,7 +188,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           channelId,
           author.id,
           event.msg_id,
-          isSentByMe ? 'Miku' : author.nickname,
+          isSentByMe ? DisplayName : author.nickname,
           isSentByMe ? 'assistant' : 'user',
           content,
           !isMentioningMe
@@ -207,7 +206,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     channelId,
     author.id,
     event.msg_id,
-    isSentByMe ? 'Miku' : author.nickname,
+    isSentByMe ? DisplayName : author.nickname,
     isSentByMe ? 'assistant' : 'user',
     content,
     !isMentioningMe
@@ -218,7 +217,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  const initialResponse = 'Miku打字中...'
+  const initialResponse = `${DisplayName}打字中...`
   const sendResult = await Requests.createChannelMessage(
     {
       type: KEventType.Card,
@@ -273,7 +272,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           },
           { guildId, originalTextContent: modelMessageAccumulated }
         )
-      } catch {}
+      } catch {
+        // ignored
+      }
     })
   }
 
@@ -329,23 +330,19 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
   }
 
-  const backend =
-    backendConfig === ChatBotBackend.Ernie
-      ? chatCompletionErnie
-      : backendConfig.startsWith('deepseek')
-        ? (
-            groupChat: boolean,
-            context: ContextUnit[],
-            onMessage: (message: string) => void,
-            onMessageEnd: (message: string) => void
-          ) =>
-            chatCompletionDeepSeek(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
-        : (
-            groupChat: boolean,
-            context: ContextUnit[],
-            onMessage: (message: string) => void,
-            onMessageEnd: (message: string) => void
-          ) => chatCompletionChatGpt(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
+  const backend = backendConfig.startsWith('deepseek')
+    ? (
+        groupChat: boolean,
+        context: ContextUnit[],
+        onMessage: (message: string) => void,
+        onMessageEnd: (message: string) => void
+      ) => chatCompletionDeepSeek(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
+    : (
+        groupChat: boolean,
+        context: ContextUnit[],
+        onMessage: (message: string) => void,
+        onMessageEnd: (message: string) => void
+      ) => chatCompletionChatGpt(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
 
   try {
     await backend(isGroupChat, context, onMessage, onMessageEnd)
@@ -377,8 +374,7 @@ async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtr
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
-  const whitelisted =
-    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {}).hasOwnProperty(guildId) || calledByTrustedUser
+  const whitelisted = (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] || calledByTrustedUser
 
   if (!whitelisted) {
     return
@@ -409,7 +405,7 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
       const prizeId = value.args[0]
       const result = drawPrize(prizeId, eventBody.user_info)
       const cardBuilder = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, '抽奖通知！')
+        .addIconWithKMarkdownText(CardIcons.IconCute, '抽奖通知！')
         .addKMarkdownText(result.message || '祝你好运！')
       Requests.createChannelPrivateMessage({
         channelId: eventBody.target_id,
@@ -424,7 +420,7 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
       const optionTitle = value.args[1]
       submitVote(voteId, eventBody.user_info, optionTitle).then(({ message }) => {
         const cardBuilder = CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.MikuCute, '投票通知！')
+          .addIconWithKMarkdownText(CardIcons.IconCute, '投票通知！')
           .addKMarkdownText(message)
         Requests.createChannelPrivateMessage({
           channelId: eventBody.target_id,
@@ -490,7 +486,7 @@ function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
 
 function handleReset() {
   botEventEmitter.emit('send-lark-message', {
-    title: 'Miku Event',
+    title: `${DisplayName} Event`,
     message: 'Server: Reset',
   })
 }
