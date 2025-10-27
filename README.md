@@ -7,13 +7,17 @@
 
 原本是一个 KOOK WebSocket 机器人的练习项目，如今已经可以满足日常使用需求~
 
+## Usage
+
+必须使用 pnpm，因为项目使用了先进的 `package.yaml` 管理依赖，yarn 和 npm 都不支持。
+
 ## 功能
 
 - 群聊模式
-- ChatGPT/DeepSeek/Ernie 动态切换
-- OpenAI Function Calling
-- OpenAI Vision
-- 接了一下 DALL-3
+- 多种 LLM 动态切换、继承上下文
+- 遵循 OpenAI 标准的 Function Calling
+- 遵循 OpenAI 标准的 Vision API
+- Stable Diffusion API
 - 指令支持
 - Yuki 系列 API
   - 测试工具

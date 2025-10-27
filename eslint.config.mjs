@@ -5,6 +5,7 @@ import tseslint from 'typescript-eslint'
 
 import js from '@eslint/js'
 
+// 源自一个 globals 库的 BUG，和 eslint 一点小事就报错的特性叠 buff 了
 delete globals.browser['AudioWorkletGlobalScope ']
 
 /**
@@ -19,6 +20,7 @@ const commonConfigs = {
       ...globals.browser,
       ...globals.node,
       ...globals.es2021,
+      ...globals.jest,
     },
   },
   plugins: { js },

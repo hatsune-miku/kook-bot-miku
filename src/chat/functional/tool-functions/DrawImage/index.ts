@@ -80,7 +80,7 @@ export class DrawImageTool implements IFunctionTool {
       n: 1,
     })
 
-    const image = result?.data[0]
+    const image = result?.data?.[0]
     if (!image?.url) {
       return '绘画失败'
     }
