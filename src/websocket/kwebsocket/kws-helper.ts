@@ -5,6 +5,8 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
+import { tryit } from 'radash'
+import WebSocket from 'ws'
 
 import {
   KEvent,
@@ -15,29 +17,27 @@ import {
   KResumeAckMessage,
   KSystemEventExtra,
   KTextChannelExtra,
-  KWSState
-} from "./types"
-import { error, info, warn } from "../../utils/logging/logger"
-import { Requests } from "../../utils/krequest/request"
-import WebSocket from "ws"
-import { decompressKMessage } from "../../utils/deflate/deflate"
-import { KMessageQueue } from "../../utils/pqueue/kmqueue"
-import { tryit } from "radash"
-import { botEventEmitter } from "../../events"
+  KWSState,
+} from './types'
+
+import { botEventEmitter } from '../../events'
+import { decompressKMessage } from '../../utils/deflate/deflate'
+import { Requests } from '../../utils/krequest/request'
+import { error, info, warn } from '../../utils/logging/logger'
+import { KMessageQueue } from '../../utils/pqueue/kmqueue'
 
 /**
  * KOOK WebSocket connection helper
  */
 export class KWSHelper {
   private options: KWSOptions
-
   private autoReconnect: boolean
-  private pingSenderInterval: NodeJS.Timeout | null = null
-  private clearQueueTimeout: NodeJS.Timeout | null = null
+  private pingSenderInterval: any = null
+  private clearQueueTimeout: any = null
   private lastSn: number = 0
-  private lastSessionId: string = ""
+  private lastSessionId: string = ''
   private webSocket: WebSocket | null = null
-  private gatewayUrl: string = ""
+  private gatewayUrl: string = ''
   private compression: boolean = true
   private state: KWSState = KWSState.IDLE
   private onSevereError: OnSevereError | null = null
@@ -47,10 +47,7 @@ export class KWSHelper {
 
   private eventQueue: KMessageQueue<KEvent<unknown>> = new KMessageQueue()
 
-  constructor(
-    options: KWSHelperOptions = defaultKWSHelperOptions,
-    websocketOptions: KWSOptions = defaultKWSOptions
-  ) {
+  constructor(options: KWSHelperOptions = defaultKWSHelperOptions, websocketOptions: KWSOptions = defaultKWSOptions) {
     this.options = websocketOptions
     this.onSevereError = options.onSevereError
     this.onTextChannelEvent = options.onTextChannelEvent
@@ -69,7 +66,7 @@ export class KWSHelper {
     }
   ): void {
     if (state === this.state) {
-      warn("State is already", state)
+      warn('State is already', state)
       return
     }
 
@@ -99,9 +96,7 @@ export class KWSHelper {
         break
 
       case KWSState.OPENING_GATEWAY_AFTER_DISCONNECT:
-        this.handleOpenGatewayInfiniteRetry(
-          this.options.infiniteRetryDelayInitial
-        )
+        this.handleOpenGatewayInfiniteRetry(this.options.infiniteRetryDelayInitial)
         break
 
       case KWSState.OPENING_GATEWAY_1ST_RETRY:
@@ -144,7 +139,7 @@ export class KWSHelper {
   sendKMessage<T>(message: KMessage<T>) {
     const serialized = JSON.stringify(message)
     if (this.webSocket?.readyState !== WebSocket.OPEN) {
-      warn("WebSocket is not ready to send message", serialized)
+      warn('WebSocket is not ready to send message', serialized)
       return
     }
     this.webSocket?.send(serialized)
@@ -167,17 +162,11 @@ export class KWSHelper {
    *
    * @param fromDisconnect 是否走断线重连逻辑？
    */
-  async handleOpenGateway({
-    isRetry,
-    isLastRetry
-  }: {
-    isRetry: boolean
-    isLastRetry: boolean
-  }) {
+  async handleOpenGateway({ isRetry, isLastRetry }: { isRetry: boolean; isLastRetry: boolean }) {
     // 连接 Gateway
     const result = await Requests.openGateway({
       compress: this.compression,
-      fromDisconnect: false
+      fromDisconnect: false,
     })
 
     // 如果成功，进入第三步（收hello包）
@@ -190,50 +179,46 @@ export class KWSHelper {
 
     // Gateway的最后一次重试失败了
     if (isLastRetry) {
-      this.tryRaiseSevereError("无法连接到服务器")
+      this.tryRaiseSevereError('无法连接到服务器')
       return
     }
 
     // 第一次重试失败了，4s后重试下一次
     if (isRetry) {
       this.setState(KWSState.OPENING_GATEWAY_LAST_RETRY, {
-        afterMillis: this.options.finalOpenGatewayRetryDelay
+        afterMillis: this.options.finalOpenGatewayRetryDelay,
       })
       return
     }
 
     // 首次失败，2s后重试
     this.setState(KWSState.OPENING_GATEWAY_1ST_RETRY, {
-      afterMillis: this.options.firstOpenGatewayRetryDelay
+      afterMillis: this.options.firstOpenGatewayRetryDelay,
     })
   }
 
   async handleOpenGatewayInfiniteRetry(duration: number) {
-    info("Infinite reconnecting with duration=", duration)
+    info('Infinite reconnecting with duration=', duration)
 
     const tryReconnect = async () => {
       // 重连连接 Gateway
-      const [err, result] = await tryit((args: any) =>
-        Requests.openGateway(args)
-      )({
+      const [err, result] = await tryit((args: any) => Requests.openGateway(args))({
         compress: this.compression,
         fromDisconnect: true,
         lastProcessedSn: this.lastSn,
-        lastSessionId: this.lastSessionId
+        lastSessionId: this.lastSessionId,
       })
 
       if (err || !result.success) {
         // 重连失败，按照指数回退重试
         error(
-          "Failed to open gateway during an infinite retry",
+          'Failed to open gateway during an infinite retry',
           err,
           JSON.stringify(err),
           result,
-          result ? result.message : ""
+          result ? result.message : ''
         )
-        this.handleOpenGatewayInfiniteRetry(
-          Math.min(duration * 2, this.options.infiniteRetryDelayMaximum)
-        )
+        this.handleOpenGatewayInfiniteRetry(Math.min(duration * 2, this.options.infiniteRetryDelayMaximum))
         return
       }
 
@@ -252,7 +237,7 @@ export class KWSHelper {
     setTimeout(() => {
       if (this.state === KWSState.WAITING_FOR_HANDSHAKE) {
         this.setState(KWSState.OPENING_GATEWAY, {
-          afterMillis: this.options.openGatewayDelay
+          afterMillis: this.options.openGatewayDelay,
         })
       }
     }, this.options.handshakeTimeout)
@@ -276,10 +261,7 @@ export class KWSHelper {
         }
       }
     }
-    this.pingSenderInterval = setInterval(
-      intervalTask,
-      this.options.heartBeatInterval
-    )
+    this.pingSenderInterval = setInterval(intervalTask, this.options.heartBeatInterval)
 
     // 先发一个
     intervalTask()
@@ -290,7 +272,7 @@ export class KWSHelper {
     setTimeout(() => {
       if (this.state === KWSState.WAITING_FOR_HEARTBEAT_RESPONSE) {
         this.setState(KWSState.WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY, {
-          afterMillis: this.options.firstHeartbeatRetryDelay
+          afterMillis: this.options.firstHeartbeatRetryDelay,
         })
       }
     }, this.options.heartbeatTimeout)
@@ -298,20 +280,11 @@ export class KWSHelper {
 
   handleWaitingForPong1stRetry() {
     // 先发两次心跳ping (2, 4)
-    setTimeout(
-      this.sendHeartbeatRequest.bind(this),
-      this.options.firstRepingDelay
-    )
-    setTimeout(
-      this.sendHeartbeatRequest.bind(this),
-      this.options.finalRepingDelay
-    )
+    setTimeout(this.sendHeartbeatRequest.bind(this), this.options.firstRepingDelay)
+    setTimeout(this.sendHeartbeatRequest.bind(this), this.options.finalRepingDelay)
 
     // 发过ping了，如果XX秒后，还~没收到Pong，则认为超时了，触发断线重连
-    const timeout =
-      this.options.firstRepingDelay +
-      this.options.finalRepingDelay +
-      this.options.pongTimeout
+    const timeout = this.options.firstRepingDelay + this.options.finalRepingDelay + this.options.pongTimeout
     setTimeout(() => {
       if (this.state === KWSState.WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY) {
         // 如果不成功，回退到第2步，但尝试两次resume
@@ -322,16 +295,10 @@ export class KWSHelper {
 
   handleWaitingForPongLastRetry() {
     // 尝试两次Resume (8, 16)
-    setTimeout(
-      this.sendResumeRequest.bind(this),
-      this.options.firstResumeRequestDelay
-    )
-    setTimeout(
-      this.sendResumeRequest.bind(this),
-      this.options.secondResumeRequestDelay
-    )
+    setTimeout(this.sendResumeRequest.bind(this), this.options.firstResumeRequestDelay)
+    setTimeout(this.sendResumeRequest.bind(this), this.options.secondResumeRequestDelay)
     this.setState(KWSState.WAITING_FOR_RESUME_OK, {
-      afterMillis: this.options.resumeOkTimeout
+      afterMillis: this.options.resumeOkTimeout,
     })
   }
 
@@ -345,17 +312,11 @@ export class KWSHelper {
     }, this.options.resumeOkTimeout)
   }
 
-  async handleReceivedTextChannelEvent(
-    sn: number | undefined,
-    messageEvent: KEvent<KTextChannelExtra>
-  ) {
+  async handleReceivedTextChannelEvent(sn: number | undefined, messageEvent: KEvent<KTextChannelExtra>) {
     this.onTextChannelEvent?.(messageEvent, sn)
   }
 
-  handleReceivedSystemEvent(
-    sn: number | undefined,
-    event: KEvent<KSystemEventExtra>
-  ) {
+  handleReceivedSystemEvent(sn: number | undefined, event: KEvent<KSystemEventExtra>) {
     this.onSystemEvent?.(event, sn)
   }
 
@@ -364,28 +325,25 @@ export class KWSHelper {
       if (event.type === KEventType.System) {
         this.handleReceivedSystemEvent(sn, event as KEvent<KSystemEventExtra>)
       } else {
-        this.handleReceivedTextChannelEvent(
-          sn,
-          event as KEvent<KTextChannelExtra>
-        )
+        this.handleReceivedTextChannelEvent(sn, event as KEvent<KTextChannelExtra>)
       }
     }
 
     if (!sn) {
-      info("Processing event without sn...")
+      info('Processing event without sn...')
       executeEvent(event)
       return
     }
 
     // 跳号发生
     if (sn - this.lastSn > 1) {
-      warn("Jumped serial number detected", "lastSn=", this.lastSn, "sn=", sn)
+      warn('Jumped serial number detected', 'lastSn=', this.lastSn, 'sn=', sn)
 
       this.eventQueue.enqueue(event, sn)
       if (!this.clearQueueTimeout) {
-        info("Set up clear queue timeout")
+        info('Set up clear queue timeout')
         this.clearQueueTimeout = setTimeout(() => {
-          info("Time is up! Try emptying queue...")
+          info('Time is up! Try emptying queue...')
           if (!this.eventQueue.isEmpty()) {
             this.handleClearMessageQueueAndSetLastSn()
           }
@@ -399,13 +357,9 @@ export class KWSHelper {
 
       // 只有没跳号的信令发来了，才有意义去检测严格递增
       if (!this.eventQueue.isEmpty()) {
-        info("One missing SN has finally received.")
+        info('One missing SN has finally received.')
         if (this.eventQueue.isPriorityStrictAscending(this.lastSn)) {
-          info(
-            "Jumped SN resolved. Clearing queue and processing ",
-            this.eventQueue.size(),
-            "events..."
-          )
+          info('Jumped SN resolved. Clearing queue and processing ', this.eventQueue.size(), 'events...')
           this.handleClearMessageQueueAndSetLastSn()
         }
       }
@@ -413,7 +367,7 @@ export class KWSHelper {
   }
 
   handleReceivedHandshakeResult(sessionId: string) {
-    info("Server handshake success", "sessionId=", sessionId)
+    info('Server handshake success', 'sessionId=', sessionId)
     this.lastSessionId = sessionId
 
     if (this.state === KWSState.WAITING_FOR_HANDSHAKE) {
@@ -422,8 +376,8 @@ export class KWSHelper {
   }
 
   handleReceivedPing() {
-    warn("意外的收到了来自服务器的ping包")
-    warn("不慌，我们pong回去！")
+    warn('意外的收到了来自服务器的ping包')
+    warn('不慌，我们pong回去！')
     this.sendKMessage({ s: KMessageKind.Pong, d: {} })
   }
 
@@ -441,34 +395,28 @@ export class KWSHelper {
     // 任何时候，收到reconnect包，应该将当前消息队列，sn等全部清空
     // 然后回到第一步，否则消息可能会错乱
     this.lastSn = 0
-    this.lastSessionId = ""
-    this.gatewayUrl = ""
+    this.lastSessionId = ''
+    this.gatewayUrl = ''
     this.setState(KWSState.OPENING_GATEWAY)
     this.onReset?.()
   }
 
   handleReceivedResumeAck(sessionId: string) {
-    info("Server acked resume")
+    info('Server acked resume')
     this.lastSessionId = sessionId
     if (this.state === KWSState.WAITING_FOR_RESUME_OK) {
       this.setState(KWSState.CONNECTED)
     }
   }
 
-  dispatchKMessage({
-    s: messageKind,
-    d: data,
-    sn: serialNumber
-  }: KMessage<unknown>) {
+  dispatchKMessage({ s: messageKind, d: data, sn: serialNumber }: KMessage<unknown>) {
     switch (messageKind) {
       case KMessageKind.Event:
         this.handleReceivedEvent(serialNumber, data as KEvent<unknown>)
         break
 
       case KMessageKind.HandshakeResult:
-        this.handleReceivedHandshakeResult(
-          (data as KHandshakeMessage).session_id
-        )
+        this.handleReceivedHandshakeResult((data as KHandshakeMessage).session_id)
         break
 
       case KMessageKind.Ping:
@@ -500,7 +448,7 @@ export class KWSHelper {
   }
 
   handleGatewayReady(gatewayUrl: string) {
-    info("Gateway URL ready", gatewayUrl)
+    info('Gateway URL ready', gatewayUrl)
     this.gatewayUrl = gatewayUrl
 
     const ws = new WebSocket(this.gatewayUrl)
@@ -512,18 +460,18 @@ export class KWSHelper {
   }
 
   onWebSocketOpen(ev: WebSocket.Event) {
-    info("onWebSocketOpen", ev)
-    botEventEmitter.emit("send-lark-message", {
-      title: "Miku Event",
-      message: "Socket Open"
+    info('onWebSocketOpen', ev)
+    botEventEmitter.emit('send-lark-message', {
+      title: 'Miku Event',
+      message: 'Socket Open',
     })
   }
 
   onWebSocketClose(ev: WebSocket.CloseEvent) {
-    info("onWebSocketClose", ev.reason)
-    botEventEmitter.emit("send-lark-message", {
-      title: "Miku Event",
-      message: "Socket Closed"
+    info('onWebSocketClose', ev.reason)
+    botEventEmitter.emit('send-lark-message', {
+      title: 'Miku Event',
+      message: 'Socket Closed',
     })
 
     if (this.autoReconnect) {
@@ -532,10 +480,10 @@ export class KWSHelper {
   }
 
   onWebSocketError(ev: WebSocket.ErrorEvent) {
-    info("onWebSocketError", ev)
-    botEventEmitter.emit("send-lark-message", {
-      title: "Miku Event",
-      message: "Socket Error"
+    info('onWebSocketError', ev)
+    botEventEmitter.emit('send-lark-message', {
+      title: 'Miku Event',
+      message: 'Socket Error',
     })
 
     if (this.autoReconnect) {
@@ -627,12 +575,12 @@ export const defaultKWSOptions: KWSOptions = {
   firstOpenGatewayRetryDelay: 2000,
   finalOpenGatewayRetryDelay: 4000,
   openGatewayDelay: 2000,
-  firstHeartbeatRetryDelay: 2000
+  firstHeartbeatRetryDelay: 2000,
 }
 
 export const defaultKWSHelperOptions: KWSHelperOptions = {
   onSevereError: null,
   onTextChannelEvent: null,
   onSystemEvent: null,
-  onReset: null
+  onReset: null,
 }

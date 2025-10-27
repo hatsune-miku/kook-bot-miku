@@ -1,5 +1,6 @@
-import { RespondToUserParameters } from "../events"
-import { ParseEventResultValid } from "./directives"
+import { ParseEventResultValid } from './directives'
+
+import { RespondToUserParameters } from '../events'
 
 export interface IChatDirectivesManager {
   respondToUser(params: RespondToUserParameters): void

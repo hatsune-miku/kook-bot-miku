@@ -1,28 +1,29 @@
-import { ChatCompletionTool } from "openai/resources"
-import { IFunctionTool } from "../dispatch"
-import { ToolFunctionContext } from "../../context"
-import { CardBuilder } from "../../../../helpers/card-helper"
+import { ChatCompletionTool } from 'openai/resources'
+
+import { CardBuilder } from '../../../../helpers/card-helper'
+import { ToolFunctionContext } from '../../context'
+import { IFunctionTool } from '../dispatch'
 
 export class CreateDownloadUrlTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
     return {
-      type: "function",
+      type: 'function',
       function: {
-        name: "createDownloadUrl",
-        description: "根据本地临时文件，创建一个对应的https的下载链接",
+        name: 'createDownloadUrl',
+        description: '根据本地临时文件，创建一个对应的https的下载链接',
         parameters: {
-          type: "object",
+          type: 'object',
           properties: {
             path: {
-              type: "string",
-              description: "本地临时文件的绝对路径"
-            }
+              type: 'string',
+              description: '本地临时文件的绝对路径',
+            },
           },
-          required: ["path"],
-          additionalProperties: false
+          required: ['path'],
+          additionalProperties: false,
         },
-        strict: false
-      }
+        strict: false,
+      },
     }
   }
 
@@ -30,10 +31,10 @@ export class CreateDownloadUrlTool implements IFunctionTool {
     const { path } = params || {}
 
     if (!path) {
-      return "错误的路径"
+      return '错误的路径'
     }
 
-    const filePathAfterTmp = path.split("/tmp/").pop()
+    const filePathAfterTmp = path.split('/tmp/').pop()
     const fileNameEncoded = encodeURIComponent(filePathAfterTmp)
     const downloadUrl = `https://www.k00kapp.cn/kook/api/v1/download?file=${fileNameEncoded}`
     return downloadUrl

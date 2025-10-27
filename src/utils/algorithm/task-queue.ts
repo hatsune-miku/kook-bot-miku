@@ -19,7 +19,7 @@ export class TaskQueue {
         try {
           await task()
         } catch (error) {
-          console.error("Task failed:", error)
+          console.error('Task failed:', error)
         }
       }
     }

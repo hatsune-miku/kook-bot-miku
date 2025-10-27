@@ -1,5 +1,5 @@
-import { KUser } from "../../websocket/kwebsocket/types"
-import { ParseEventResultValid } from "../directives"
+import { KUser } from '../../websocket/kwebsocket/types'
+import { ParseEventResultValid } from '../directives'
 
 export interface YukiContext {
   guildId: string

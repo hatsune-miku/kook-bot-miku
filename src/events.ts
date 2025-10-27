@@ -1,9 +1,10 @@
-import { EventEmitter } from "stream"
-import { KEvent, KTextChannelExtra } from "./websocket/kwebsocket/types"
+import { EventEmitter } from 'stream'
+
+import { KEvent, KTextChannelExtra } from './websocket/kwebsocket/types'
 
 export const Events = {
-  RespondToUser: "respond-to-user",
-  RespondCardMessageToUser: "respond-card-message-to-user"
+  RespondToUser: 'respond-to-user',
+  RespondCardMessageToUser: 'respond-card-message-to-user',
 }
 
 export interface RespondToUserParameters {
@@ -15,17 +16,17 @@ export interface RespondToUserParameters {
   }
 }
 
-export type KCardSize = "sm" | "md" | "lg"
+export type KCardSize = 'sm' | 'md' | 'lg'
 
 export interface KCardMessageSubTextElement {
   // TODO
-  type: "kmarkdown" | "plain-text"
+  type: 'kmarkdown' | 'plain-text'
   content: string
 }
 
 export interface KCardMessageContainedElement {
   // TODO
-  type: "image" | "file"
+  type: 'image' | 'file'
   title?: string
   src?: string
   size?: KCardSize | string
@@ -42,8 +43,8 @@ export interface KCardMessageSubElement {
 
 export interface KCardMessageElement {
   // TODO
-  type: "card" | "container"
-  theme: "primary" | "secondary" | "invisible"
+  type: 'card' | 'container'
+  theme: 'primary' | 'secondary' | 'invisible'
   size: KCardSize
   color?: string
   modules: KCardMessageSubElement[]

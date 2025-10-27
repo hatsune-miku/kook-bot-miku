@@ -5,49 +5,37 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
-
-import { ContextManager } from "./chat/context-manager"
-import { chatCompletionStreamed as chatCompletionChatGpt } from "./chat/openai"
-import { chatCompletionStreamed as chatCompletionDeepSeek } from "./chat/deepseek"
-import { chatCompletionStreamed as chatCompletionErnie } from "./chat/ernie"
-import { ChatDirectivesManager } from "./chat/directives"
-import { shared } from "./global/shared"
-import { extractContent, isExplicitlyMentioningBot } from "./utils/kevent/utils"
-import { Requests } from "./utils/krequest/request"
-import { error, info, warn } from "./utils/logging/logger"
-import { die } from "./utils/server/die"
-import { GuildRoleManager } from "./websocket/kwebsocket/guild-role-manager"
-import { KWSHelper } from "./websocket/kwebsocket/kws-helper"
+import { viewCodeBlock } from './backend/controllers/code'
+import { drawPrize, loadActivePrizes, saveActivePrizes } from './backend/controllers/prize'
+import { loadActiveVotes, saveActiveVotes, submitVote } from './backend/controllers/vote'
+import { ContextManager } from './chat/context-manager'
+import { chatCompletionStreamed as chatCompletionDeepSeek } from './chat/deepseek'
+import { ChatDirectivesManager } from './chat/directives'
+import { chatCompletionStreamed as chatCompletionErnie } from './chat/ernie'
+import { ToolFunctionContext } from './chat/functional/context'
+import { chatCompletionStreamed as chatCompletionChatGpt } from './chat/openai'
+import { ChatBotBackend, ContextUnit, GroupChatStrategy } from './chat/types'
+import { Events, RespondToUserParameters, botEventEmitter } from './events'
+import { shared } from './global/shared'
+import { CardBuilder, CardIcons } from './helpers/card-helper'
+import { displayNameFromUser, isTrustedUser } from './utils'
+import { TaskQueue } from './utils/algorithm/task-queue'
+import ConfigUtils from './utils/config/config'
+import { extractContent, isExplicitlyMentioningBot } from './utils/kevent/utils'
+import { Requests } from './utils/krequest/request'
+import { CreateChannelMessageResult, KResponseExt } from './utils/krequest/types'
+import { error, info, warn } from './utils/logging/logger'
+import { die } from './utils/server/die'
+import { GuildRoleManager } from './websocket/kwebsocket/guild-role-manager'
+import { KWSHelper } from './websocket/kwebsocket/kws-helper'
 import {
   KCardButtonExtra,
   KCardButtonValue,
   KEvent,
   KEventType,
   KSystemEventExtra,
-  KTextChannelExtra
-} from "./websocket/kwebsocket/types"
-import { botEventEmitter, Events, RespondToUserParameters } from "./events"
-import { displayNameFromUser, isTrustedUser } from "./utils"
-import ConfigUtils from "./utils/config/config"
-import { ChatBotBackend, ContextUnit, GroupChatStrategy } from "./chat/types"
-import { CardBuilder, CardIcons } from "./helpers/card-helper"
-import { ToolFunctionContext } from "./chat/functional/context"
-import {
-  CreateChannelMessageResult,
-  KResponseExt
-} from "./utils/krequest/types"
-import { TaskQueue } from "./utils/algorithm/task-queue"
-import {
-  drawPrize,
-  loadActivePrizes,
-  saveActivePrizes
-} from "./backend/controllers/prize"
-import {
-  loadActiveVotes,
-  saveActiveVotes,
-  submitVote
-} from "./backend/controllers/vote"
-import { viewCodeBlock } from "./backend/controllers/code"
+  KTextChannelExtra,
+} from './websocket/kwebsocket/types'
 
 ConfigUtils.initialize()
 
@@ -66,19 +54,16 @@ export async function main() {
     onTextChannelEvent: handleTextChannelEvent,
     onSystemEvent: handleSystemEvent,
     onReset: handleReset,
-    autoReconnect: true
+    autoReconnect: true,
   })
   helper.startWebsocket()
 
   botEventEmitter.on(Events.RespondToUser, handleRespondToUserEvent)
-  botEventEmitter.on(
-    Events.RespondCardMessageToUser,
-    handleRespondCardMessageToUserEvent
-  )
+  botEventEmitter.on(Events.RespondCardMessageToUser, handleRespondCardMessageToUserEvent)
 
   loadActiveVotes()
   loadActivePrizes()
-  info("Initialization OK")
+  info('Initialization OK')
 }
 
 export function deinitialize() {
@@ -96,19 +81,14 @@ async function handleRespondToUserEvent(
       type: KEventType.KMarkdown,
       target_id: event.originalEvent.target_id,
       content: event.content,
-      quote: event.originalEvent.msg_id
+      quote: event.originalEvent.msg_id,
     },
     event.withContext
   )
 
   callback?.(result)
   if (!result.success) {
-    error(
-      "Failed to respond to",
-      displayNameFromUser(event.originalEvent.extra.author),
-      "reason:",
-      result.message
-    )
+    error('Failed to respond to', displayNameFromUser(event.originalEvent.extra.author), 'reason:', result.message)
   }
 }
 
@@ -121,24 +101,19 @@ async function handleRespondCardMessageToUserEvent(
       type: KEventType.Card,
       target_id: event.originalEvent.target_id,
       content: event.content,
-      quote: event.originalEvent.msg_id
+      quote: event.originalEvent.msg_id,
     },
     event.withContext
   )
 
   callback?.(result)
   if (!result.success) {
-    error(
-      "Failed to respond to",
-      displayNameFromUser(event.originalEvent.extra.author),
-      "reason:",
-      result.message
-    )
+    error('Failed to respond to', displayNameFromUser(event.originalEvent.extra.author), 'reason:', result.message)
   }
 }
 
 async function tryPrepareBotInformation() {
-  info("Querying self information from KOOK...")
+  info('Querying self information from KOOK...')
   const querySelfResult = await Requests.querySelfUser()
   const self = querySelfResult.data
 
@@ -152,7 +127,7 @@ async function tryPrepareBotInformation() {
   }
 
   const displayName = `${self.username}#${self.identify_num}`
-  info("I am", displayName, "with user id", self.id)
+  info('I am', displayName, 'with user id', self.id)
 
   shared.me = self
 }
@@ -176,14 +151,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
   const isMentioningMe = isExplicitlyMentioningBot(event, shared.me.id, myRoles)
-  const groupChatStrategy = directivesManager.getGroupChatStrategy(
-    guildId,
-    channelId
-  )
+  const groupChatStrategy = directivesManager.getGroupChatStrategy(guildId, channelId)
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
-  const whitelisted =
-    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] ||
-    calledByTrustedUser
+  const whitelisted = (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] || calledByTrustedUser
 
   if (isSentByMe) {
     return
@@ -194,18 +164,15 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       type: KEventType.KMarkdown,
       target_id: event.target_id,
       content: `miku机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
-      quote: event.msg_id
+      quote: event.msg_id,
     })
     return
   }
 
   // @我或者可以免除@我，都可以处理指令
-  if (
-    isMentioningMe ||
-    directivesManager.isAllowOmittingMentioningMeEnabled(guildId, channelId)
-  ) {
+  if (isMentioningMe || directivesManager.isAllowOmittingMentioningMeEnabled(guildId, channelId)) {
     // Process directives
-    info("Processing directives for", displayName, "with content", content)
+    info('Processing directives for', displayName, 'with content', content)
     directivesManager.tryInitializeForUser(guildId, author)
     const parsedEvent = await directivesManager.tryParseEvent(content, event)
     if (parsedEvent.shouldIntercept) {
@@ -213,12 +180,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         return
       }
 
-      parsedEvent.mentionUserIds = parsedEvent.mentionUserIds.filter(
-        (id) => id !== shared.me.id
-      )
-      parsedEvent.mentionRoleIds = parsedEvent.mentionRoleIds.filter(
-        (rid) => !myRoles.includes(rid)
-      )
+      parsedEvent.mentionUserIds = parsedEvent.mentionUserIds.filter((id) => id !== shared.me.id)
+      parsedEvent.mentionRoleIds = parsedEvent.mentionRoleIds.filter((rid) => !myRoles.includes(rid))
 
       directivesManager.dispatchDirectives(parsedEvent, () => {
         contextManager.appendToContext(
@@ -226,8 +189,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           channelId,
           author.id,
           event.msg_id,
-          isSentByMe ? "Miku" : author.nickname,
-          isSentByMe ? "assistant" : "user",
+          isSentByMe ? 'Miku' : author.nickname,
+          isSentByMe ? 'assistant' : 'user',
           content,
           !isMentioningMe
         )
@@ -238,14 +201,14 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   const shouldIncludeFreeChat = groupChatStrategy === GroupChatStrategy.Normal
 
-  info("Appending to context", author.nickname, content)
+  info('Appending to context', author.nickname, content)
   contextManager.appendToContext(
     guildId,
     channelId,
     author.id,
     event.msg_id,
-    isSentByMe ? "Miku" : author.nickname,
-    isSentByMe ? "assistant" : "user",
+    isSentByMe ? 'Miku' : author.nickname,
+    isSentByMe ? 'assistant' : 'user',
     content,
     !isMentioningMe
   )
@@ -255,27 +218,24 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  const initialResponse = "Miku打字中..."
+  const initialResponse = 'Miku打字中...'
   const sendResult = await Requests.createChannelMessage(
     {
       type: KEventType.Card,
       target_id: event.target_id,
       content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(
-          "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-          initialResponse
-        )
+        .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', initialResponse)
         .build(),
-      quote: event.msg_id
+      quote: event.msg_id,
     },
     { guildId, originalTextContent: initialResponse }
   )
 
   if (!sendResult.success) {
-    error("Failed to respond to", displayName, "reason:", sendResult.message)
+    error('Failed to respond to', displayName, 'reason:', sendResult.message)
     return
   } else {
-    info("Successfully responded to", displayName, sendResult, sendResult.data)
+    info('Successfully responded to', displayName, sendResult, sendResult.data)
   }
 
   const isGroupChat = groupChatStrategy !== GroupChatStrategy.Off
@@ -284,42 +244,32 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     ? contextManager.getMixedContext(guildId, channelId, shouldIncludeFreeChat)
     : contextManager.getContext(guildId, channelId, author.id)
 
-  const backendModelName = directivesManager.getChatBotBackend(
-    guildId,
-    channelId
-  )
+  const backendModelName = directivesManager.getChatBotBackend(guildId, channelId)
   const backendConfig = directivesManager.getChatBotBackend(guildId, channelId)
-  const toolFunctionContext = new ToolFunctionContext(
-    event,
-    directivesManager,
-    contextManager
-  )
+  const toolFunctionContext = new ToolFunctionContext(event, directivesManager, contextManager)
 
-  let modelMessageAccumulated = ""
+  let modelMessageAccumulated = ''
   const queue = new TaskQueue()
   const onMessage = async (message: string) => {
-    if (message === "") {
+    if (message === '') {
       return
     }
     modelMessageAccumulated += message
     queue.submit(async () => {
       try {
-        info("update message part", modelMessageAccumulated.length)
+        info('update message part', modelMessageAccumulated.length)
         await Requests.updateChannelMessage(
           {
             msg_id: createdMessage.msg_id,
             content: CardBuilder.fromTemplate()
-              .addIconWithKMarkdownText(
-                "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-                ""
-              )
+              .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', '')
               .addKMarkdownText(modelMessageAccumulated)
               .build(),
             quote: event.msg_id,
             extra: {
               type: KEventType.KMarkdown,
-              target_id: event.target_id
-            }
+              target_id: event.target_id,
+            },
           },
           { guildId, originalTextContent: modelMessageAccumulated }
         )
@@ -329,25 +279,22 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   const onMessageEnd = async (message: string) => {
     queue.stop()
-    let lastUpdateErrorMessage = ""
+    let lastUpdateErrorMessage = ''
 
     modelMessageAccumulated = message
-    info("update final message", modelMessageAccumulated)
+    info('update final message', modelMessageAccumulated)
     const result = await Requests.updateChannelMessage(
       {
         msg_id: createdMessage.msg_id,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(
-            "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-            ""
-          )
+          .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', '')
           .addKMarkdownText(modelMessageAccumulated)
           .build(),
         quote: event.msg_id,
         extra: {
           type: KEventType.KMarkdown,
-          target_id: event.target_id
-        }
+          target_id: event.target_id,
+        },
       },
       { guildId, originalTextContent: modelMessageAccumulated }
     )
@@ -356,7 +303,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       lastUpdateErrorMessage = result.message
     }
 
-    info("full model response", modelMessageAccumulated)
+    info('full model response', modelMessageAccumulated)
     const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
 
     if (!isUpdateMessageSuccess) {
@@ -365,60 +312,40 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           msg_id: createdMessage.msg_id,
           content: CardBuilder.fromTemplate()
             .addIconWithKMarkdownText(
-              "https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png",
-              "消息发送失败了！"
+              'https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png',
+              '消息发送失败了！'
             )
             .addKMarkdownText(userSideErrorMessage)
             .build(),
           quote: event.msg_id,
           extra: {
             type: KEventType.KMarkdown,
-            target_id: event.target_id
-          }
+            target_id: event.target_id,
+          },
         },
         { guildId, originalTextContent: userSideErrorMessage }
       )
-      error(
-        "Failed to update message",
-        createdMessage.msg_id,
-        "reason:",
-        lastUpdateErrorMessage
-      )
+      error('Failed to update message', createdMessage.msg_id, 'reason:', lastUpdateErrorMessage)
     }
   }
 
   const backend =
     backendConfig === ChatBotBackend.Ernie
       ? chatCompletionErnie
-      : backendConfig.startsWith("deepseek")
-      ? (
-          groupChat: boolean,
-          context: ContextUnit[],
-          onMessage: (message: string) => void,
-          onMessageEnd: (message: string) => void
-        ) =>
-          chatCompletionDeepSeek(
-            toolFunctionContext,
-            groupChat,
-            context,
-            backendModelName,
-            onMessage,
-            onMessageEnd
-          )
-      : (
-          groupChat: boolean,
-          context: ContextUnit[],
-          onMessage: (message: string) => void,
-          onMessageEnd: (message: string) => void
-        ) =>
-          chatCompletionChatGpt(
-            toolFunctionContext,
-            groupChat,
-            context,
-            backendModelName,
-            onMessage,
-            onMessageEnd
-          )
+      : backendConfig.startsWith('deepseek')
+        ? (
+            groupChat: boolean,
+            context: ContextUnit[],
+            onMessage: (message: string) => void,
+            onMessageEnd: (message: string) => void
+          ) =>
+            chatCompletionDeepSeek(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
+        : (
+            groupChat: boolean,
+            context: ContextUnit[],
+            onMessage: (message: string) => void,
+            onMessageEnd: (message: string) => void
+          ) => chatCompletionChatGpt(toolFunctionContext, groupChat, context, backendModelName, onMessage, onMessageEnd)
 
   try {
     await backend(isGroupChat, context, onMessage, onMessageEnd)
@@ -426,14 +353,12 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     try {
       await backend(isGroupChat, context, onMessage, onMessageEnd)
     } catch {
-      error("Failed to respond to", displayName, "reason:", "unknown")
+      error('Failed to respond to', displayName, 'reason:', 'unknown')
     }
   }
 }
 
-async function handleTextChannelMultimediaMessage(
-  event: KEvent<KTextChannelExtra>
-) {
+async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtra>) {
   const dataUrl = event.content
   const guildId = event.extra?.guild_id
   const channelId = event.target_id
@@ -453,68 +378,64 @@ async function handleTextChannelMultimediaMessage(
   const displayName = displayNameFromUser(author)
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
   const whitelisted =
-    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {}).hasOwnProperty(
-      guildId
-    ) || calledByTrustedUser
+    (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {}).hasOwnProperty(guildId) || calledByTrustedUser
 
   if (!whitelisted) {
     return
   }
 
-  info("extra", event.extra)
+  info('extra', event.extra)
 }
 
 async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
   let value: KCardButtonValue
 
   if (!event.extra?.body?.user_info) {
-    info("No user info in event")
+    info('No user info in event')
     return
   }
 
   const eventBody = event.extra.body
 
   try {
-    value = JSON.parse(eventBody.value || "{}")
+    value = JSON.parse(eventBody.value || '{}')
   } catch (e) {
-    info("Failed to parse card button value", e)
+    info('Failed to parse card button value', e)
     return
   }
 
   switch (value.kind) {
-    case "prize-draw": {
+    case 'prize-draw': {
       const prizeId = value.args[0]
       const result = drawPrize(prizeId, eventBody.user_info)
       const cardBuilder = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuCute, "抽奖通知！")
-        .addKMarkdownText(result.message || "祝你好运！")
+        .addIconWithKMarkdownText(CardIcons.MikuCute, '抽奖通知！')
+        .addKMarkdownText(result.message || '祝你好运！')
       Requests.createChannelPrivateMessage({
         channelId: eventBody.target_id,
         targetUserId: eventBody.user_info.id,
-        cardBuilder
+        cardBuilder,
       })
       break
     }
 
-    case "vote-submit": {
+    case 'vote-submit': {
       const voteId = value.args[0]
       const optionTitle = value.args[1]
-      submitVote(voteId, eventBody.user_info, optionTitle).then(
-        ({ message }) => {
-          const cardBuilder = CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(CardIcons.MikuCute, "投票通知！")
-            .addKMarkdownText(message)
-          Requests.createChannelPrivateMessage({
-            channelId: eventBody.target_id,
-            targetUserId: eventBody.user_info.id,
-            cardBuilder
-          })
-        }
-      )
+      submitVote(voteId, eventBody.user_info, optionTitle).then(({ message }) => {
+        const cardBuilder = CardBuilder.fromTemplate()
+          .addIconWithKMarkdownText(CardIcons.MikuCute, '投票通知！')
+          .addKMarkdownText(message)
+        Requests.createChannelPrivateMessage({
+          channelId: eventBody.target_id,
+          targetUserId: eventBody.user_info.id,
+          cardBuilder,
+        })
+      })
       break
     }
 
-    case "code-view": {
+    case 'code-view': {
       const codeBlockId = value.args[0]
       viewCodeBlock(eventBody.user_info, eventBody.target_id, codeBlockId)
       break
@@ -552,28 +473,24 @@ function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
   }
 
   switch (extra.type) {
-    case "deleted_message": {
+    case 'deleted_message': {
       if (extra.body.channel_id && extra.body.msg_id) {
-        info("Deleted message", extra.body.msg_id)
-        contextManager.deleteMessageFromContext(
-          guildId,
-          extra.body.channel_id,
-          extra.body.msg_id
-        )
+        info('Deleted message', extra.body.msg_id)
+        contextManager.deleteMessageFromContext(guildId, extra.body.channel_id, extra.body.msg_id)
       }
       break
     }
 
-    case "message_btn_click": {
-      info("Button clicked", extra.body)
+    case 'message_btn_click': {
+      info('Button clicked', extra.body)
       dispatchCardButtonEvent(event as KEvent<KCardButtonExtra>)
     }
   }
 }
 
 function handleReset() {
-  botEventEmitter.emit("send-lark-message", {
-    title: "Miku Event",
-    message: "Server: Reset"
+  botEventEmitter.emit('send-lark-message', {
+    title: 'Miku Event',
+    message: 'Server: Reset',
   })
 }

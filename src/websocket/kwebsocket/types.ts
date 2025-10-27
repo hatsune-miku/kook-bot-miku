@@ -7,17 +7,17 @@
  */
 
 export enum KWSState {
-  OPENING_GATEWAY = "OPENING_GATEWAY",
-  OPENING_GATEWAY_1ST_RETRY = "OPENING_GATEWAY_1ST_RETRY",
-  OPENING_GATEWAY_LAST_RETRY = "OPENING_GATEWAY_LAST_RETRY",
-  OPENING_GATEWAY_AFTER_DISCONNECT = "OPENING_GATEWAY_AFTER_DISCONNECT",
-  WAITING_FOR_HANDSHAKE = "WAITING_FOR_HANDSHAKE",
-  CONNECTED = "CONNECTED",
-  WAITING_FOR_HEARTBEAT_RESPONSE = "WAITING_FOR_HEARTBEAT_RESPONSE",
-  WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY = "WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY",
-  WAITING_FOR_HEARTBEAT_RESPONSE_LAST_RETRY = "WAITING_FOR_HEARTBEAT_RESPONSE_LAST_RETRY",
-  WAITING_FOR_RESUME_OK = "WAITING_FOR_RESUME_OK",
-  IDLE = "IDLE"
+  OPENING_GATEWAY = 'OPENING_GATEWAY',
+  OPENING_GATEWAY_1ST_RETRY = 'OPENING_GATEWAY_1ST_RETRY',
+  OPENING_GATEWAY_LAST_RETRY = 'OPENING_GATEWAY_LAST_RETRY',
+  OPENING_GATEWAY_AFTER_DISCONNECT = 'OPENING_GATEWAY_AFTER_DISCONNECT',
+  WAITING_FOR_HANDSHAKE = 'WAITING_FOR_HANDSHAKE',
+  CONNECTED = 'CONNECTED',
+  WAITING_FOR_HEARTBEAT_RESPONSE = 'WAITING_FOR_HEARTBEAT_RESPONSE',
+  WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY = 'WAITING_FOR_HEARTBEAT_RESPONSE_1ST_RETRY',
+  WAITING_FOR_HEARTBEAT_RESPONSE_LAST_RETRY = 'WAITING_FOR_HEARTBEAT_RESPONSE_LAST_RETRY',
+  WAITING_FOR_RESUME_OK = 'WAITING_FOR_RESUME_OK',
+  IDLE = 'IDLE',
 }
 
 export enum KMessageKind {
@@ -27,7 +27,7 @@ export enum KMessageKind {
   Pong = 3,
   Resume = 4,
   Reconnect = 5,
-  ResumeAck = 6
+  ResumeAck = 6,
 }
 
 /**
@@ -72,13 +72,11 @@ export enum KEventType {
   Audio = 8,
   KMarkdown = 9,
   Card = 10,
-  System = 255
+  System = 255,
 }
 
-export interface KEvent<
-  KExtraType extends KTextChannelExtra | KSystemEventExtra | unknown
-> {
-  channel_type: "GROUP" | "PERSON" | "BROADCAST"
+export interface KEvent<KExtraType extends KTextChannelExtra | KSystemEventExtra | unknown> {
+  channel_type: 'GROUP' | 'PERSON' | 'BROADCAST'
   type: KEventType
 
   /**
@@ -155,12 +153,10 @@ export interface KTextChannelExtra {
 }
 
 // https://developer.kookapp.cn/doc/event/event-introduction
-export type KSystemEventExtra =
-  | KDeletedMessageSystemEventExtra
-  | KCardButtonExtra
+export type KSystemEventExtra = KDeletedMessageSystemEventExtra | KCardButtonExtra
 
 export interface KDeletedMessageSystemEventExtra {
-  type: "deleted_message"
+  type: 'deleted_message'
   body: {
     msg_id: string
     channel_id: string
@@ -169,7 +165,7 @@ export interface KDeletedMessageSystemEventExtra {
 }
 
 export interface KCardButtonExtra {
-  type: "message_btn_click"
+  type: 'message_btn_click'
   body: {
     msg_id: string
     user_id: string

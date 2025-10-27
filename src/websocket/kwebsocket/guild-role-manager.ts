@@ -1,5 +1,5 @@
-import { Requests } from "../../utils/krequest/request"
-import { info } from "../../utils/logging/logger"
+import { Requests } from '../../utils/krequest/request'
+import { info } from '../../utils/logging/logger'
 
 /**
  * Bot在不同服务器有不同Role ID
@@ -16,7 +16,7 @@ export class GuildRoleManager {
 
     const result = await Requests.queryUser({
       user_id: userId,
-      guild_id: guildId
+      guild_id: guildId,
     })
 
     if (!result.success) {

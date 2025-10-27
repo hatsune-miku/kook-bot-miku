@@ -1,6 +1,6 @@
-import { KEvent, KTextChannelExtra } from "../../websocket/kwebsocket/types"
-import { ContextManager } from "../context-manager"
-import { ChatDirectivesManager } from "../directives"
+import { KEvent, KTextChannelExtra } from '../../websocket/kwebsocket/types'
+import { ContextManager } from '../context-manager'
+import { ChatDirectivesManager } from '../directives'
 
 export class ToolFunctionContext {
   constructor(

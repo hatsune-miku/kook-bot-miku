@@ -1,28 +1,29 @@
-import { ChatCompletionTool } from "openai/resources"
-import { IFunctionTool } from "../dispatch"
-import { ToolFunctionContext } from "../../context"
+import { ChatCompletionTool } from 'openai/resources'
+
+import { ToolFunctionContext } from '../../context'
+import { IFunctionTool } from '../dispatch'
 
 export class GetStandardTimeTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
     return {
-      type: "function",
+      type: 'function',
       function: {
-        name: "getDateTime",
-        description: "获取当前时间（北京时间）",
+        name: 'getDateTime',
+        description: '获取当前时间（北京时间）',
         parameters: {
-          type: "object",
+          type: 'object',
           properties: {},
           required: [],
-          additionalProperties: false
+          additionalProperties: false,
         },
-        strict: false
-      }
+        strict: false,
+      },
     }
   }
 
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    return new Date().toLocaleString("zh-CN", {
-      timeZone: "Asia/Shanghai"
+    return new Date().toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
     })
   }
 }

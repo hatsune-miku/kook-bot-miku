@@ -1,29 +1,31 @@
-import { ChatCompletionTool } from "openai/resources"
-import { IFunctionTool } from "../dispatch"
-import { ToolFunctionContext } from "../../context"
-import { info } from "../../../../utils/logging/logger"
-import { queryRealtimeWeatherByKeyword } from "./weather"
+import { ChatCompletionTool } from 'openai/resources'
+
+import { queryRealtimeWeatherByKeyword } from './weather'
+
+import { info } from '../../../../utils/logging/logger'
+import { ToolFunctionContext } from '../../context'
+import { IFunctionTool } from '../dispatch'
 
 export class QWeatherTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
     return {
-      type: "function",
+      type: 'function',
       function: {
-        name: "getRealtimeWeather",
-        description: "获取实时天气",
+        name: 'getRealtimeWeather',
+        description: '获取实时天气',
         parameters: {
-          type: "object",
+          type: 'object',
           properties: {
             city: {
-              type: "string",
-              description: "城市名"
-            }
+              type: 'string',
+              description: '城市名',
+            },
           },
-          required: ["city"],
-          additionalProperties: false
+          required: ['city'],
+          additionalProperties: false,
         },
-        strict: false
-      }
+        strict: false,
+      },
     }
   }
 
@@ -33,7 +35,7 @@ export class QWeatherTool implements IFunctionTool {
       const result = await queryRealtimeWeatherByKeyword(params.city)
       return JSON.stringify(result)
     } catch (e: any) {
-      return `获取天气信息失败: ${e?.message || "未知错误"}`
+      return `获取天气信息失败: ${e?.message || '未知错误'}`
     }
   }
 }

@@ -5,40 +5,41 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
+import { readFile } from 'fs/promises'
+import { DateTime } from 'luxon'
+import { lookup } from 'mime-types'
+import { sleep } from 'radash'
 
-import { error, info } from "../logging/logger"
 import {
+  ContextProps,
   CreateChannelMessageProps,
   CreateChannelMessageResult,
+  CreateChannelPrivateMessageProps,
   EditChannelMessageProps,
   KGatewayResult,
   KRateLimitHeader,
   KResponse,
   KResponseExt,
-  QuerySelfResult,
   KResponseHeader,
+  QuerySelfResult,
   QuerySelfExtendProps as QueryUserProps,
   WhoAmIExtendResult as QueryUserResult,
-  CreateChannelPrivateMessageProps,
-  ContextProps
-} from "./types"
-import { KEventType, OpenGatewayProps } from "../../websocket/kwebsocket/types"
-import { Env, reloadConfig } from "../env/env"
-import { DateTime } from "luxon"
-import { die } from "../server/die"
-import { MessageLengthUpperBound } from "../config/config"
-import { sleep } from "radash"
-import { lookup } from "mime-types"
-import { readFile } from "fs/promises"
-import { ContextManager } from "../../chat/context-manager"
-import { shared } from "../../global/shared"
+} from './types'
+
+import { ContextManager } from '../../chat/context-manager'
+import { shared } from '../../global/shared'
+import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
+import { MessageLengthUpperBound } from '../config/config'
+import { Env, reloadConfig } from '../env/env'
+import { error, info } from '../logging/logger'
+import { die } from '../server/die'
 
 reloadConfig()
 
 export const BASE_URL = Env.KOOKBaseUrl
 export const AUTHORIZATION = `Bot ${Env.BotToken}`
 
-export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE"
+export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 const bucketToSpeedLimitIndication = new Map<string, KRateLimitHeader | null>()
 
@@ -59,7 +60,7 @@ export class Requests {
     isFormData: boolean = false,
     returnRaw: boolean = false
   ): Promise<KResponseExt<T>> {
-    const bucket = url.replace(`/api/v3/`, "")
+    const bucket = url.replace(`/api/v3/`, '')
 
     if (disabledUntil > DateTime.now().toMillis()) {
       return fail(1147, `All requests blocked until ${disabledUntil}`)
@@ -75,25 +76,25 @@ export class Requests {
 
     const requestData: any = data ?? {}
     const headers: HeadersInit = {
-      Authorization: AUTHORIZATION
+      Authorization: AUTHORIZATION,
     }
     if (!isFormData) {
-      headers["Content-type"] = "application/json"
+      headers['Content-type'] = 'application/json'
     }
 
     const request: RequestInit = {
       headers: headers,
-      method: method
+      method: method,
     }
 
-    if (method === "POST" || method === "PUT" || method === "DELETE") {
-      if (method === "POST" && isFormData) {
+    if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+      if (method === 'POST' && isFormData) {
         request.body = requestData
       } else {
         request.body = JSON.stringify(requestData)
       }
     } else {
-      url += "?" + queryFromObject(requestData)
+      url += '?' + queryFromObject(requestData)
     }
 
     let responseText: string
@@ -115,23 +116,18 @@ export class Requests {
       }
     } catch (e) {
       error(e)
-      return fail(1145, "网络错误")
+      return fail(1145, '网络错误')
     }
 
     if (responseHeader) {
       const actualBucket = responseHeader.rateLimit.bucket
-      if (
-        actualBucket !== bucket &&
-        !actualBucket.includes(bucket) &&
-        !bucket.includes(actualBucket)
-      ) {
+      if (actualBucket !== bucket && !actualBucket.includes(bucket) && !bucket.includes(actualBucket)) {
         die(`Bucket not match (expected=${bucket}, actual=${actualBucket}).`)
       }
 
       if (responseHeader.rateLimit.didTriggeredGlobalRateLimit) {
-        disabledUntil =
-          responseHeader.rateLimit.timestampSecondsWhenFullyRecovered * 1000
-        return fail(1146, "Speed rate hard limit reached.")
+        disabledUntil = responseHeader.rateLimit.timestampSecondsWhenFullyRecovered * 1000
+        return fail(1146, 'Speed rate hard limit reached.')
       }
       bucketToSpeedLimitIndication.set(bucket, responseHeader.rateLimit)
     }
@@ -139,8 +135,8 @@ export class Requests {
     try {
       responseObject = JSON.parse(responseText)
     } catch {
-      error("返回数据不是有效的JSON")
-      return fail(1145, "返回数据不是有效的JSON")
+      error('返回数据不是有效的JSON')
+      return fail(1145, '返回数据不是有效的JSON')
     }
 
     return { success: true, ...responseObject }
@@ -150,29 +146,24 @@ export class Requests {
    * @param props compress: 是否压缩？fromDisconnect: 是否为断线重连？
    * @returns
    */
-  static async openGateway(
-    props: OpenGatewayProps
-  ): Promise<KResponseExt<KGatewayResult>> {
+  static async openGateway(props: OpenGatewayProps): Promise<KResponseExt<KGatewayResult>> {
     const queryParams: any = {
-      compress: props.compress ? 1 : 0
+      compress: props.compress ? 1 : 0,
     }
 
     if (props.fromDisconnect) {
-      queryParams["resume"] = 1
-      queryParams["sn"] = props.lastProcessedSn
-      queryParams["session_id"] = props.lastSessionId
+      queryParams['resume'] = 1
+      queryParams['sn'] = props.lastProcessedSn
+      queryParams['session_id'] = props.lastSessionId
     }
 
-    return Requests.request("/api/v3/gateway/index", "GET", queryParams)
+    return Requests.request('/api/v3/gateway/index', 'GET', queryParams)
   }
 
-  static async reactToMessage(
-    messageId: string,
-    emojiCode: string
-  ): Promise<KResponseExt<[]>> {
-    return this.request(`/api/v3/message/add-reaction`, "POST", {
+  static async reactToMessage(messageId: string, emojiCode: string): Promise<KResponseExt<[]>> {
+    return this.request(`/api/v3/message/add-reaction`, 'POST', {
       msg_id: messageId,
-      emoji: emojiCode
+      emoji: emojiCode,
     })
   }
 
@@ -184,26 +175,23 @@ export class Requests {
     let shouldPrependMarkdownMark = false
 
     for (let i = 0; i < chunks; ++i) {
-      let chunk = props.content.slice(
-        i * MessageLengthUpperBound,
-        (i + 1) * MessageLengthUpperBound
-      )
+      let chunk = props.content.slice(i * MessageLengthUpperBound, (i + 1) * MessageLengthUpperBound)
 
       if (shouldPrependMarkdownMark) {
-        chunk = "\n```\n" + chunk
+        chunk = '\n```\n' + chunk
         shouldPrependMarkdownMark = false
       }
 
       // 有奇数个 ``` 标记
       const markdownMarkCount = (chunk.match(/```/g) ?? []).length
       if (markdownMarkCount % 2 !== 0) {
-        chunk += "\n```\n"
+        chunk += '\n```\n'
         shouldPrependMarkdownMark = true
       }
 
-      ret = await this.request(`/api/v3/message/create`, "POST", {
+      ret = await this.request(`/api/v3/message/create`, 'POST', {
         ...props,
-        content: `(${i + 1}/${chunks}) ${chunk}`
+        content: `(${i + 1}/${chunks}) ${chunk}`,
       })
       await sleep(100)
     }
@@ -218,26 +206,16 @@ export class Requests {
       return this.createChannelMessageChunk(props)
     }
     info(props)
-    const result: KResponseExt<CreateChannelMessageResult> = await this.request(
-      `/api/v3/message/create`,
-      "POST",
-      props
-    )
+    const result: KResponseExt<CreateChannelMessageResult> = await this.request(`/api/v3/message/create`, 'POST', props)
     if (guildId && result.code === 0 && result.data?.msg_id) {
-      info(
-        "Appending context",
-        guildId,
-        props.target_id,
-        shared.me.id,
-        originalTextContent
-      )
+      info('Appending context', guildId, props.target_id, shared.me.id, originalTextContent)
       Requests.contextManager?.appendToContext(
         guildId,
         props.target_id,
         shared.me.id,
         result.data.msg_id,
-        "Miku",
-        "assistant",
+        'Miku',
+        'assistant',
         originalTextContent ?? props.content,
         false
       )
@@ -248,21 +226,17 @@ export class Requests {
   static async createChannelPrivateMessage({
     cardBuilder,
     targetUserId,
-    channelId
-  }: CreateChannelPrivateMessageProps): Promise<
-    KResponseExt<CreateChannelMessageResult>
-  > {
+    channelId,
+  }: CreateChannelPrivateMessageProps): Promise<KResponseExt<CreateChannelMessageResult>> {
     const cardContent = cardBuilder
       .addDivider()
-      .addKMarkdownText(
-        `(met)${targetUserId}(met)(font)，这条消息仅你可见。(font)[secondary]`
-      )
+      .addKMarkdownText(`(met)${targetUserId}(met)(font)，这条消息仅你可见。(font)[secondary]`)
       .build()
     return this.createChannelMessage({
       type: KEventType.Card,
       target_id: channelId,
       temp_target_id: targetUserId,
-      content: cardContent
+      content: cardContent,
     })
   }
 
@@ -274,22 +248,18 @@ export class Requests {
       return this.createChannelMessageChunk({
         type: props.extra.type,
         target_id: props.extra.target_id,
-        ...props
+        ...props,
       })
     }
-    const result: KResponseExt<{}> = await this.request(
-      `/api/v3/message/update`,
-      "POST",
-      props
-    )
+    const result: KResponseExt<{}> = await this.request(`/api/v3/message/update`, 'POST', props)
     if (result.code === 0 && guildId) {
       Requests.contextManager?.updateExistingContext(
         guildId,
         props.extra.target_id,
         shared.me.id,
         props.msg_id,
-        "Miku",
-        "assistant",
+        'Miku',
+        'assistant',
         originalTextContent ?? props.content,
         false
       )
@@ -299,33 +269,25 @@ export class Requests {
 
   static async uploadFile(path: string): Promise<[string, number]> {
     const fileData = new Blob([await readFile(path)], {
-      type: lookup(path) || undefined
+      type: lookup(path) || undefined,
     })
     const requestData = new FormData()
-    requestData.append("file", fileData, path)
+    requestData.append('file', fileData, path)
 
-    const result = (await this.request(
-      `/api/v3/asset/create`,
-      "POST",
-      requestData,
-      true,
-      true
-    )) as any as string
+    const result = (await this.request(`/api/v3/asset/create`, 'POST', requestData, true, true)) as any as string
     info(`Upload file result: ${result}`, requestData, fileData)
     const resultParsed = JSON.parse(result)
-    const url = resultParsed.data?.url || ""
+    const url = resultParsed.data?.url || ''
     const size = fileData.size
     return [url, size]
   }
 
   static async querySelfUser(): Promise<KResponseExt<QuerySelfResult>> {
-    return this.request(`/api/v3/user/me`, "GET")
+    return this.request(`/api/v3/user/me`, 'GET')
   }
 
-  static async queryUser(
-    props: QueryUserProps
-  ): Promise<KResponseExt<QueryUserResult>> {
-    return this.request(`/api/v3/user/view`, "GET", props)
+  static async queryUser(props: QueryUserProps): Promise<KResponseExt<QueryUserResult>> {
+    return this.request(`/api/v3/user/view`, 'GET', props)
   }
 }
 
@@ -335,7 +297,7 @@ export class Requests {
 export function queryFromObject(obj: Record<string, any>): string {
   return Object.keys(obj)
     .map((key) => `${key}=${obj[key]}`)
-    .join("&")
+    .join('&')
 }
 
 function fail(code: number, message: string): KResponseExt<any> {
@@ -349,31 +311,26 @@ function success<T>(message: string, data: T): KResponseExt<T> {
 function failureFromCode(statusCode: number): KResponseExt<any> {
   switch (statusCode) {
     case 401:
-      return fail(401, "未授权")
+      return fail(401, '未授权')
     case 403:
-      return fail(403, "禁止访问")
+      return fail(403, '禁止访问')
     case 404:
-      return fail(404, "找不到资源")
+      return fail(404, '找不到资源')
     case 500:
-      return fail(500, "服务器错误")
+      return fail(500, '服务器错误')
     default:
-      return fail(1145, "未知错误")
+      return fail(1145, '未知错误')
   }
 }
 
 function extractKResponseHeader(headers: Headers): KResponseHeader | undefined {
-  const requestsAllowed = headers.get("X-Rate-Limit-Limit")
-  const requestsRemaining = headers.get("X-Rate-Limit-Remaining")
-  const timestampSecondsWhenFullyRecovered = headers.get("X-Rate-Limit-Reset")
-  const bucket = headers.get("X-Rate-Limit-Bucket")
-  const didTriggeredGlobalRateLimit = headers.get("X-Rate-Limit-Global")
+  const requestsAllowed = headers.get('X-Rate-Limit-Limit')
+  const requestsRemaining = headers.get('X-Rate-Limit-Remaining')
+  const timestampSecondsWhenFullyRecovered = headers.get('X-Rate-Limit-Reset')
+  const bucket = headers.get('X-Rate-Limit-Bucket')
+  const didTriggeredGlobalRateLimit = headers.get('X-Rate-Limit-Global')
 
-  if (
-    !requestsAllowed ||
-    !requestsRemaining ||
-    !timestampSecondsWhenFullyRecovered ||
-    !bucket
-  ) {
+  if (!requestsAllowed || !requestsRemaining || !timestampSecondsWhenFullyRecovered || !bucket) {
     return undefined
   }
 
@@ -381,11 +338,9 @@ function extractKResponseHeader(headers: Headers): KResponseHeader | undefined {
     rateLimit: {
       requestsAllowed: Number.parseInt(requestsAllowed),
       requestsRemaining: Number.parseInt(requestsRemaining),
-      timestampSecondsWhenFullyRecovered: Number.parseInt(
-        timestampSecondsWhenFullyRecovered
-      ),
+      timestampSecondsWhenFullyRecovered: Number.parseInt(timestampSecondsWhenFullyRecovered),
       bucket: bucket,
-      didTriggeredGlobalRateLimit: !!didTriggeredGlobalRateLimit
-    }
+      didTriggeredGlobalRateLimit: !!didTriggeredGlobalRateLimit,
+    },
   }
 }

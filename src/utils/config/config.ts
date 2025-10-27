@@ -1,10 +1,7 @@
-import { readFileSync, writeFileSync } from "fs"
-import {
-  ChatBotBackend,
-  ContextUnit,
-  GroupChatStrategy
-} from "../../chat/types"
-import { info } from "../logging/logger"
+import { readFileSync, writeFileSync } from 'fs'
+
+import { ChatBotBackend, ContextUnit, GroupChatStrategy } from '../../chat/types'
+import { info } from '../logging/logger'
 
 export const MessageLengthUpperBound = Math.round(4000 * 0.9)
 
@@ -16,11 +13,11 @@ export default class ConfigUtils {
 
   static initialize() {
     try {
-      const configRaw = readFileSync("config.json", {
-        encoding: "utf-8"
+      const configRaw = readFileSync('config.json', {
+        encoding: 'utf-8',
       })
       ConfigUtils.config = JSON.parse(configRaw)
-      console.log("Loaded user config.", ConfigUtils.config)
+      console.log('Loaded user config.', ConfigUtils.config)
     } catch (e) {
       ConfigUtils.config = {}
     }
@@ -28,10 +25,10 @@ export default class ConfigUtils {
 
   static persist() {
     try {
-      writeFileSync("config.json", JSON.stringify(ConfigUtils.config, null, 2))
-      info("Config persisted.")
+      writeFileSync('config.json', JSON.stringify(ConfigUtils.config, null, 2))
+      info('Config persisted.')
     } catch (e) {
-      console.error("Failed to persist config:", e)
+      console.error('Failed to persist config:', e)
     }
   }
 
@@ -47,32 +44,24 @@ export default class ConfigUtils {
     return config.guilds[guildId] ?? {}
   }
 
-  static getChannelConfig(
-    guildId: string,
-    channelId: string
-  ): ChannelScopeConfig {
+  static getChannelConfig(guildId: string, channelId: string): ChannelScopeConfig {
     const guildConfig = ConfigUtils.getGuildConfig(guildId)
     guildConfig.channels ??= {}
     guildConfig.channels[channelId] ??= {}
     return guildConfig.channels[channelId] ?? {}
   }
 
-  static updateGlobalConfig(
-    updater: (config: GlobalScopeConfig) => GlobalScopeConfig
-  ) {
+  static updateGlobalConfig(updater: (config: GlobalScopeConfig) => GlobalScopeConfig) {
     ConfigUtils.config = updater(ConfigUtils.getGlobalConfig())
   }
 
-  static updateGuildConfig(
-    guildId: string,
-    updater: (config: GuildScopeConfig) => GuildScopeConfig
-  ) {
+  static updateGuildConfig(guildId: string, updater: (config: GuildScopeConfig) => GuildScopeConfig) {
     ConfigUtils.updateGlobalConfig((config) => ({
       ...config,
       guilds: {
         ...config.guilds,
-        [guildId]: updater(config.guilds?.[guildId] ?? {})
-      }
+        [guildId]: updater(config.guilds?.[guildId] ?? {}),
+      },
     }))
   }
 
@@ -85,8 +74,8 @@ export default class ConfigUtils {
       ...guildConfig,
       channels: {
         ...guildConfig.channels,
-        [channelId]: updater(guildConfig.channels?.[channelId] ?? {})
-      }
+        [channelId]: updater(guildConfig.channels?.[channelId] ?? {}),
+      },
     }))
   }
 }

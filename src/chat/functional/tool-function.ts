@@ -1,6 +1,7 @@
-import { info } from "../../utils/logging/logger"
-import { ToolFunctionContext } from "./context"
-import { dispatchTool } from "./tool-functions/dispatch"
+import { ToolFunctionContext } from './context'
+import { dispatchTool } from './tool-functions/dispatch'
+
+import { info } from '../../utils/logging/logger'
 
 export class ToolFunctionInvoker {
   constructor(private context: ToolFunctionContext) {}
@@ -12,16 +13,12 @@ export class ToolFunctionInvoker {
     }
 
     try {
-      if (typeof params === "string") {
+      if (typeof params === 'string') {
         params = JSON.parse(params)
       }
     } catch {
-      info(
-        `[ToolFunctionInvoker] Failed to parse params: ${JSON.stringify(
-          params
-        )}`
-      )
-      return "调用失败：JSON parse failed"
+      info(`[ToolFunctionInvoker] Failed to parse params: ${JSON.stringify(params)}`)
+      return '调用失败：JSON parse failed'
     }
     return await tool.invoke(this.context, params)
   }

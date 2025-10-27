@@ -5,9 +5,8 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
-
-import { CardBuilder } from "../../helpers/card-helper"
-import { KEventType } from "../../websocket/kwebsocket/types"
+import { CardBuilder } from '../../helpers/card-helper'
+import { KEventType } from '../../websocket/kwebsocket/types'
 
 /**
  * 仅Bot内部使用的扩展类型，其中 `success` 等价于 `code === 0`

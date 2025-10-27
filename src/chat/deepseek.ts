@@ -5,23 +5,24 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
+import OpenAI from 'openai'
+import { ChatCompletionMessageParam } from 'openai/resources'
+import { ChatCompletionContentPart, Completions } from 'openai/resources/chat'
+import { draw } from 'radash'
 
-import OpenAI from "openai"
-import { Env } from "../utils/env/env"
-import { draw } from "radash"
-import { ChatCompletionMessageParam } from "openai/resources"
-import { ContextUnit } from "./types"
-import { ToolFunctionInvoker } from "./functional/tool-function"
-import { getChatCompletionTools } from "./functional/tool-functions/dispatch"
-import { ToolFunctionContext } from "./functional/context"
-import { info } from "../utils/logging/logger"
-import { ChatCompletionContentPart, Completions } from "openai/resources/chat"
-import { KCardMessageElement, KCardMessageSubElement } from "../events"
+import { ToolFunctionContext } from './functional/context'
+import { ToolFunctionInvoker } from './functional/tool-function'
+import { getChatCompletionTools } from './functional/tool-functions/dispatch'
+import { ContextUnit } from './types'
+
+import { KCardMessageElement, KCardMessageSubElement } from '../events'
+import { Env } from '../utils/env/env'
+import { info } from '../utils/logging/logger'
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   const normalUnit: ChatCompletionMessageParam = {
-    role: "user",
-    content: `${unit.name}(id=${unit.id})说: ${unit.content}`
+    role: 'user',
+    content: `${unit.name}(id=${unit.id})说: ${unit.content}`,
   }
 
   let parsed: any
@@ -41,7 +42,7 @@ function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   }
 
   const message = parsed as KCardMessageElement
-  const isCardMessage = message.type === "card" && message.theme?.length > 1
+  const isCardMessage = message.type === 'card' && message.theme?.length > 1
   if (!isCardMessage) {
     return normalUnit
   }
@@ -51,29 +52,26 @@ function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
     return normalUnit
   }
 
-  const processModules = (
-    modules: KCardMessageSubElement[],
-    onImageFound: (src: string) => void
-  ) => {
+  const processModules = (modules: KCardMessageSubElement[], onImageFound: (src: string) => void) => {
     for (const m of modules) {
-      if (m.type === "container") {
+      if (m.type === 'container') {
         processModules(m.elements || [], onImageFound)
-      } else if (m.type.includes("image")) {
+      } else if (m.type.includes('image')) {
         onImageFound(m.src)
       }
     }
   }
 
   const result: ChatCompletionMessageParam = {
-    role: "user",
-    content: []
+    role: 'user',
+    content: [],
   }
 
   try {
     processModules(modules, (src) => {
       ;(result.content as Array<ChatCompletionContentPart>).push({
-        type: "text",
-        text: "image url attached: " + src
+        type: 'text',
+        text: 'image url attached: ' + src,
       })
     })
     if ((result.content as Array<ChatCompletionContentPart>).length === 0) {
@@ -85,15 +83,12 @@ function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   }
 }
 
-function makeContext(
-  groupChat: boolean,
-  context: ContextUnit[]
-): ChatCompletionMessageParam[] {
+function makeContext(groupChat: boolean, context: ContextUnit[]): ChatCompletionMessageParam[] {
   if (groupChat) {
     const units = context.map(mapContextUnit)
     return [
       {
-        role: "system",
+        role: 'system',
         content: `请你作为KOOK平台的活泼群聊成员Miku参与讨论，以最后一条消息为最高优先级。注意：
           - 直接开始回答，不要带"Miku(id=xxx)说:"的前缀
           - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
@@ -104,17 +99,17 @@ function makeContext(
               - 请勿使用 #, ##, ###
               - 必须使用半角括号
               - 支持 (spl)文字点击后显示(spl) 语法来显示带有剧透的内容
-              - 支持 (met)对方整数id(met) 语法来提及（@）对方，例如 (met)123456(met)`
+              - 支持 (met)对方整数id(met) 语法来提及（@）对方，例如 (met)123456(met)`,
       },
-      ...(units as ChatCompletionMessageParam[])
+      ...(units as ChatCompletionMessageParam[]),
     ]
   }
   return [
     {
-      role: "system",
-      content: "你是DeepSeek，作为某即时通讯平台的Bot，为用户提供简短的解答。"
+      role: 'system',
+      content: '你是DeepSeek，作为某即时通讯平台的Bot，为用户提供简短的解答。',
     },
-    ...context
+    ...context,
   ]
 }
 
@@ -128,8 +123,8 @@ export async function chatCompletionStreamed(
 ) {
   const openai = new OpenAI({
     // baseURL: "https://api.deepseek.com",
-    baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-    apiKey: draw(Env.VolcKeys)!
+    baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: draw(Env.VolcKeys)!,
   })
 
   let messages = makeContext(groupChat, context)
@@ -137,20 +132,17 @@ export async function chatCompletionStreamed(
 
   let functionsFulfilled = false
   let mergedChunks = []
-  let responseMessage = ""
+  let responseMessage = ''
 
   while (!functionsFulfilled) {
     const completionStreamed = await openai.chat.completions.create({
       messages: messages,
       model: model,
       tools: await getChatCompletionTools(),
-      stream: true
+      stream: true,
     })
 
-    let mergedToolCalls: Record<
-      number,
-      Completions.ChatCompletionChunk.Choice.Delta.ToolCall
-    > = {}
+    let mergedToolCalls: Record<number, Completions.ChatCompletionChunk.Choice.Delta.ToolCall> = {}
 
     for await (const part of completionStreamed) {
       const delta = part.choices?.[0]?.delta
@@ -160,19 +152,16 @@ export async function chatCompletionStreamed(
       }
 
       const toolCalls = delta.tool_calls
-      const noToolCallsPresent =
-        !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
-      functionsFulfilled =
-        noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
-      const functionsMerged =
-        noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
+      const noToolCallsPresent = !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+      functionsFulfilled = noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
+      const functionsMerged = noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
       const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
 
       if (functionsFulfilled) {
-        const content = delta.content || ""
+        const content = delta.content || ''
         mergedChunks.push(content)
         if (mergedChunks.length >= 3) {
-          const content = mergedChunks.join("")
+          const content = mergedChunks.join('')
           // info(`[Chat] Merged chunks`, content)
           onMessage(content)
           mergedChunks = []
@@ -183,33 +172,26 @@ export async function chatCompletionStreamed(
         const mergedToolCallsArray = Object.values(mergedToolCalls)
 
         messages.push({
-          role: "assistant",
+          role: 'assistant',
           tool_calls: mergedToolCallsArray.map((toolCall) => ({
             id: toolCall.id!,
             function: {
-              name: toolCall.function?.name || "",
-              arguments: toolCall.function?.arguments || ""
+              name: toolCall.function?.name || '',
+              arguments: toolCall.function?.arguments || '',
             },
-            type: toolCall.type!
-          }))
+            type: toolCall.type!,
+          })),
         })
 
         for (const toolCall of mergedToolCallsArray) {
-          if (
-            !toolCall?.id ||
-            !toolCall.function?.name ||
-            !toolCall.function?.arguments
-          ) {
+          if (!toolCall?.id || !toolCall.function?.name || !toolCall.function?.arguments) {
             continue
           }
-          const result = await toolInvoker.invoke(
-            toolCall.function.name,
-            toolCall.function.arguments
-          )
+          const result = await toolInvoker.invoke(toolCall.function.name, toolCall.function.arguments)
           messages.push({
-            role: "tool",
+            role: 'tool',
             tool_call_id: toolCall.id,
-            content: `${result}`
+            content: `${result}`,
           })
         }
       } else if (functionsMerging) {
@@ -217,10 +199,9 @@ export async function chatCompletionStreamed(
           const index = toolCallChunk.index
           if (!mergedToolCalls[index]) {
             mergedToolCalls[index] = toolCallChunk
-            mergedToolCalls[index].function ||= { arguments: "" }
+            mergedToolCalls[index].function ||= { arguments: '' }
           } else {
-            mergedToolCalls[index]!.function!.arguments +=
-              toolCallChunk!.function!.arguments || ""
+            mergedToolCalls[index]!.function!.arguments += toolCallChunk!.function!.arguments || ''
           }
         }
       }
@@ -229,12 +210,12 @@ export async function chatCompletionStreamed(
 
   if (mergedChunks.length > 0) {
     // info(`[Chat] Final merged chunks`, mergedChunks)
-    const content = mergedChunks.join("")
+    const content = mergedChunks.join('')
     onMessage(content)
   }
   onMessageEnd(responseMessage)
   messages.push({
     content: responseMessage,
-    role: "assistant"
+    role: 'assistant',
   })
 }

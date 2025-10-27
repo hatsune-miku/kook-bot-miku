@@ -1,22 +1,15 @@
-import ConfigUtils from "../utils/config/config"
-import { ContextUnit } from "./types"
+import { ContextUnit } from './types'
+
+import ConfigUtils from '../utils/config/config'
 
 export class ContextManager {
-  getContext(
-    guildId: string,
-    channelId: string,
-    userId: string
-  ): ContextUnit[] {
+  getContext(guildId: string, channelId: string, userId: string): ContextUnit[] {
     const channelConfig = ConfigUtils.getChannelConfig(guildId, channelId)
     channelConfig.userIdToContextUnits ??= {}
     return channelConfig.userIdToContextUnits?.[userId] ?? []
   }
 
-  getMixedContext(
-    guildId: string,
-    channelId: string,
-    includesFreeChat: boolean
-  ): ContextUnit[] {
+  getMixedContext(guildId: string, channelId: string, includesFreeChat: boolean): ContextUnit[] {
     const channelConfig = ConfigUtils.getChannelConfig(guildId, channelId)
     channelConfig.userIdToContextUnits ??= {}
     const userIdToContexts = channelConfig.userIdToContextUnits ?? {}
@@ -38,11 +31,7 @@ export class ContextManager {
     return units
   }
 
-  deleteMessageFromContext(
-    guildId: string,
-    channelId: string,
-    messageId: string
-  ) {
+  deleteMessageFromContext(guildId: string, channelId: string, messageId: string) {
     ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
       const userIdToContextUnits = config.userIdToContextUnits || {}
       for (const userId of Object.keys(userIdToContextUnits)) {
@@ -56,7 +45,7 @@ export class ContextManager {
       }
       return {
         ...config,
-        userIdToContextUnits: userIdToContextUnits
+        userIdToContextUnits: userIdToContextUnits,
       }
     })
   }
@@ -67,9 +56,9 @@ export class ContextManager {
     userId: string,
     messageId: string,
     displayName: string,
-    role: ContextUnit["role"],
-    content: ContextUnit["content"],
-    freeChat: ContextUnit["freeChat"]
+    role: ContextUnit['role'],
+    content: ContextUnit['content'],
+    freeChat: ContextUnit['freeChat']
   ) {
     const context = this.getContext(guildId, channelId, userId)
     context.push({
@@ -79,7 +68,7 @@ export class ContextManager {
       name: displayName,
       content: content,
       timestamp: Date.now(),
-      freeChat: freeChat
+      freeChat: freeChat,
     })
 
     if (context.length > 12) {
@@ -91,7 +80,7 @@ export class ContextManager {
       userIdToContextUnits[userId] = context
       return {
         ...config,
-        userIdToContextUnits: userIdToContextUnits
+        userIdToContextUnits: userIdToContextUnits,
       }
     })
   }
@@ -102,9 +91,9 @@ export class ContextManager {
     userId: string,
     messageId: string,
     displayName: string,
-    role: ContextUnit["role"],
-    content: ContextUnit["content"],
-    freeChat: ContextUnit["freeChat"]
+    role: ContextUnit['role'],
+    content: ContextUnit['content'],
+    freeChat: ContextUnit['freeChat']
   ) {
     const context = this.getContext(guildId, channelId, userId)
     const existingContext = context.find((unit) => unit.messageId === messageId)
@@ -124,23 +113,18 @@ export class ContextManager {
       userIdToContextUnits[userId] = context
       return {
         ...config,
-        userIdToContextUnits: userIdToContextUnits
+        userIdToContextUnits: userIdToContextUnits,
       }
     })
   }
 
-  setContext(
-    guildId: string,
-    channelId: string,
-    userId: string,
-    context: ContextUnit[]
-  ) {
+  setContext(guildId: string, channelId: string, userId: string, context: ContextUnit[]) {
     ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
       const userIdToContextUnits = config.userIdToContextUnits ?? {}
       userIdToContextUnits[userId] = context
       return {
         ...config,
-        userIdToContextUnits: userIdToContextUnits
+        userIdToContextUnits: userIdToContextUnits,
       }
     })
   }
@@ -149,7 +133,7 @@ export class ContextManager {
     ConfigUtils.updateChannelConfig(guildId, channelId, (config) => {
       return {
         ...config,
-        userIdToContextUnits: {}
+        userIdToContextUnits: {},
       }
     })
   }

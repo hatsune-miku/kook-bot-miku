@@ -1,44 +1,43 @@
-import { ChatCompletionTool } from "openai/resources"
-import { IFunctionTool } from "../dispatch"
-import { ToolFunctionContext } from "../../context"
-import { CardBuilder, CardIcons } from "../../../../helpers/card-helper"
-import { writeFileSync } from "fs"
-import { Requests } from "../../../../utils/krequest/request"
-import { KEventType } from "../../../../websocket/kwebsocket/types"
-import { draw } from "radash"
-import { Env } from "../../../../utils/env/env"
-import { shared } from "../../../../global/shared"
-import { info } from "../../../../utils/logging/logger"
-import FormData from "form-data"
-import fetch from "node-fetch"
+import FormData from 'form-data'
+import { writeFileSync } from 'fs'
+import fetch from 'node-fetch'
+import { ChatCompletionTool } from 'openai/resources'
+import { draw } from 'radash'
+
+import { shared } from '../../../../global/shared'
+import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
+import { Env } from '../../../../utils/env/env'
+import { Requests } from '../../../../utils/krequest/request'
+import { info } from '../../../../utils/logging/logger'
+import { KEventType } from '../../../../websocket/kwebsocket/types'
+import { ToolFunctionContext } from '../../context'
+import { IFunctionTool } from '../dispatch'
 
 export class DrawImageStableDiffusionTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
     return {
-      type: "function",
+      type: 'function',
       function: {
-        name: "drawImage",
+        name: 'drawImage',
         description:
-          "用户请求画图时，你需要根据需求编写英文提示词。绘画之前，你需自行检查prompt，如果你认为内容不适当、不尊重特定人或群体，应该拒绝绘画并通过getModerationCheckNoticeText来获取拦截文案。",
+          '用户请求画图时，你需要根据需求编写英文提示词。绘画之前，你需自行检查prompt，如果你认为内容不适当、不尊重特定人或群体，应该拒绝绘画并通过getModerationCheckNoticeText来获取拦截文案。',
         parameters: {
-          type: "object",
+          type: 'object',
           properties: {
             prompt: {
-              type: "string",
-              description:
-                "英文prompt。如果用户的需求是其他语言，你需要依靠LLM自身能力将其翻译为英文。"
+              type: 'string',
+              description: '英文prompt。如果用户的需求是其他语言，你需要依靠LLM自身能力将其翻译为英文。',
             },
             negative_prompt: {
-              type: "string",
-              description:
-                "负面prompt。如果用户没明确指定，你可以自行发挥或者采用空字符串。"
-            }
+              type: 'string',
+              description: '负面prompt。如果用户没明确指定，你可以自行发挥或者采用空字符串。',
+            },
           },
-          required: ["prompt", "negative_prompt"],
-          additionalProperties: false
+          required: ['prompt', 'negative_prompt'],
+          additionalProperties: false,
         },
-        strict: false
-      }
+        strict: false,
+      },
     }
   }
 
@@ -50,12 +49,10 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     const {
       code,
       message,
-      data: sendResult
+      data: sendResult,
     } = await context.directivesManager.respondCardMessageToUser({
       originalEvent: context.event,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.MikuHappy, `Miku画画中...`)
-        .build()
+      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.MikuHappy, `Miku画画中...`).build(),
     })
 
     if (code !== 0) {
@@ -66,14 +63,12 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       Requests.updateChannelMessage(
         {
           msg_id: sendResult.msg_id,
-          content: CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(iconUrl, content)
-            .build(),
+          content: CardBuilder.fromTemplate().addIconWithKMarkdownText(iconUrl, content).build(),
           quote: context.event.msg_id,
           extra: {
             type: KEventType.KMarkdown,
-            target_id: context.event.target_id
-          }
+            target_id: context.event.target_id,
+          },
         },
         { guildId, originalTextContent: content }
       )
@@ -82,49 +77,43 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     let res: fetch.Response
     try {
       const token = draw(Env.StableDiffusionKeys)
-      info("DrawImageTool", `Stable Diffusion token: ${token}`)
+      info('DrawImageTool', `Stable Diffusion token: ${token}`)
 
       const form = new FormData()
-      form.append("prompt", prompt)
-      form.append("negative_prompt", negative_prompt)
-      form.append("output_format", "jpeg")
-      form.append("mode", "text-to-image")
-      form.append("model", "sd3.5-large-turbo")
+      form.append('prompt', prompt)
+      form.append('negative_prompt', negative_prompt)
+      form.append('output_format', 'jpeg')
+      form.append('mode', 'text-to-image')
+      form.append('model', 'sd3.5-large-turbo')
 
-      res = await fetch(
-        "https://api.stability.ai/v2beta/stable-image/generate/sd3",
-        {
-          method: "POST",
-          headers: {
-            ...form.getHeaders(),
-            authorization: `Bearer ${token}`,
-            accept: "image/*"
-          },
-          body: form
-        }
-      )
+      res = await fetch('https://api.stability.ai/v2beta/stable-image/generate/sd3', {
+        method: 'POST',
+        headers: {
+          ...form.getHeaders(),
+          authorization: `Bearer ${token}`,
+          accept: 'image/*',
+        },
+        body: form,
+      })
     } catch (e: any) {
-      info("DrawImageTool", `Stable Diffusion error: ${e.message}`, e)
+      info('DrawImageTool', `Stable Diffusion error: ${e.message}`, e)
       return `绘画失败: ${e.message}`
     }
-    info("DrawImageTool", `Stable Diffusion response: ${res}`, res)
+    info('DrawImageTool', `Stable Diffusion response: ${res}`, res)
 
     const data = await res.arrayBuffer()
     const fileName = `/tmp/stable-diffusion-${Date.now()}.jpeg`
     writeFileSync(fileName, Buffer.from(data))
 
     const [url] = await Requests.uploadFile(fileName)
-    info("DrawImageTool", `Uploaded file: ${url}`)
+    info('DrawImageTool', `Uploaded file: ${url}`)
 
     const result = await context.directivesManager.respondCardMessageToUser({
       originalEvent: context.event,
-      content: CardBuilder.fromTemplate().addImage(url).build()
+      content: CardBuilder.fromTemplate().addImage(url).build(),
     })
     if (result.code !== 0) {
-      updateMessage(
-        CardIcons.MikuHappy,
-        `Miku已绘画完成，但是发送消息失败\n\n\`${result.message}\``
-      )
+      updateMessage(CardIcons.MikuHappy, `Miku已绘画完成，但是发送消息失败\n\n\`${result.message}\``)
     } else {
       const message = `Miku已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
       updateMessage(CardIcons.MikuHappy, message)
@@ -133,12 +122,12 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
         channelId,
         shared.me.id,
         sendResult.msg_id,
-        "Miku",
-        "assistant",
+        'Miku',
+        'assistant',
         message,
         true
       )
     }
-    return "已调用 drawImage 完成并发送了绘画"
+    return '已调用 drawImage 完成并发送了绘画'
   }
 }

@@ -1,20 +1,20 @@
-import { KCardMessage, KCardMessageElement, KCardSize } from "../events"
+import { KCardMessage, KCardMessageElement, KCardSize } from '../events'
 
 export class CardHelper {}
 
 export interface CardBuilderTemplateOptions {
-  initialCard?: Partial<Omit<KCardMessage[0], "modules">>
+  initialCard?: Partial<Omit<KCardMessage[0], 'modules'>>
 }
 
 export class CardBuilder {
   private card: KCardMessage = [
     {
-      type: "card",
-      theme: "secondary",
-      size: "lg",
-      color: "#fb7299",
-      modules: []
-    }
+      type: 'card',
+      theme: 'secondary',
+      size: 'lg',
+      color: '#fb7299',
+      modules: [],
+    },
   ]
   private main = this.card[0]
   private modules = this.card[0].modules
@@ -27,7 +27,7 @@ export class CardBuilder {
 
   static fromTemplate(
     options: CardBuilderTemplateOptions = {
-      initialCard: { theme: "secondary" }
+      initialCard: { theme: 'secondary' },
     }
   ) {
     return new CardBuilder(options)
@@ -38,90 +38,90 @@ export class CardBuilder {
     return this
   }
 
-  theme(theme: KCardMessageElement["theme"]) {
+  theme(theme: KCardMessageElement['theme']) {
     this.main.theme = theme
     return this
   }
 
-  color(color: KCardMessageElement["color"]) {
+  color(color: KCardMessageElement['color']) {
     this.main.color = color
     return this
   }
 
   addIconWithKMarkdownText(iconUrl: string, text: string) {
     this.modules.push({
-      type: "section",
+      type: 'section',
       text: {
-        type: "kmarkdown",
-        content: text
+        type: 'kmarkdown',
+        content: text,
       },
-      mode: "left",
+      mode: 'left',
       accessory: {
-        type: "image",
+        type: 'image',
         src: iconUrl,
-        size: "sm"
-      }
+        size: 'sm',
+      },
     })
     return this
   }
 
   addImage(imageUrl: string) {
     this.modules.push({
-      type: "container",
+      type: 'container',
       elements: [
         {
-          type: "image",
-          src: imageUrl
-        }
-      ]
+          type: 'image',
+          src: imageUrl,
+        },
+      ],
     })
     return this
   }
 
   addFile(title: string, fileUrl: string, fileSize: number) {
     this.modules.push({
-      type: "file",
+      type: 'file',
       title: title,
       src: fileUrl,
-      size: `${fileSize}`
+      size: `${fileSize}`,
     })
     return this
   }
 
   addKMarkdownText(content: string) {
     this.modules.push({
-      type: "section",
+      type: 'section',
       text: {
-        type: "kmarkdown",
-        content: content
-      }
+        type: 'kmarkdown',
+        content: content,
+      },
     })
     return this
   }
 
   addPlainText(text: string) {
     this.modules.push({
-      type: "section",
+      type: 'section',
       text: {
-        type: "plain-text",
-        content: text
-      }
+        type: 'plain-text',
+        content: text,
+      },
     })
     return this
   }
 
   addDivider() {
     this.modules.push({
-      type: "divider"
+      type: 'divider',
     })
     return this
   }
 
   addHourCountDown(endAt: number) {
     this.modules.push({
-      type: "countdown",
-      mode: "hour",
-      endTime: endAt
+      type: 'countdown',
+      mode: 'hour',
+      endTime: endAt,
     })
     return this
   }
@@ -132,12 +132,8 @@ export class CardBuilder {
 }
 
 export const CardIcons = {
-  MikuCry:
-    "https://img.kookapp.cn/emojis/3553226959/42829/7ydOiupsN90m80mb.png",
-  MikuCute:
-    "https://img.kookapp.cn/emojis/3553226959/42829/gJ7IgeHpHN0rt0rx.png",
-  MikuSad:
-    "https://img.kookapp.cn/emojis/3553226959/42829/OhGpZwVWpm0dw0dz.png",
-  MikuHappy:
-    "https://img.kookapp.cn/emojis/3266153385602000/XiuGRap9Do0rt0rx.png"
+  MikuCry: 'https://img.kookapp.cn/emojis/3553226959/42829/7ydOiupsN90m80mb.png',
+  MikuCute: 'https://img.kookapp.cn/emojis/3553226959/42829/gJ7IgeHpHN0rt0rx.png',
+  MikuSad: 'https://img.kookapp.cn/emojis/3553226959/42829/OhGpZwVWpm0dw0dz.png',
+  MikuHappy: 'https://img.kookapp.cn/emojis/3266153385602000/XiuGRap9Do0rt0rx.png',
 }

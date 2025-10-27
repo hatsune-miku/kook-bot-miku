@@ -1,15 +1,8 @@
-import { info } from "../../utils/logging/logger"
+import { info } from '../../utils/logging/logger'
 
-export function extractParameter(
-  parameters: string[],
-  subject: string,
-  defaultValue: string
-): string {
+export function extractParameter(parameters: string[], subject: string, defaultValue: string): string {
   try {
-    return (
-      parameters.find((p) => p.startsWith(`${subject}=`))?.split("=")[1] ||
-      defaultValue
-    )
+    return parameters.find((p) => p.startsWith(`${subject}=`))?.split('=')[1] || defaultValue
   } catch {
     return defaultValue
   }
@@ -17,7 +10,7 @@ export function extractParameter(
 
 export function parseParameterDate(parameter: string) {
   let untilDateParsed: Date
-  if (parameter.startsWith("+")) {
+  if (parameter.startsWith('+')) {
     const now = new Date()
 
     try {
@@ -29,13 +22,13 @@ export function parseParameterDate(parameter: string) {
       }
 
       switch (unit) {
-        case "s":
+        case 's':
           untilDateParsed = new Date(now.getTime() + valueInt * 1000)
           break
-        case "m":
+        case 'm':
           untilDateParsed = new Date(now.getTime() + valueInt * 60 * 1000)
           break
-        case "h":
+        case 'h':
           untilDateParsed = new Date(now.getTime() + valueInt * 60 * 60 * 1000)
           break
       }
@@ -43,7 +36,7 @@ export function parseParameterDate(parameter: string) {
       return null
     }
   } else {
-    if (parameter.length !== "20070831120000".length) {
+    if (parameter.length !== '20070831120000'.length) {
       return null
     }
 

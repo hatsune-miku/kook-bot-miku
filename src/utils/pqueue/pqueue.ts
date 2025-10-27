@@ -40,10 +40,7 @@ export class PriorityQueue<T> {
   private bubbleUp(index: number): void {
     const parentIndex = Math.floor((index - 1) / 2)
 
-    if (
-      index > 0 &&
-      this.heap[index].priority < this.heap[parentIndex].priority
-    ) {
+    if (index > 0 && this.heap[index].priority < this.heap[parentIndex].priority) {
       this.swap(index, parentIndex)
       this.bubbleUp(parentIndex)
     }
@@ -54,17 +51,11 @@ export class PriorityQueue<T> {
     const rightChildIndex = 2 * index + 2
     let smallestIndex = index
 
-    if (
-      leftChildIndex < this.heap.length &&
-      this.heap[leftChildIndex].priority < this.heap[smallestIndex].priority
-    ) {
+    if (leftChildIndex < this.heap.length && this.heap[leftChildIndex].priority < this.heap[smallestIndex].priority) {
       smallestIndex = leftChildIndex
     }
 
-    if (
-      rightChildIndex < this.heap.length &&
-      this.heap[rightChildIndex].priority < this.heap[smallestIndex].priority
-    ) {
+    if (rightChildIndex < this.heap.length && this.heap[rightChildIndex].priority < this.heap[smallestIndex].priority) {
       smallestIndex = rightChildIndex
     }
 
@@ -75,19 +66,19 @@ export class PriorityQueue<T> {
   }
 
   protected swap(index1: number, index2: number): void {
-    ;[this.heap[index1], this.heap[index2]] = [
-      this.heap[index2],
-      this.heap[index1]
-    ]
+    ;[this.heap[index1], this.heap[index2]] = [this.heap[index2], this.heap[index1]]
   }
 
   public toString(): string {
-    return this.heap.map((item) => item.toString()).join(", ")
+    return this.heap.map((item) => item.toString()).join(', ')
   }
 }
 
 class Item<T> {
-  constructor(public value: T, public priority: number) {}
+  constructor(
+    public value: T,
+    public priority: number
+  ) {}
 
   public toString(): string {
     return `(${this.priority}: '${this.value}')`

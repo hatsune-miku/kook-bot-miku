@@ -1,15 +1,17 @@
-import { ChatCompletionTool } from "openai/resources"
-import { ToolFunctionContext } from "../context"
-import { SetCountdownTool } from "./SetCountdown"
-import { map } from "radash"
-import { EvaluateJavaScriptTool } from "./EvaluateJavaScript"
-import { GetStandardTimeTool } from "./GetStandardTime"
-import { QWeatherTool } from "./QWeather"
-import { RunLinuxCommandTool } from "./RunLinuxCommand"
-import { DownloadFileTool } from "./DownloadFile"
-import { EvaluatePythonTool } from "./EvaluatePython"
-import { SendFileTool } from "./SendFile"
-import { DrawImageStableDiffusionTool } from "./DrawImageStableDiffusion"
+import { ChatCompletionTool } from 'openai/resources'
+import { map } from 'radash'
+
+import { DownloadFileTool } from './DownloadFile'
+import { DrawImageStableDiffusionTool } from './DrawImageStableDiffusion'
+import { EvaluateJavaScriptTool } from './EvaluateJavaScript'
+import { EvaluatePythonTool } from './EvaluatePython'
+import { GetStandardTimeTool } from './GetStandardTime'
+import { QWeatherTool } from './QWeather'
+import { RunLinuxCommandTool } from './RunLinuxCommand'
+import { SendFileTool } from './SendFile'
+import { SetCountdownTool } from './SetCountdown'
+
+import { ToolFunctionContext } from '../context'
 
 export const toolFunctions: IFunctionTool[] = [
   SetCountdownTool,
@@ -20,13 +22,10 @@ export const toolFunctions: IFunctionTool[] = [
   DownloadFileTool,
   EvaluatePythonTool,
   DrawImageStableDiffusionTool,
-  SendFileTool
+  SendFileTool,
 ].map((Tool) => new Tool())
 
-export const toolDefinitionCache: Record<
-  string,
-  [IFunctionTool, ChatCompletionTool]
-> = {}
+export const toolDefinitionCache: Record<string, [IFunctionTool, ChatCompletionTool]> = {}
 
 export interface IFunctionTool {
   invoke(context: ToolFunctionContext, params: any): Promise<string>

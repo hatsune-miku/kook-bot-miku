@@ -5,9 +5,9 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
+import Pako from 'pako'
 
-import Pako from "pako"
-import { KMessage } from "../../websocket/kwebsocket/types"
+import { KMessage } from '../../websocket/kwebsocket/types'
 
 /**
  * pako pako! \^-^/
@@ -15,6 +15,6 @@ import { KMessage } from "../../websocket/kwebsocket/types"
  * @throws
  */
 export function decompressKMessage<T>(data: Pako.Data): KMessage<T> {
-  const decompressed = Pako.inflate(data, { to: "string" })
+  const decompressed = Pako.inflate(data, { to: 'string' })
   return JSON.parse(decompressed) as KMessage<T>
 }

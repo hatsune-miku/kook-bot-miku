@@ -32,23 +32,20 @@ export interface NormalizeTimeOptions {
  * @param {NormalizeTimeOptions} options
  * @return {string}
  */
-export function normalizeTime(
-  representation: any,
-  options: NormalizeTimeOptions
-) {
+export function normalizeTime(representation: any, options: NormalizeTimeOptions) {
   const {
     defaultValue,
     dateOnly = false,
     dateZeroPadding = true,
     hourZeroPadding = true,
-    dateSeparator = "-",
-    timeSeparator = ":"
+    dateSeparator = '-',
+    timeSeparator = ':',
   } = options
   if (representation === null || representation === undefined) {
     return defaultValue
   }
 
-  if (typeof representation === "number") {
+  if (typeof representation === 'number') {
     const isTimestampLike = representation > 10000
     if (!isTimestampLike) {
       return defaultValue
@@ -58,11 +55,9 @@ export function normalizeTime(
     if (!isMillisecondBased) {
       representation *= 1000
     }
-  } else if (typeof representation === "string") {
+  } else if (typeof representation === 'string') {
     representation = representation.trim()
-    const isTimestampLike =
-      (representation.length === 10 || representation.length === 13) &&
-      !isNaN(representation)
+    const isTimestampLike = (representation.length === 10 || representation.length === 13) && !isNaN(representation)
     if (isTimestampLike) {
       return normalizeTime(parseInt(representation), options)
     }
@@ -83,14 +78,14 @@ export function normalizeTime(
   let minute: any = date.getMinutes()
 
   if (dateZeroPadding) {
-    month = month.toString().padStart(2, "0")
-    day = day.toString().padStart(2, "0")
+    month = month.toString().padStart(2, '0')
+    day = day.toString().padStart(2, '0')
   }
   if (hourZeroPadding) {
-    hour = hour.toString().padStart(2, "0")
+    hour = hour.toString().padStart(2, '0')
   }
   // 分钟当然永远是2位
-  minute = minute.toString().padStart(2, "0")
+  minute = minute.toString().padStart(2, '0')
 
   let result = `${year}${dateSeparator}${month}${dateSeparator}${day}`
   if (!dateOnly) {

@@ -5,15 +5,15 @@
  * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
  * @Description   : Magic. Don't touch.
  */
+import express from 'express'
+import { exit } from 'process'
 
-import express from "express"
-import { deinitialize, main } from "./bot"
-import { exit } from "process"
-import { info } from "./utils/logging/logger"
-import { defineRoute } from "./backend/route"
-import { initializeLarkBot } from "./websocket/larksocket"
+import { defineRoute } from './backend/route'
+import { deinitialize, main } from './bot'
+import { info } from './utils/logging/logger'
+import { initializeLarkBot } from './websocket/larksocket'
 
-info("Server Startup")
+info('Server Startup')
 
 const expressApp = express()
 const port = 6309
@@ -27,8 +27,8 @@ expressApp.listen(port, async () => {
   info(`Server listening at http://localhost:${port}`)
 })
 
-process.on("SIGINT", () => {
+process.on('SIGINT', () => {
   deinitialize()
-  info("Server Shutdown")
+  info('Server Shutdown')
   exit(0)
 })
