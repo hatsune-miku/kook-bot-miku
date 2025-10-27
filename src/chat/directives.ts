@@ -573,10 +573,6 @@ export class ChatDirectivesManager implements IChatDirectivesManager {
     return ConfigUtils.getChannelConfig(guildId, channelId).allowOmittingMentioningMe
   }
 
-  setContextManager(contextManager: ContextManager) {
-    this.contextManager = contextManager
-  }
-
   tryInitializeForUser(guildId: string, user: KUser) {
     if (!this.guildIdToUserIdToProperties.has(guildId)) {
       this.guildIdToUserIdToProperties.set(guildId, new Map())

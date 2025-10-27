@@ -4,7 +4,5 @@ node_modules
 .env-tttt
 .env-b
 config.json
+memory.json
 dist
-
-# Yes, the TypeScript config file intentionally ignored.
-tsconfig.json

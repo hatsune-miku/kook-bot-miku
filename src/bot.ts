@@ -1,31 +1,19 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\bot.ts
- * @Created At    : 2024-05-21 17:13:02
- * @Last Modified : 2024-05-30 14:13:23
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
-import { viewCodeBlock } from './backend/controllers/code'
-import { drawPrize, loadActivePrizes, saveActivePrizes } from './backend/controllers/prize'
-import { loadActiveVotes, saveActiveVotes, submitVote } from './backend/controllers/vote'
-import { ContextManager } from './chat/context-manager'
 import { chatCompletionStreamed as chatCompletionDeepSeek } from './chat/deepseek'
 import { ChatDirectivesManager } from './chat/directives'
 import { ToolFunctionContext } from './chat/functional/context'
 import { chatCompletionStreamed as chatCompletionChatGpt } from './chat/openai'
-import { ChatBotBackend, ContextUnit } from './chat/types'
+import { ContextUnit } from './chat/types'
 import { Events, RespondToUserParameters, botEventEmitter } from './events'
 import { DisplayName, shared } from './global/shared'
 import { CardBuilder, CardIcons } from './helpers/card-helper'
 import { displayNameFromUser, isTrustedUser } from './utils'
 import { TaskQueue } from './utils/algorithm/task-queue'
-import ConfigUtils from './utils/config/config'
+import { ConfigUtils, initializeConfig } from './utils/config/config'
 import { extractContent, isExplicitlyMentioningBot } from './utils/kevent/utils'
 import { Requests } from './utils/krequest/request'
 import { CreateChannelMessageResult, KResponseExt } from './utils/krequest/types'
 import { error, info, warn } from './utils/logging/logger'
 import { die } from './utils/server/die'
-import { GuildRoleManager } from './websocket/kwebsocket/guild-role-manager'
 import { KWSHelper } from './websocket/kwebsocket/kws-helper'
 import {
   KCardButtonExtra,
@@ -36,16 +24,10 @@ import {
   KTextChannelExtra,
 } from './websocket/kwebsocket/types'
 
-ConfigUtils.initialize()
-
-const contextManager = new ContextManager()
-const roleManager = new GuildRoleManager()
 const directivesManager = new ChatDirectivesManager(botEventEmitter)
 
-directivesManager.setContextManager(contextManager)
-Requests.registerContextManager(contextManager)
-
 export async function main() {
+  ConfigUtils.main = await initializeConfig()
   await tryPrepareBotInformation()
 
   const helper = new KWSHelper({
@@ -60,15 +42,11 @@ export async function main() {
   botEventEmitter.on(Events.RespondToUser, handleRespondToUserEvent)
   botEventEmitter.on(Events.RespondCardMessageToUser, handleRespondCardMessageToUserEvent)
 
-  loadActiveVotes()
-  loadActivePrizes()
   info('Initialization OK')
 }
 
 export function deinitialize() {
-  saveActiveVotes()
-  saveActivePrizes()
-  ConfigUtils.persist()
+  info('Deinitialization OK')
 }
 
 async function handleRespondToUserEvent(
@@ -143,15 +121,14 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  const myRoles = await roleManager.getMyRolesAt(guildId, shared.me.id)
   const isSentByMe = event.author_id == shared.me.id
 
   const content = extractContent(event)
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
-  const isMentioningMe = isExplicitlyMentioningBot(event, shared.me.id, myRoles)
-  const calledByTrustedUser = isTrustedUser(event.extra.author.id)
-  const whitelisted = (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] || calledByTrustedUser
+  const isMentioningMe = isExplicitlyMentioningBot(event, shared.me.id)
+  const whitelisted = await ConfigUtils.main.whitelistedGuilds.isGuildWhitelisted({ guildId })
+  const channelConfig = await ConfigUtils.main.channelConfigs.getChannelConfig({ channelId })
 
   if (isSentByMe) {
     return
@@ -168,7 +145,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   // @我或者可以免除@我，都可以处理指令
-  if (isMentioningMe || directivesManager.isAllowOmittingMentioningMeEnabled(guildId, channelId)) {
+  if (isMentioningMe || channelConfig.allowOmittingMentioningMe) {
     // Process directives
     info('Processing directives for', displayName, 'with content', content)
     directivesManager.tryInitializeForUser(guildId, author)
@@ -179,37 +156,23 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       }
 
       parsedEvent.mentionUserIds = parsedEvent.mentionUserIds.filter((id) => id !== shared.me.id)
-      parsedEvent.mentionRoleIds = parsedEvent.mentionRoleIds.filter((rid) => !myRoles.includes(rid))
 
       directivesManager.dispatchDirectives(parsedEvent, () => {
-        contextManager.appendToContext(
+        ConfigUtils.main.contextUnits.createContextUnit({
           guildId,
           channelId,
-          author.id,
-          event.msg_id,
-          isSentByMe ? DisplayName : author.nickname,
-          isSentByMe ? 'assistant' : 'user',
+          authorUserId: author.id,
+          messageId: event.msg_id,
+          authorName: isSentByMe ? DisplayName : author.nickname,
+          role: isSentByMe ? 'assistant' : 'user',
           content,
-          !isMentioningMe
-        )
+        })
       })
       return
     }
   }
 
-  info('Appending to context', author.nickname, content)
-  contextManager.appendToContext(
-    guildId,
-    channelId,
-    author.id,
-    event.msg_id,
-    isSentByMe ? DisplayName : author.nickname,
-    isSentByMe ? 'assistant' : 'user',
-    content,
-    !isMentioningMe
-  )
-
-  // 只有明确@我的消息才会被交给ChatGPT
+  // 只有明确@我的消息才会被交给AI
   if (!isMentioningMe) {
     return
   }
@@ -219,9 +182,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     {
       type: KEventType.Card,
       target_id: event.target_id,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', initialResponse)
-        .build(),
+      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.IconHappy, initialResponse).build(),
       quote: event.msg_id,
     },
     { guildId, originalTextContent: initialResponse }
@@ -350,7 +311,6 @@ async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtr
     return
   }
 
-  const myRoles = await roleManager.getMyRolesAt(guildId, shared.me.id)
   const isSentByMe = event.author_id == shared.me.id
 
   if (isSentByMe) {
@@ -360,7 +320,7 @@ async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtr
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
   const calledByTrustedUser = isTrustedUser(event.extra.author.id)
-  const whitelisted = (ConfigUtils.getGlobalConfig().whiteListedGuildIds ?? {})[guildId] || calledByTrustedUser
+  const whitelisted = await ConfigUtils.main.whitelistedGuilds.isGuildWhitelisted({ guildId })
 
   if (!whitelisted) {
     return

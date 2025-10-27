@@ -1,109 +1,60 @@
-import { readFileSync, writeFileSync } from 'fs'
+import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
-import { ChatBotBackend, ContextUnit } from '../../chat/types'
-import { info } from '../logging/logger'
+import { createChannelConfigHelper } from './helpers/channel-config'
+import { createContextUnitHelper } from './helpers/context-unit'
+import { createUserDefinedScriptHelper } from './helpers/user-defined-script'
+import { createUserRoleHelper } from './helpers/user-role'
+import { createWhitelistedGuildHelper } from './helpers/whitelisted-guild'
+import {
+  ChannelConfigModel,
+  ContextUnitModel,
+  UserDefinedScriptModel,
+  UserRoleModel,
+  WhitelistedGuildModel,
+} from './models'
 
 export const MessageLengthUpperBound = Math.round(4000 * 0.9)
 
-/**
- * 写的也太乱了！！！！！
- */
-export default class ConfigUtils {
-  static config?: GlobalScopeConfig
+export interface Config {
+  whitelistedGuilds: ReturnType<typeof createWhitelistedGuildHelper>
+  channelConfigs: ReturnType<typeof createChannelConfigHelper>
+  userDefinedScripts: ReturnType<typeof createUserDefinedScriptHelper>
+  userRoles: ReturnType<typeof createUserRoleHelper>
+  contextUnits: ReturnType<typeof createContextUnitHelper>
+}
 
-  static initialize() {
-    try {
-      const configRaw = readFileSync('config.json', {
-        encoding: 'utf-8',
-      })
-      ConfigUtils.config = JSON.parse(configRaw)
-      console.log('Loaded user config.', ConfigUtils.config)
-    } catch (e) {
-      ConfigUtils.config = {}
-    }
+export async function initializeConfig(): Promise<Config> {
+  const sqlite3DatabaseFileName = 'memory.db'
+  const configMap = {
+    whitelistedGuilds: [WhitelistedGuildModel, createWhitelistedGuildHelper],
+    channelConfigs: [ChannelConfigModel, createChannelConfigHelper],
+    userDefinedScripts: [UserDefinedScriptModel, createUserDefinedScriptHelper],
+    userRoles: [UserRoleModel, createUserRoleHelper],
+    contextUnitStorage: [ContextUnitModel, createContextUnitHelper],
   }
 
-  static persist() {
-    try {
-      writeFileSync('config.json', JSON.stringify(ConfigUtils.config, null, 2))
-      info('Config persisted.')
-    } catch (e) {
-      console.error('Failed to persist config:', e)
-    }
-  }
+  const keys = Object.keys(configMap)
+  const config: Config = {} as Config
+  const initializers = []
 
-  static getGlobalConfig(): GlobalScopeConfig {
-    ConfigUtils.config ??= {}
-    return ConfigUtils.config
-  }
-
-  static getGuildConfig(guildId: string): GuildScopeConfig {
-    const config = ConfigUtils.getGlobalConfig()
-    config.guilds ??= {}
-    config.guilds[guildId] ??= {}
-    return config.guilds[guildId] ?? {}
-  }
-
-  static getChannelConfig(guildId: string, channelId: string): ChannelScopeConfig {
-    const guildConfig = ConfigUtils.getGuildConfig(guildId)
-    guildConfig.channels ??= {}
-    guildConfig.channels[channelId] ??= {}
-    return guildConfig.channels[channelId] ?? {}
-  }
-
-  static updateGlobalConfig(updater: (config: GlobalScopeConfig) => GlobalScopeConfig) {
-    ConfigUtils.config = updater(ConfigUtils.getGlobalConfig())
-  }
-
-  static updateGuildConfig(guildId: string, updater: (config: GuildScopeConfig) => GuildScopeConfig) {
-    ConfigUtils.updateGlobalConfig((config) => ({
-      ...config,
-      guilds: {
-        ...config.guilds,
-        [guildId]: updater(config.guilds?.[guildId] ?? {}),
+  for (const key of keys) {
+    const [model, createHelper] = configMap[key]
+    const storage = new NodeGenericExternalStorage({
+      isNode: true,
+      model,
+      storageOptions: {
+        sqlite3DatabaseFileName,
       },
-    }))
+    })
+
+    initializers.push(storage.initialize())
+    config[key] = createHelper(storage)
   }
 
-  static updateChannelConfig(
-    guildId: string,
-    channelId: string,
-    updater: (config: ChannelScopeConfig) => ChannelScopeConfig
-  ) {
-    ConfigUtils.updateGuildConfig(guildId, (guildConfig) => ({
-      ...guildConfig,
-      channels: {
-        ...guildConfig.channels,
-        [channelId]: updater(guildConfig.channels?.[channelId] ?? {}),
-      },
-    }))
-  }
+  await Promise.all(initializers)
+  return config
 }
 
-export interface UserConfig {
-  roles?: string[]
-}
-
-export interface GuildScopeConfig {
-  users?: {
-    [userId: string]: UserConfig | undefined
-  }
-  channels?: {
-    [channelId: string]: ChannelScopeConfig | undefined
-  }
-  userDefinedScripts?: Record<string, string>
-}
-
-export interface ChannelScopeConfig {
-  backend?: ChatBotBackend
-  userIdToContextUnits?: Record<string, ContextUnit[]>
-  allowOmittingMentioningMe?: boolean
-}
-
-export interface GlobalScopeConfig {
-  guilds?: {
-    [guildId: string]: GuildScopeConfig | undefined
-  }
-  whiteListedGuildIds?: Record<string, string>
-  miscellaneous?: any
+export const ConfigUtils: { main: Config } = {
+  main: null,
 }

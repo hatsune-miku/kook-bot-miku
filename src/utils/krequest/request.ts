@@ -49,10 +49,6 @@ let disabledUntil: number = 0
 export class Requests {
   static contextManager: ContextManager | null = null
 
-  static registerContextManager(contextManager: ContextManager) {
-    Requests.contextManager = contextManager
-  }
-
   static async request<T>(
     url: string,
     method: RequestMethod,
