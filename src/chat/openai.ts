@@ -12,19 +12,19 @@ import { ChatCompletionContentPart, ChatCompletionMessageParam } from 'openai/re
 import { Completions } from 'openai/resources/chat'
 import { draw } from 'radash'
 
-import { ToolFunctionContext } from './functional/context'
 import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionTools } from './functional/tool-functions/dispatch'
-import { ContextUnit } from './types'
+import { ToolFunctionContext } from './functional/types'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
 import { DisplayName } from '../global/shared'
+import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   const normalUnit: ChatCompletionMessageParam = {
     role: 'user',
-    content: `${unit.name}(id=${unit.id})说: ${unit.content}`,
+    content: `${unit.authorName}(id=${unit.authorUserId})说: ${unit.content}`,
   }
 
   let parsed: any

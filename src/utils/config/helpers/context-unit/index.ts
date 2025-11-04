@@ -36,10 +36,20 @@ export function createContextUnitHelper(storage: NodeGenericExternalStorage) {
     await s.delete({ where: { guildId, channelId } })
   }
 
+  async function deleteContextUnit({ guildId, channelId, messageId }: any = {}) {
+    await s.delete({ where: { guildId, channelId, messageId }, limit: 1 })
+  }
+
+  async function updateContextUnit(unit: Omit<ContextUnit, 'createdAt'>) {
+    await s.updateOne(unit)
+  }
+
   return {
     getContextUnits,
     isContextUnitExists,
     createContextUnit,
     clearContextUnits,
+    updateContextUnit,
+    deleteContextUnit,
   }
 }

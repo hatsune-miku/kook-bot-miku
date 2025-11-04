@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\utils\krequest\request.ts
- * @Created At    : 2024-05-21 16:22:37
- * @Last Modified : 2024-05-29 18:15:42
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import { readFile } from 'fs/promises'
 import { DateTime } from 'luxon'
 import { lookup } from 'mime-types'
@@ -26,10 +19,9 @@ import {
   WhoAmIExtendResult as QueryUserResult,
 } from './types'
 
-import { ContextManager } from '../../chat/context-manager'
 import { DisplayName, shared } from '../../global/shared'
 import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
-import { MessageLengthUpperBound } from '../config/config'
+import { ConfigUtils, MessageLengthUpperBound } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
 import { error, info } from '../logging/logger'
 import { die } from '../server/die'
@@ -47,8 +39,6 @@ const bucketToSpeedLimitIndication = new Map<string, KRateLimitHeader | null>()
 let disabledUntil: number = 0
 
 export class Requests {
-  static contextManager: ContextManager | null = null
-
   static async request<T>(
     url: string,
     method: RequestMethod,
@@ -71,16 +61,17 @@ export class Requests {
     }
 
     const requestData: any = data ?? {}
-    const headers: HeadersInit = {
+    const headers = {
       Authorization: AUTHORIZATION,
     }
     if (!isFormData) {
       headers['Content-type'] = 'application/json'
     }
 
-    const request: RequestInit = {
+    const request = {
       headers: headers,
       method: method,
+      body: null,
     }
 
     if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
@@ -205,16 +196,15 @@ export class Requests {
     const result: KResponseExt<CreateChannelMessageResult> = await this.request(`/api/v3/message/create`, 'POST', props)
     if (guildId && result.code === 0 && result.data?.msg_id) {
       info('Appending context', guildId, props.target_id, shared.me.id, originalTextContent)
-      Requests.contextManager?.appendToContext(
+      await ConfigUtils.main.contextUnits.createContextUnit({
         guildId,
-        props.target_id,
-        shared.me.id,
-        result.data.msg_id,
-        DisplayName,
-        'assistant',
-        originalTextContent ?? props.content,
-        false
-      )
+        channelId: props.target_id,
+        authorUserId: shared.me.id,
+        messageId: result.data.msg_id,
+        authorName: DisplayName,
+        role: 'assistant',
+        content: originalTextContent ?? props.content,
+      })
     }
     return result
   }
@@ -249,16 +239,15 @@ export class Requests {
     }
     const result: KResponseExt<{}> = await this.request(`/api/v3/message/update`, 'POST', props)
     if (result.code === 0 && guildId) {
-      Requests.contextManager?.updateExistingContext(
+      await ConfigUtils.main.contextUnits.updateContextUnit({
         guildId,
-        props.extra.target_id,
-        shared.me.id,
-        props.msg_id,
-        DisplayName,
-        'assistant',
-        originalTextContent ?? props.content,
-        false
-      )
+        channelId: props.extra.target_id,
+        messageId: props.msg_id,
+        role: 'assistant',
+        authorName: DisplayName,
+        authorUserId: shared.me.id,
+        content: originalTextContent ?? props.content,
+      })
     }
     return result
   }

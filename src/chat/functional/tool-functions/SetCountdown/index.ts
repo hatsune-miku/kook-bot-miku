@@ -1,7 +1,7 @@
 import { ChatCompletionTool } from 'openai/resources'
 
 import { CardBuilder } from '../../../../helpers/card-helper'
-import { ToolFunctionContext } from '../../context'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class SetCountdownTool implements IFunctionTool {

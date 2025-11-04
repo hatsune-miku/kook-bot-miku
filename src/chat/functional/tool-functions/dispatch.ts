@@ -11,7 +11,12 @@ import { RunLinuxCommandTool } from './RunLinuxCommand'
 import { SendFileTool } from './SendFile'
 import { SetCountdownTool } from './SetCountdown'
 
-import { ToolFunctionContext } from '../context'
+import { ToolFunctionContext } from '../types'
+
+export interface IFunctionTool {
+  invoke(context: ToolFunctionContext, params: any): Promise<string>
+  defineOpenAICompletionTool(): Promise<ChatCompletionTool>
+}
 
 export const toolFunctions: IFunctionTool[] = [
   SetCountdownTool,
@@ -26,11 +31,6 @@ export const toolFunctions: IFunctionTool[] = [
 ].map((Tool) => new Tool())
 
 export const toolDefinitionCache: Record<string, [IFunctionTool, ChatCompletionTool]> = {}
-
-export interface IFunctionTool {
-  invoke(context: ToolFunctionContext, params: any): Promise<string>
-  defineOpenAICompletionTool(): Promise<ChatCompletionTool>
-}
 
 export async function getChatCompletionTools(): Promise<ChatCompletionTool[]> {
   if (Object.keys(toolDefinitionCache).length > 0) {

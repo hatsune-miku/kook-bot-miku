@@ -6,11 +6,13 @@ import { draw } from 'radash'
 
 import { DisplayName, shared } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
+import { ConfigUtils } from '../../../../utils/config/config'
 import { Env } from '../../../../utils/env/env'
 import { Requests } from '../../../../utils/krequest/request'
 import { info } from '../../../../utils/logging/logger'
 import { KEventType } from '../../../../websocket/kwebsocket/types'
-import { ToolFunctionContext } from '../../context'
+import { respondCardMessageToUser } from '../../../directives/utils/events'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class DrawImageStableDiffusionTool implements IFunctionTool {
@@ -19,8 +21,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       type: 'function',
       function: {
         name: 'drawImage',
-        description:
-          '用户请求画图时，你需要根据需求编写英文提示词。绘画之前，你需自行检查prompt，如果你认为内容不适当、不尊重特定人或群体，应该拒绝绘画并通过getModerationCheckNoticeText来获取拦截文案。',
+        description: '用户请求画图时，你需要根据需求编写英文提示词。。',
         parameters: {
           type: 'object',
           properties: {
@@ -50,7 +51,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       code,
       message,
       data: sendResult,
-    } = await context.directivesManager.respondCardMessageToUser({
+    } = await respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.IconHappy, `${DisplayName}画画中...`)
@@ -110,7 +111,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     const [url] = await Requests.uploadFile(fileName)
     info('DrawImageTool', `Uploaded file: ${url}`)
 
-    const result = await context.directivesManager.respondCardMessageToUser({
+    const result = await respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate().addImage(url).build(),
     })
@@ -119,16 +120,16 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
     } else {
       const message = `${DisplayName}已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
       updateMessage(CardIcons.IconHappy, message)
-      context.contextManager.appendToContext(
+
+      ConfigUtils.main.contextUnits.createContextUnit({
         guildId,
         channelId,
-        shared.me.id,
-        sendResult.msg_id,
-        DisplayName,
-        'assistant',
-        message,
-        true
-      )
+        messageId: sendResult.msg_id,
+        role: 'assistant',
+        authorName: DisplayName,
+        authorUserId: shared.me.id,
+        content: message,
+      })
     }
     return '已调用 drawImage 完成并发送了绘画'
   }

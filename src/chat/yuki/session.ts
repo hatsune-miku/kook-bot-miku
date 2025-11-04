@@ -2,9 +2,9 @@ import { YukiContext } from './context'
 import { Invocation, parseDirectiveInvocation, takeAndVerifyParameters } from './utils'
 
 import { CardBuilder, CardIcons } from '../../helpers/card-helper'
-import ConfigUtils from '../../utils/config/config'
+import { ConfigUtils } from '../../utils/config/config'
 import { info, warn } from '../../utils/logging/logger'
-import { IChatDirectivesManager } from '../interfaces'
+import { IChatDirectivesManager } from '../types'
 
 export interface BuiltinCommands {
   [key: string]: () => Promise<any>
@@ -35,8 +35,11 @@ export default class YukiCommandSession {
 
   async interpretUserDefinedCommand() {
     const { directive, parameters } = this.invocation
-    const config = ConfigUtils.getGuildConfig(this.context.guildId)
-    let commandBody = (config.userDefinedScripts || {})?.[directive]
+    const scripts = await ConfigUtils.main.userDefinedScripts.findUserDefinedScripts({
+      guildId: this.context.guildId,
+      name: directive,
+    })
+    let commandBody = scripts[0]?.script
     if (!commandBody) {
       this.chatManager.respondCardMessageToUser({
         originalEvent: this.context.event.originalEvent,
@@ -162,7 +165,7 @@ export default class YukiCommandSession {
       })
       return
     }
-    commandsSerialized = commandsSerialized.replace(/\\\\\"/g, '\\"')
+    commandsSerialized = commandsSerialized.replace(/\\\\"/g, '\\"')
 
     info('Executing script', commandsSerialized)
     console.log(commandsSerialized)
@@ -228,11 +231,13 @@ export default class YukiCommandSession {
       return
     }
 
-    ConfigUtils.updateGuildConfig(guildId, (guildConfig) => {
-      guildConfig.userDefinedScripts ||= {}
-      guildConfig.userDefinedScripts[commandName] = commandBody
-      return guildConfig
+    ConfigUtils.main.userDefinedScripts.createUserDefinedScript({
+      guildId,
+      userId: this.context.author.id,
+      name: commandName,
+      script: commandBody,
     })
+
     this.chatManager.respondCardMessageToUser({
       originalEvent: this.context.event.originalEvent,
       content: CardBuilder.fromTemplate()

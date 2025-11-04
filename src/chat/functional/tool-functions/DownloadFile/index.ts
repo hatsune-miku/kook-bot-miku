@@ -8,7 +8,8 @@ import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
 import { Requests } from '../../../../utils/krequest/request'
 import { info } from '../../../../utils/logging/logger'
 import { KEventType } from '../../../../websocket/kwebsocket/types'
-import { ToolFunctionContext } from '../../context'
+import { respondCardMessageToUser } from '../../../directives/utils/events'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class DownloadFileTool implements IFunctionTool {
@@ -49,7 +50,7 @@ export class DownloadFileTool implements IFunctionTool {
       code,
       message,
       data: sendResult,
-    } = await context.directivesManager.respondCardMessageToUser({
+    } = await respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.IconHappy, `${DisplayName}收到了链接\n\n\`${url}\``)

@@ -1,21 +1,23 @@
-export interface ContextUnit {
-  id: string
-  messageId: string
-  role: 'assistant' | 'user'
-  name: string
-  content: string
-  timestamp: number
-  freeChat: boolean
-}
+import { ParseEventResultValid } from './directives/types'
 
-export enum ChatBotBackend {
-  GPT4o = 'gpt-4o',
-  GPT4 = 'gpt-4',
-  GPT5 = 'gpt-5',
-  O1 = 'o1',
-  O1Mini = 'o1-mini',
-  O3Mini = 'o3-mini',
-  DeepSeekV3 = 'deepseek-chat',
-  DeepSeekR1 = 'deepseek-reasoner',
-  DeepSeekV31Volc = 'deepseek-v3-1-250821',
+import { RespondToUserParameters } from '../events'
+
+export const ChatBotBackends = {
+  gpt4o: 'gpt-4o',
+  gpt4: 'gpt-4',
+  gpt5: 'gpt-5',
+  o1: 'o1',
+  o1mini: 'o1-mini',
+  o3mini: 'o3-mini',
+  deepseekv3: 'deepseek-chat',
+  deepseekr1: 'deepseek-reasoner',
+  deepseekv31volc: 'deepseek-v3-1-250821',
+} as const
+
+export type ChatBotBackend = (typeof ChatBotBackends)[keyof typeof ChatBotBackends]
+
+export interface IChatDirectivesManager {
+  respondToUser(params: RespondToUserParameters): void
+  respondCardMessageToUser(params: RespondToUserParameters): void
+  dispatchDirectives(parsedEvent: ParseEventResultValid): Promise<boolean>
 }

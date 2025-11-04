@@ -1,9 +1,8 @@
 import { ChatCompletionTool } from 'openai/resources'
 import { sleep } from 'radash'
 
-import { createCodeBlock } from '../../../../backend/controllers/code'
 import { info } from '../../../../utils/logging/logger'
-import { ToolFunctionContext } from '../../context'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class EvaluateJavaScriptTool implements IFunctionTool {

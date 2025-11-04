@@ -2,7 +2,8 @@ import { ChatCompletionTool } from 'openai/resources'
 
 import { CardBuilder } from '../../../../helpers/card-helper'
 import { Requests } from '../../../../utils/krequest/request'
-import { ToolFunctionContext } from '../../context'
+import { respondCardMessageToUser } from '../../../directives/utils/events'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class SendFileTool implements IFunctionTool {
@@ -49,7 +50,7 @@ export class SendFileTool implements IFunctionTool {
       return '无法获取服务器ID或频道ID'
     }
 
-    context.directivesManager.respondCardMessageToUser({
+    respondCardMessageToUser({
       originalEvent: context.event,
       content: CardBuilder.fromTemplate().addFile(fileName, url, size).build(),
     })

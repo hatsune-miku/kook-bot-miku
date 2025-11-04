@@ -3,7 +3,7 @@ import { ChatCompletionTool } from 'openai/resources'
 import { sleep } from 'radash'
 
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
-import { ToolFunctionContext } from '../../context'
+import { ToolFunctionContext } from '../../types'
 import { EvaluateJavaScriptTool } from '../EvaluateJavaScript'
 import { IFunctionTool } from '../dispatch'
 

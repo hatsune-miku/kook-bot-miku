@@ -29,9 +29,19 @@ export function createWhitelistedGuildHelper(storage: NodeGenericExternalStorage
     await s.delete({ where: { guildId }, limit: 1 })
   }
 
+  async function getWhitelistedGuilds() {
+    const [err, guilds] = await s.findAll({})
+    if (err) {
+      error(err)
+      return []
+    }
+    return guilds as { guildId: string; name: string }[]
+  }
+
   return {
     isGuildWhitelisted,
     addWhitelistedGuild,
     removeWhitelistedGuild,
+    getWhitelistedGuilds,
   }
 }

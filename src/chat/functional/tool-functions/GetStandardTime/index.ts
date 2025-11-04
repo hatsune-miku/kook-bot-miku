@@ -1,6 +1,6 @@
 import { ChatCompletionTool } from 'openai/resources'
 
-import { ToolFunctionContext } from '../../context'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class GetStandardTimeTool implements IFunctionTool {

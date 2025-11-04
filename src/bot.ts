@@ -1,8 +1,8 @@
 import { chatCompletionStreamed as chatCompletionDeepSeek } from './chat/deepseek'
-import { ChatDirectivesManager } from './chat/directives'
-import { ToolFunctionContext } from './chat/functional/context'
+import { dispatchDirectives } from './chat/directives'
+import { tryParseEvent } from './chat/directives/utils/events'
+import { ToolFunctionContext } from './chat/functional/types'
 import { chatCompletionStreamed as chatCompletionChatGpt } from './chat/openai'
-import { ContextUnit } from './chat/types'
 import { Events, RespondToUserParameters, botEventEmitter } from './events'
 import { DisplayName, shared } from './global/shared'
 import { CardBuilder, CardIcons } from './helpers/card-helper'
@@ -23,8 +23,6 @@ import {
   KSystemEventExtra,
   KTextChannelExtra,
 } from './websocket/kwebsocket/types'
-
-const directivesManager = new ChatDirectivesManager(botEventEmitter)
 
 export async function main() {
   ConfigUtils.main = await initializeConfig()
@@ -148,16 +146,14 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   if (isMentioningMe || channelConfig.allowOmittingMentioningMe) {
     // Process directives
     info('Processing directives for', displayName, 'with content', content)
-    directivesManager.tryInitializeForUser(guildId, author)
-    const parsedEvent = await directivesManager.tryParseEvent(content, event)
+    const parsedEvent = await tryParseEvent(content, event)
     if (parsedEvent.shouldIntercept) {
       if (!whitelisted) {
         return
       }
 
       parsedEvent.mentionUserIds = parsedEvent.mentionUserIds.filter((id) => id !== shared.me.id)
-
-      directivesManager.dispatchDirectives(parsedEvent, () => {
+      const handleContextReady = () => {
         ConfigUtils.main.contextUnits.createContextUnit({
           guildId,
           channelId,
@@ -167,7 +163,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           role: isSentByMe ? 'assistant' : 'user',
           content,
         })
-      })
+      }
+
+      dispatchDirectives(parsedEvent, handleContextReady)
       return
     }
   }
@@ -196,11 +194,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const createdMessage = sendResult.data
-  const context = contextManager.getMixedContext(guildId, channelId, true)
-
-  const backendModelName = directivesManager.getChatBotBackend(guildId, channelId)
-  const backendConfig = directivesManager.getChatBotBackend(guildId, channelId)
-  const toolFunctionContext = new ToolFunctionContext(event, directivesManager, contextManager)
+  const contextUnits = await ConfigUtils.main.contextUnits.getContextUnits({ guildId, channelId })
+  const toolFunctionContext: ToolFunctionContext = { event }
 
   let modelMessageAccumulated = ''
   const queue = new TaskQueue()
@@ -216,7 +211,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
           {
             msg_id: createdMessage.msg_id,
             content: CardBuilder.fromTemplate()
-              .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', '')
+              .addIconWithKMarkdownText(CardIcons.IconCute, '')
               .addKMarkdownText(modelMessageAccumulated)
               .build(),
             quote: event.msg_id,
@@ -243,7 +238,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       {
         msg_id: createdMessage.msg_id,
         content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText('https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png', '')
+          .addIconWithKMarkdownText(CardIcons.IconCute, '')
           .addKMarkdownText(modelMessageAccumulated)
           .build(),
         quote: event.msg_id,
@@ -267,10 +262,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         {
           msg_id: createdMessage.msg_id,
           content: CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(
-              'https://img.kookapp.cn/assets/2024-11/08/j9AUs4J16i04s04y.png',
-              '消息发送失败了！'
-            )
+            .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
             .addKMarkdownText(userSideErrorMessage)
             .build(),
           quote: event.msg_id,
@@ -285,17 +277,13 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
   }
 
-  const backend = backendConfig.startsWith('deepseek')
-    ? (context: ContextUnit[], onMessage: (message: string) => void, onMessageEnd: (message: string) => void) =>
-        chatCompletionDeepSeek(toolFunctionContext, context, backendModelName, onMessage, onMessageEnd)
-    : (context: ContextUnit[], onMessage: (message: string) => void, onMessageEnd: (message: string) => void) =>
-        chatCompletionChatGpt(toolFunctionContext, context, backendModelName, onMessage, onMessageEnd)
+  const backend = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
 
   try {
-    await backend(context, onMessage, onMessageEnd)
+    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
   } catch {
     try {
-      await backend(context, onMessage, onMessageEnd)
+      await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
     } catch {
       error('Failed to respond to', displayName, 'reason:', 'unknown')
     }
@@ -303,9 +291,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 }
 
 async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtra>) {
-  const dataUrl = event.content
   const guildId = event.extra?.guild_id
-  const channelId = event.target_id
 
   if (!guildId) {
     return
@@ -317,16 +303,11 @@ async function handleTextChannelMultimediaMessage(event: KEvent<KTextChannelExtr
     return
   }
 
-  const author = event.extra.author
-  const displayName = displayNameFromUser(author)
-  const calledByTrustedUser = isTrustedUser(event.extra.author.id)
   const whitelisted = await ConfigUtils.main.whitelistedGuilds.isGuildWhitelisted({ guildId })
 
   if (!whitelisted) {
     return
   }
-
-  info('extra', event.extra)
 }
 
 async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
@@ -344,44 +325,6 @@ async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
   } catch (e) {
     info('Failed to parse card button value', e)
     return
-  }
-
-  switch (value.kind) {
-    case 'prize-draw': {
-      const prizeId = value.args[0]
-      const result = drawPrize(prizeId, eventBody.user_info)
-      const cardBuilder = CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.IconCute, '抽奖通知！')
-        .addKMarkdownText(result.message || '祝你好运！')
-      Requests.createChannelPrivateMessage({
-        channelId: eventBody.target_id,
-        targetUserId: eventBody.user_info.id,
-        cardBuilder,
-      })
-      break
-    }
-
-    case 'vote-submit': {
-      const voteId = value.args[0]
-      const optionTitle = value.args[1]
-      submitVote(voteId, eventBody.user_info, optionTitle).then(({ message }) => {
-        const cardBuilder = CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.IconCute, '投票通知！')
-          .addKMarkdownText(message)
-        Requests.createChannelPrivateMessage({
-          channelId: eventBody.target_id,
-          targetUserId: eventBody.user_info.id,
-          cardBuilder,
-        })
-      })
-      break
-    }
-
-    case 'code-view': {
-      const codeBlockId = value.args[0]
-      viewCodeBlock(eventBody.user_info, eventBody.target_id, codeBlockId)
-      break
-    }
   }
 }
 
@@ -418,7 +361,11 @@ function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
     case 'deleted_message': {
       if (extra.body.channel_id && extra.body.msg_id) {
         info('Deleted message', extra.body.msg_id)
-        contextManager.deleteMessageFromContext(guildId, extra.body.channel_id, extra.body.msg_id)
+        ConfigUtils.main.contextUnits.deleteContextUnit({
+          guildId,
+          channelId: extra.body.channel_id,
+          messageId: extra.body.msg_id,
+        })
       }
       break
     }

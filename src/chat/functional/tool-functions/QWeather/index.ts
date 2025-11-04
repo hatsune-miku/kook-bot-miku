@@ -3,7 +3,7 @@ import { ChatCompletionTool } from 'openai/resources'
 import { queryRealtimeWeatherByKeyword } from './weather'
 
 import { info } from '../../../../utils/logging/logger'
-import { ToolFunctionContext } from '../../context'
+import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class QWeatherTool implements IFunctionTool {
