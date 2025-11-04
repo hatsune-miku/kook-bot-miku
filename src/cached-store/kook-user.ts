@@ -1,4 +1,4 @@
-import { UserProperties } from '../chat/directives'
+import { UserProperties } from '../chat/directives/types'
 import { ConfigUtils } from '../utils/config/config'
 import { Requests } from '../utils/krequest/request'
 

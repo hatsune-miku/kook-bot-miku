@@ -1,5 +1,4 @@
 import { ChatCompletionTool } from 'openai/resources'
-import { sleep } from 'radash'
 
 import { info } from '../../../../utils/logging/logger'
 import { ToolFunctionContext } from '../../types'
@@ -32,16 +31,16 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     info(`[Chat] Evaluate js expression`, params)
     const { expression, showCommand = true } = params
 
-    if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
-      createCodeBlock({
-        guildId: context.event.extra.guild_id,
-        channelId: context.event.target_id,
-        code: expression,
-        language: 'JavaScript',
-        markdownCodeLanguage: 'js',
-      })
-      await sleep(100)
-    }
+    // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
+    //   createCodeBlock({
+    //     guildId: context.event.extra.guild_id,
+    //     channelId: context.event.target_id,
+    //     code: expression,
+    //     language: 'JavaScript',
+    //     markdownCodeLanguage: 'js',
+    //   })
+    //   await sleep(100)
+    // }
 
     try {
       const result = eval(expression)

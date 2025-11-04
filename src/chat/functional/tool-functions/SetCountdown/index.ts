@@ -1,6 +1,7 @@
 import { ChatCompletionTool } from 'openai/resources'
 
 import { CardBuilder } from '../../../../helpers/card-helper'
+import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
@@ -32,7 +33,7 @@ export class SetCountdownTool implements IFunctionTool {
 
     const endAt = Date.now() + time
     const card = CardBuilder.fromTemplate().addHourCountDown(endAt).build()
-    context.directivesManager.respondCardMessageToUser({
+    respondCardMessageToUser({
       originalEvent: context.event,
       content: card,
     })

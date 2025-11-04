@@ -1,6 +1,5 @@
-import { ChatDirectiveItem, ParseEventResultValid } from '..'
-
 import { ConfigUtils } from '../../../utils/config/config'
+import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
 export default {

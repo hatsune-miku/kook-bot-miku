@@ -1,5 +1,5 @@
-import { ToolFunctionContext } from './context'
 import { dispatchTool } from './tool-functions/dispatch'
+import { ToolFunctionContext } from './types'
 
 import { info } from '../../utils/logging/logger'
 

@@ -1,9 +1,7 @@
 import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
 import { ChatCompletionTool } from 'openai/resources'
-import { sleep } from 'radash'
 
-import { createCodeBlock } from '../../../../backend/controllers/code'
 import { info } from '../../../../utils/logging/logger'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
@@ -36,16 +34,16 @@ export class EvaluatePythonTool implements IFunctionTool {
     info(`[Chat] Evaluate Python expression`, params)
     const { code, showCommand = true } = params
 
-    if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
-      createCodeBlock({
-        guildId: context.event.extra.guild_id,
-        channelId: context.event.target_id,
-        code: code,
-        language: 'Python',
-        markdownCodeLanguage: 'python',
-      })
-      await sleep(100)
-    }
+    // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
+    //   createCodeBlock({
+    //     guildId: context.event.extra.guild_id,
+    //     channelId: context.event.target_id,
+    //     code: code,
+    //     language: 'Python',
+    //     markdownCodeLanguage: 'python',
+    //   })
+    //   await sleep(100)
+    // }
 
     try {
       writeFileSync('/tmp/eval.py', code)

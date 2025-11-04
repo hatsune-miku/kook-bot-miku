@@ -8,7 +8,6 @@
 import express from 'express'
 import { exit } from 'process'
 
-import { defineRoute } from './backend/route'
 import { deinitialize, main } from './bot'
 import { info } from './utils/logging/logger'
 import { initializeLarkBot } from './websocket/larksocket'
@@ -23,7 +22,6 @@ expressApp.listen(port, async () => {
   await initializeLarkBot()
 
   expressApp.use(express.json())
-  defineRoute(expressApp)
   info(`Server listening at http://localhost:${port}`)
 })
 

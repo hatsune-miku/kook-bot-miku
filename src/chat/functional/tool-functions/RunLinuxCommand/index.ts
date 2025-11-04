@@ -3,6 +3,7 @@ import { ChatCompletionTool } from 'openai/resources'
 import { sleep } from 'radash'
 
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
+import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { EvaluateJavaScriptTool } from '../EvaluateJavaScript'
 import { IFunctionTool } from '../dispatch'
@@ -38,7 +39,7 @@ export class RunLinuxCommandTool implements IFunctionTool {
       const card = CardBuilder.fromTemplate()
         .addIconWithKMarkdownText(CardIcons.IconCute, `已执行:\n\`\`\`bash\n${expression}\n\`\`\``)
         .build()
-      context.directivesManager.respondCardMessageToUser({
+      respondCardMessageToUser({
         originalEvent: context.event,
         content: card,
       })
