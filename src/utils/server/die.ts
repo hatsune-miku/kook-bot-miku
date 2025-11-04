@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\utils\server\die.ts
- * @Created At    : 2024-05-21 17:15:04
- * @Last Modified : 2024-05-27 15:46:17
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import { botEventEmitter } from '../../events'
 import { DisplayName } from '../../global/shared'
 import { KResponseExt } from '../krequest/types'

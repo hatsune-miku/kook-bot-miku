@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\utils\logging\logger.ts
- * @Created At    : 2024-05-21 16:47:55
- * @Last Modified : 2024-05-22 15:07:32
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import { DateTime } from 'luxon'
 
 import { Env } from '../env/env'

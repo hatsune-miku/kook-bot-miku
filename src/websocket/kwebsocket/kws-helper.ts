@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\websocket\kwebsocket\kws-helper.ts
- * @Created At    : 2024-05-27 11:11:32
- * @Last Modified : 2024-05-28 16:56:02
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import { tryit } from 'radash'
 import WebSocket from 'ws'
 

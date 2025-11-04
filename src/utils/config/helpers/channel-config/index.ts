@@ -1,8 +1,17 @@
 import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
+import { ChatBotBackends } from '../../../../chat/types'
 import { error } from '../../../logging/logger'
 import { die } from '../../../server/die'
 import { ChannelConfig } from '../../types'
+
+function makeDefaults(channelId: string): ChannelConfig {
+  return {
+    channelId,
+    allowOmittingMentioningMe: false,
+    backend: ChatBotBackends.deepseekv31volc,
+  }
+}
 
 export function createChannelConfigHelper(storage: NodeGenericExternalStorage) {
   const s = storage.activeStorage!
@@ -16,7 +25,7 @@ export function createChannelConfigHelper(storage: NodeGenericExternalStorage) {
       error(err)
       return null
     }
-    return config as ChannelConfig | null
+    return (config || makeDefaults(channelId)) as ChannelConfig | null
   }
 
   async function setChannelConfig(config: ChannelConfig) {

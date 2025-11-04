@@ -1,18 +1,19 @@
-name: kook-bot-cgrelay
+name: kook-bot-miku
 version: 1.0.0
 main: index.js
 license: MIT
+
 scripts:
   build: tsc
   start: node dist/src/server.js
   daemon: while true; do pnpm start; done
   test: jest
+
 dependencies:
-  '@baiducloud/qianfan': ^0.1.7
-  '@larksuiteoapi/node-sdk': ^1.44.0
   '@kookapp/klee-core': '0.1.21'
   '@kookapp/klee-sqlite3': '0.1.21'
   '@kookapp/klee-node-toolkit': '0.1.21'
+  '@larksuiteoapi/node-sdk': ^1.44.0
   cors: ^2.8.5
   dotenv: ^16.4.5
   eventsource: ^2.0.2

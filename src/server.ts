@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\server.ts
- * @Created At    : 2024-05-21 16:20:02
- * @Last Modified : 2024-05-27 12:48:35
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import express from 'express'
 import { exit } from 'process'
 
@@ -20,7 +13,6 @@ const port = 6309
 expressApp.listen(port, async () => {
   await main()
   await initializeLarkBot()
-
   expressApp.use(express.json())
   info(`Server listening at http://localhost:${port}`)
 })

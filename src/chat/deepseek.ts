@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\chat\openai.ts
- * @Created At    : 2024-05-22 17:45:24
- * @Last Modified : 2024-05-29 23:00:54
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import OpenAI from 'openai'
 import { ChatCompletionMessageParam } from 'openai/resources'
 import { ChatCompletionContentPart, Completions } from 'openai/resources/chat'

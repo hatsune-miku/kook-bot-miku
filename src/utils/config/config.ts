@@ -1,3 +1,5 @@
+import path from 'path'
+
 import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
 import { createChannelConfigHelper } from './helpers/channel-config'
@@ -35,7 +37,6 @@ export async function initializeConfig(): Promise<Config> {
 
   const keys = Object.keys(configMap)
   const config: Config = {} as Config
-  const initializers = []
 
   for (const key of keys) {
     const [model, createHelper] = configMap[key]
@@ -44,14 +45,14 @@ export async function initializeConfig(): Promise<Config> {
       model,
       storageOptions: {
         sqlite3DatabaseFileName,
+        externalWorkingDirectory: path.join(process.cwd(), 'config'),
       },
     })
 
-    initializers.push(storage.initialize())
+    await storage.initialize()
     config[key] = createHelper(storage)
   }
 
-  await Promise.all(initializers)
   return config
 }
 

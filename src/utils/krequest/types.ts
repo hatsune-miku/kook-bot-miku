@@ -1,10 +1,3 @@
-/*
- * @Path          : \kook-bot-cgrelay\src\utils\krequest\types.ts
- * @Created At    : 2024-05-21 16:30:11
- * @Last Modified : 2024-05-28 16:38:36
- * @By            : Guan Zhen (guanzhen@chuanyuapp.com)
- * @Description   : Magic. Don't touch.
- */
 import { CardBuilder } from '../../helpers/card-helper'
 import { KEventType } from '../../websocket/kwebsocket/types'
 
