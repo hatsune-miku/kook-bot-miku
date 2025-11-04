@@ -124,6 +124,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   const content = extractContent(event)
   const author = event.extra.author
   const displayName = displayNameFromUser(author)
+  const trusted = isTrustedUser(author.id)
   const isMentioningMe = isExplicitlyMentioningBot(event, shared.me.id)
   const whitelisted = await ConfigUtils.main.whitelistedGuilds.isGuildWhitelisted({ guildId })
   const channelConfig = await ConfigUtils.main.channelConfigs.getChannelConfig({ channelId })
@@ -132,7 +133,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  if (isMentioningMe && !whitelisted) {
+  if (isMentioningMe && !whitelisted && !trusted) {
     await Requests.createChannelMessage({
       type: KEventType.KMarkdown,
       target_id: event.target_id,
