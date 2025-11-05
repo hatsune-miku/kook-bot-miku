@@ -1,9 +1,12 @@
 import { dispatchCardButtonEvent } from './shared'
 
+import { pluginLoader } from '../../plugins/loader'
 import { configUtils } from '../../utils/config/config'
 import { KCardButtonExtra, KEvent, KSystemEventExtra } from '../../websocket/kwebsocket/types'
 
-export function handleSystemEvent(event: KEvent<KSystemEventExtra>) {
+export async function handleSystemEvent(event: KEvent<KSystemEventExtra>, sn: number | undefined) {
+  await Promise.all(pluginLoader.plugins.map((p) => p.onSystemEvent?.(event, sn)))
+
   const extra = event.extra
   const guildId = event.target_id
 

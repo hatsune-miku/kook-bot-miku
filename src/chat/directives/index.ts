@@ -2,11 +2,15 @@ import { builtinDirectives } from './builtin'
 import { ParseEventResultValid } from './types'
 import { respondCardMessageToUser, respondToUser } from './utils/events'
 
+import { pluginLoader } from '../../plugins/loader'
 import { isTrustedUser } from '../../utils'
 import { warn } from '../../utils/logging/logger'
 
 async function handleHelp(event: ParseEventResultValid) {
-  const directives = [...builtinDirectives]
+  const directives = [
+    ...builtinDirectives,
+    ...pluginLoader.plugins.flatMap((plugin) => plugin.providedDirectives ?? []),
+  ]
   const content = directives
     .map((directive) => {
       const triggerWords = Array.isArray(directive.triggerWord) ? directive.triggerWord : [directive.triggerWord]
@@ -36,7 +40,11 @@ export async function dispatchDirectives(
     return true
   }
 
-  const directiveItem = builtinDirectives.find((d) =>
+  const directiveItems = [
+    ...builtinDirectives,
+    ...pluginLoader.plugins.flatMap((plugin) => plugin.providedDirectives ?? []),
+  ]
+  const directiveItem = directiveItems.find((d) =>
     Array.isArray(d.triggerWord) ? d.triggerWord.includes(directive) : d.triggerWord === directive
   )
   if (!directiveItem) {

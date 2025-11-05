@@ -1,5 +1,3 @@
-import path from 'path'
-
 import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
 import { createChannelConfigHelper } from './helpers/channel-config'
@@ -14,8 +12,8 @@ import {
   UserRoleModel,
   WhitelistedGuildModel,
 } from './models'
+import { getExternalConfigPath } from './utils'
 
-import { info } from '../logging/logger'
 import { die } from '../server/die'
 
 export const MessageLengthUpperBound = Math.round(4000 * 0.9)
@@ -46,16 +44,12 @@ export class ConfigUtils {
 
     for (const key of keys) {
       const [model, createHelper] = configMap[key]
-      info('options', {
-        sqlite3DatabaseFileName,
-        externalWorkingDirectory: path.join(process.cwd(), 'config'),
-      })
       const storage = new NodeGenericExternalStorage({
         isNode: true,
         model,
         storageOptions: {
           sqlite3DatabaseFileName,
-          externalWorkingDirectory: path.join(process.cwd(), 'config'),
+          externalWorkingDirectory: getExternalConfigPath(),
         },
       })
 

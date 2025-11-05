@@ -6,6 +6,7 @@ import { ToolFunctionContext } from '../../chat/functional/types'
 import { chatCompletionStreamed as chatCompletionChatGpt } from '../../chat/openai'
 import { DisplayName } from '../../global/shared'
 import { CardBuilder, CardIcons } from '../../helpers/card-helper'
+import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
 import { TaskQueue } from '../../utils/algorithm/task-queue'
 import { configUtils } from '../../utils/config/config'
@@ -14,7 +15,9 @@ import { Requests } from '../../utils/krequest/request'
 import { error } from '../../utils/logging/logger'
 import { KEvent, KEventType, KTextChannelExtra } from '../../websocket/kwebsocket/types'
 
-export async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>) {
+export async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>, sn: number | undefined) {
+  await Promise.all(pluginLoader.plugins.map((p) => p.onTextChannelEvent?.(event, sn)))
+
   switch (event.type) {
     case KEventType.KMarkdown:
     case KEventType.Card:
@@ -90,6 +93,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       }
 
       await dispatchDirectives(parsedEvent, handleContextReady)
+      await Promise.all(pluginLoader.plugins.map((p) => p.onParsedTextChannelEvent?.(parsedEvent)))
       return
     }
   }
@@ -178,14 +182,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       },
       { guildId, originalTextContent: modelMessageAccumulated }
     )
-    const isUpdateMessageSuccess = result.success && result.code === 0
-    if (!isUpdateMessageSuccess) {
+    if (!result.success || result.code !== 0) {
       lastUpdateErrorMessage = result.message
-    }
-
-    const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
-
-    if (!isUpdateMessageSuccess) {
+      const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
       Requests.updateChannelMessage(
         {
           msg_id: createdMessage.msg_id,
@@ -202,6 +201,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
         { guildId, originalTextContent: userSideErrorMessage }
       )
       error('Failed to update message', createdMessage.msg_id, 'reason:', lastUpdateErrorMessage)
+      return
     }
   }
 
