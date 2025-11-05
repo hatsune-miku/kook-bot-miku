@@ -10,9 +10,9 @@ scripts:
   test: jest
 
 dependencies:
-  '@kookapp/klee-core': '0.1.21'
-  '@kookapp/klee-sqlite3': '0.1.21'
-  '@kookapp/klee-node-toolkit': '0.1.21'
+  '@kookapp/klee-core': '0.1.22'
+  '@kookapp/klee-sqlite3': '0.1.22'
+  '@kookapp/klee-node-toolkit': '0.1.22'
   '@larksuiteoapi/node-sdk': ^1.44.0
   cors: ^2.8.5
   dotenv: ^16.4.5
