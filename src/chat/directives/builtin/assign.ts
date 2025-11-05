@@ -1,47 +1,51 @@
+import { map } from 'radash'
+
+import { kookUserStore } from '../../../cached-store/kook-user'
 import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
 export default {
   triggerWord: 'assign',
-  parameterDescription: '<user-id> <role-id>',
-  description: '将指定用户分配到指定角色',
+  parameterDescription: '<role> @user',
+  description: '指定@的人的 <role> 角色',
   defaultValue: undefined,
-  permissionGroups: ['developer'],
+  permissionGroups: ['admin'],
   async handler(event: ParseEventResultValid) {
-    const channelId = event.originalEvent.target_id
-
-    if (event.parameter === 'on') {
-      configUtils.main.channelConfigs.updateChannelConfig({
-        channelId,
-        allowOmittingMentioningMe: true,
-      })
+    if (event.mentionUserIds.length === 0 && event.mentionRoleIds.length > 0) {
+      // 用户常见的错误，@到role而非具体用户
       respondToUser({
         originalEvent: event.originalEvent,
-        content: '好！后续指令无需再@我即可执行！',
+        content: '你应该@具体用户，而不是@某个服务器角色，注意区分哦',
       })
       return
     }
 
-    if (event.parameter === 'off') {
-      configUtils.main.channelConfigs.updateChannelConfig({
-        channelId,
-        allowOmittingMentioningMe: false,
-      })
+    const role = event.parameter
+    if (!role) {
       respondToUser({
         originalEvent: event.originalEvent,
-        content: 'disabled `allowOmittingMentioningMe`',
+        content: '权限不能为空',
       })
       return
     }
 
-    configUtils.main.channelConfigs.updateChannelConfig({
-      channelId,
-      allowOmittingMentioningMe: false,
-    })
+    const mentionedUsers = await map(event.mentionUserIds, (userId) =>
+      kookUserStore.getUser({ userId, guildId: event.originalEvent.extra.guild_id })
+    )
+
+    await Promise.all(
+      mentionedUsers.map((user) =>
+        configUtils.main.userRoles.assignUserRole({
+          userId: user.metadata.id,
+          role: role,
+        })
+      )
+    )
+
     respondToUser({
       originalEvent: event.originalEvent,
-      content: '参数不合法，应该输入 on 或者 off',
+      content: `权限设置已更新~`,
     })
   },
 } satisfies ChatDirectiveItem
