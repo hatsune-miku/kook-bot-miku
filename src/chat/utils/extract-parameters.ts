@@ -1,5 +1,3 @@
-import { info } from '../../utils/logging/logger'
-
 export function extractParameter(parameters: string[], subject: string, defaultValue: string): string {
   try {
     return parameters.find((p) => p.startsWith(`${subject}=`))?.split('=')[1] || defaultValue
@@ -14,7 +12,6 @@ export function parseParameterDate(parameter: string) {
     const now = new Date()
 
     try {
-      info(`parameter: ${parameter}`)
       const [value, unit] = parameter.match(/^\+(\d+)([smhd])$/)!.slice(1)
       const valueInt = parseInt(value)
       if (isNaN(valueInt)) {

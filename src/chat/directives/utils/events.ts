@@ -1,12 +1,12 @@
 import { kookUserStore } from '../../../cached-store/kook-user'
-import { Events, RespondToUserParameters } from '../../../events'
+import { Events, RespondToUserParameters, botEventEmitter } from '../../../events'
 import { CreateChannelMessageResult, KResponseExt } from '../../../utils/krequest/types'
 import { KEvent, KTextChannelExtra } from '../../../websocket/kwebsocket/types'
 import { ParseEventResult } from '../types'
 
 export function respondToUser(params: RespondToUserParameters): Promise<KResponseExt<CreateChannelMessageResult>> {
   return new Promise((resolve) => {
-    this.eventEmitter.emit(Events.RespondToUser, params, resolve)
+    botEventEmitter.emit(Events.RespondToUser, params, resolve)
   })
 }
 
@@ -14,7 +14,7 @@ export function respondCardMessageToUser(
   params: RespondToUserParameters
 ): Promise<KResponseExt<CreateChannelMessageResult>> {
   return new Promise((resolve) => {
-    this.eventEmitter.emit(Events.RespondCardMessageToUser, params, resolve)
+    botEventEmitter.emit(Events.RespondCardMessageToUser, params, resolve)
   })
 }
 

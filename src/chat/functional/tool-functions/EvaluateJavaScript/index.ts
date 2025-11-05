@@ -1,6 +1,5 @@
 import { ChatCompletionTool } from 'openai/resources'
 
-import { info } from '../../../../utils/logging/logger'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
@@ -28,8 +27,7 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     }
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    info(`[Chat] Evaluate js expression`, params)
-    const { expression, showCommand = true } = params
+    const { expression, showCommand: _ = true } = params
 
     // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
     //   createCodeBlock({
@@ -44,7 +42,6 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
 
     try {
       const result = eval(expression)
-      info(`[Chat] Eval result`, result)
       return result
     } catch (e: any) {
       return `执行失败: ${e?.message || '未知错误'}`

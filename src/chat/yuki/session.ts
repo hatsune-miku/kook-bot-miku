@@ -2,9 +2,9 @@ import { YukiContext } from './context'
 import { Invocation, parseDirectiveInvocation, takeAndVerifyParameters } from './utils'
 
 import { CardBuilder, CardIcons } from '../../helpers/card-helper'
-import { ConfigUtils } from '../../utils/config/config'
+import { configUtils } from '../../utils/config/config'
 import { info, warn } from '../../utils/logging/logger'
-import { IChatDirectivesManager } from '../types'
+import { IChatDirectivesManager } from '../directives/types'
 
 export interface BuiltinCommands {
   [key: string]: () => Promise<any>
@@ -35,7 +35,7 @@ export default class YukiCommandSession {
 
   async interpretUserDefinedCommand() {
     const { directive, parameters } = this.invocation
-    const scripts = await ConfigUtils.main.userDefinedScripts.findUserDefinedScripts({
+    const scripts = await configUtils.main.userDefinedScripts.findUserDefinedScripts({
       guildId: this.context.guildId,
       name: directive,
     })
@@ -150,7 +150,7 @@ export default class YukiCommandSession {
       })
       return
     }
-    return await new Promise((resolve) => setTimeout(resolve, sleepTimeMillis))
+    await new Promise((resolve) => setTimeout(resolve, sleepTimeMillis))
   }
 
   private async _handleScript() {
@@ -167,7 +167,6 @@ export default class YukiCommandSession {
     }
     commandsSerialized = commandsSerialized.replace(/\\\\"/g, '\\"')
 
-    info('Executing script', commandsSerialized)
     console.log(commandsSerialized)
     let rawCommands = []
     try {
@@ -231,7 +230,7 @@ export default class YukiCommandSession {
       return
     }
 
-    ConfigUtils.main.userDefinedScripts.createUserDefinedScript({
+    configUtils.main.userDefinedScripts.createUserDefinedScript({
       guildId,
       userId: this.context.author.id,
       name: commandName,

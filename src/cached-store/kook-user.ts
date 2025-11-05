@@ -1,5 +1,5 @@
 import { UserProperties } from '../chat/directives/types'
-import { ConfigUtils } from '../utils/config/config'
+import { configUtils } from '../utils/config/config'
 import { Requests } from '../utils/krequest/request'
 
 export class KookUserStore {
@@ -13,7 +13,7 @@ export class KookUserStore {
     if (!result.success) {
       throw new Error(`User request failed: ${result.message}`)
     }
-    const roles = await ConfigUtils.main.userRoles.getUserRoles({ userId })
+    const roles = await configUtils.main.userRoles.getUserRoles({ userId })
     const properties = {
       roles: roles.map((role) => role.role),
       metadata: result.data,

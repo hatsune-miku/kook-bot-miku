@@ -1,4 +1,3 @@
-import { info } from 'console'
 import { HttpProxyAgent } from 'http-proxy-agent'
 import OpenAI from 'openai'
 import { ChatCompletionContentPart, ChatCompletionMessageParam } from 'openai/resources'
@@ -161,13 +160,11 @@ export async function chatCompletionStreamed(
         mergedChunks.push(content)
         if (mergedChunks.length >= 3) {
           const content = mergedChunks.join('')
-          info(`[Chat] Merged chunks`, content)
           onMessage(content)
           mergedChunks = []
         }
         responseMessage += content
       } else if (functionsMerged) {
-        info(`[Chat] Function calls`, mergedToolCalls)
         const mergedToolCallsArray = Object.values(mergedToolCalls)
 
         messages.push({
@@ -208,7 +205,6 @@ export async function chatCompletionStreamed(
   }
 
   if (mergedChunks.length > 0) {
-    info(`[Chat] Final merged chunks`, mergedChunks)
     const content = mergedChunks.join('')
     onMessage(content)
   }

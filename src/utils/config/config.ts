@@ -15,6 +15,8 @@ import {
   WhitelistedGuildModel,
 } from './models'
 
+import { die } from '../server/die'
+
 export const MessageLengthUpperBound = Math.round(4000 * 0.9)
 
 export interface Config {
@@ -25,37 +27,47 @@ export interface Config {
   contextUnits: ReturnType<typeof createContextUnitHelper>
 }
 
-export async function initializeConfig(): Promise<Config> {
-  const sqlite3DatabaseFileName = 'memory.db'
-  const configMap = {
-    whitelistedGuilds: [WhitelistedGuildModel, createWhitelistedGuildHelper],
-    channelConfigs: [ChannelConfigModel, createChannelConfigHelper],
-    userDefinedScripts: [UserDefinedScriptModel, createUserDefinedScriptHelper],
-    userRoles: [UserRoleModel, createUserRoleHelper],
-    contextUnitStorage: [ContextUnitModel, createContextUnitHelper],
+export class ConfigUtils {
+  private _main: Config
+
+  async initialize() {
+    const sqlite3DatabaseFileName = 'memory.db'
+    const configMap: Record<keyof Config, [any, (storage: NodeGenericExternalStorage) => any]> = {
+      whitelistedGuilds: [WhitelistedGuildModel, createWhitelistedGuildHelper],
+      channelConfigs: [ChannelConfigModel, createChannelConfigHelper],
+      userDefinedScripts: [UserDefinedScriptModel, createUserDefinedScriptHelper],
+      userRoles: [UserRoleModel, createUserRoleHelper],
+      contextUnits: [ContextUnitModel, createContextUnitHelper],
+    }
+
+    const keys = Object.keys(configMap)
+    const config: Config = {} as Config
+
+    for (const key of keys) {
+      const [model, createHelper] = configMap[key]
+      const storage = new NodeGenericExternalStorage({
+        isNode: true,
+        model,
+        storageOptions: {
+          sqlite3DatabaseFileName,
+          externalWorkingDirectory: path.join(process.cwd(), 'config'),
+        },
+      })
+
+      const [err] = await storage.initialize()
+      if (err) {
+        die(`initializeConfig: Failed to initialize storage: ${err}`)
+      }
+
+      config[key] = createHelper(storage)
+    }
+
+    this._main = config
   }
 
-  const keys = Object.keys(configMap)
-  const config: Config = {} as Config
-
-  for (const key of keys) {
-    const [model, createHelper] = configMap[key]
-    const storage = new NodeGenericExternalStorage({
-      isNode: true,
-      model,
-      storageOptions: {
-        sqlite3DatabaseFileName,
-        externalWorkingDirectory: path.join(process.cwd(), 'config'),
-      },
-    })
-
-    await storage.initialize()
-    config[key] = createHelper(storage)
+  get main(): Config {
+    return this._main
   }
-
-  return config
 }
 
-export const ConfigUtils: { main: Config } = {
-  main: null,
-}
+export const configUtils = new ConfigUtils()

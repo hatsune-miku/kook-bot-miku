@@ -4,9 +4,10 @@ import fetch from 'node-fetch'
 import { ChatCompletionTool } from 'openai/resources'
 import { draw } from 'radash'
 
-import { DisplayName, shared } from '../../../../global/shared'
+import { botKookUserStore } from '../../../../cached-store/bot-kook-user'
+import { DisplayName } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
-import { ConfigUtils } from '../../../../utils/config/config'
+import { configUtils } from '../../../../utils/config/config'
 import { Env } from '../../../../utils/env/env'
 import { Requests } from '../../../../utils/krequest/request'
 import { info } from '../../../../utils/logging/logger'
@@ -121,13 +122,13 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       const message = `${DisplayName}已绘画完成\n\n提示词\n\`${prompt}\`\n\n负面提示词\n\`${negative_prompt}\``
       updateMessage(CardIcons.IconHappy, message)
 
-      ConfigUtils.main.contextUnits.createContextUnit({
+      configUtils.main.contextUnits.createContextUnit({
         guildId,
         channelId,
         messageId: sendResult.msg_id,
         role: 'assistant',
         authorName: DisplayName,
-        authorUserId: shared.me.id,
+        authorUserId: botKookUserStore.me.id,
         content: message,
       })
     }

@@ -1,7 +1,7 @@
 import express from 'express'
 import { exit } from 'process'
 
-import { deinitialize, main } from './bot'
+import { deinitializeKookBot, initializeKookBot } from './bot/index'
 import { info } from './utils/logging/logger'
 import { initializeLarkBot } from './websocket/larksocket'
 
@@ -11,14 +11,14 @@ const expressApp = express()
 const port = 6309
 
 expressApp.listen(port, async () => {
-  await main()
+  await initializeKookBot()
   await initializeLarkBot()
   expressApp.use(express.json())
   info(`Server listening at http://localhost:${port}`)
 })
 
 process.on('SIGINT', () => {
-  deinitialize()
+  deinitializeKookBot()
   info('Server Shutdown')
   exit(0)
 })

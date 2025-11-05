@@ -1,9 +1,12 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { DateTime } from 'luxon'
+
+import { CardBuilder, CardIcons } from '../../../helpers/card-helper'
+import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
-import { respondToUser } from '../utils/events'
+import { respondCardMessageToUser, respondToUser } from '../utils/events'
 
 export default {
-  triggerWord: 'print_context',
+  triggerWord: ['print-context', 'recall'],
   parameterDescription: '',
   description: '(调试限定) 输出当前频道的对话上下文',
   defaultValue: undefined,
@@ -12,7 +15,7 @@ export default {
   async handler(event: ParseEventResultValid) {
     const guildId = event.originalEvent.extra.guild_id
     const channelId = event.originalEvent.target_id
-    const contextUnits = await ConfigUtils.main.contextUnits.getContextUnits({ guildId, channelId })
+    const contextUnits = await configUtils.main.contextUnits.getContextUnits({ guildId, channelId })
 
     if (contextUnits.length === 0) {
       respondToUser({
@@ -22,14 +25,23 @@ export default {
       return
     }
 
-    respondToUser({
+    const card = CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.IconHappy, '上下文数据！')
+
+    contextUnits.forEach((unit) => {
+      const dateTime = DateTime.fromMillis(unit.createdAt).toFormat('yyyy/MM/dd HH:mm:ss')
+      const authorName = unit.authorName
+      let content = unit.content
+
+      if (content.length > 32) {
+        content = `${content.slice(0, 32)}...`
+      }
+
+      card.addDivider().addContext(`${authorName} ${dateTime}`).addKMarkdownText(content)
+    })
+
+    respondCardMessageToUser({
       originalEvent: event.originalEvent,
-      content: contextUnits
-        .map(
-          (unit) =>
-            `${unit.authorName} (${unit.authorUserId}): ${unit.content.length > 32 ? unit.content.slice(0, 32) + '...' : unit.content}`
-        )
-        .join('\n'),
+      content: card.build(),
     })
   },
 } satisfies ChatDirectiveItem

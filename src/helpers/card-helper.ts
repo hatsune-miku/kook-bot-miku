@@ -126,6 +126,14 @@ export class CardBuilder {
     return this
   }
 
+  addContext(content: string) {
+    this.modules.push({
+      type: 'context',
+      elements: [{ type: 'plain-text', content }],
+    })
+    return this
+  }
+
   build() {
     return JSON.stringify(this.card)
   }

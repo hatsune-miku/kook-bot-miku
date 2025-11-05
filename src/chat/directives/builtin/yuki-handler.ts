@@ -1,6 +1,5 @@
-import { IChatDirectivesManager } from '../../types'
 import yukiSubCommandHandler from '../../yuki/handler'
-import { ChatDirectiveItem, ParseEventResultValid } from '../types'
+import { ChatDirectiveItem, IChatDirectivesManager, ParseEventResultValid } from '../types'
 
 export default {
   triggerWord: ['yuki', 'yuki-subcommands'],
@@ -8,6 +7,7 @@ export default {
   description: 'Yuki Subcommands',
   defaultValue: undefined,
   permissionGroups: ['everyone'],
+  withContext: false,
   async handler(event: ParseEventResultValid, manager: IChatDirectivesManager) {
     return yukiSubCommandHandler(manager, event)
   },

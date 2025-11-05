@@ -2,7 +2,6 @@ import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
 import { ChatCompletionTool } from 'openai/resources'
 
-import { info } from '../../../../utils/logging/logger'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
@@ -31,8 +30,7 @@ export class EvaluatePythonTool implements IFunctionTool {
     }
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    info(`[Chat] Evaluate Python expression`, params)
-    const { code, showCommand = true } = params
+    const { code, showCommand: _ = true } = params
 
     // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
     //   createCodeBlock({
@@ -50,7 +48,6 @@ export class EvaluatePythonTool implements IFunctionTool {
       const result = execSync(`python3 /tmp/eval.py`, {
         encoding: 'utf-8',
       }).toString()
-      info(`[Chat] Eval result`, result)
       return result
     } catch (e: any) {
       return `执行失败: ${e?.message || '未知错误'}`

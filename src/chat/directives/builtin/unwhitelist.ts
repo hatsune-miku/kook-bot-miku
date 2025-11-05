@@ -1,4 +1,4 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
@@ -18,7 +18,7 @@ export default {
       })
       return
     }
-    ConfigUtils.main.whitelistedGuilds.removeWhitelistedGuild({ guildId })
+    configUtils.main.whitelistedGuilds.removeWhitelistedGuild({ guildId })
     respondToUser({
       originalEvent: event.originalEvent,
       content: `已将 ${guildId} 移出白名单`,

@@ -6,7 +6,7 @@ function log(level: string, ...data: any[]) {
   if (!shouldPrintLog(level)) {
     return
   }
-  const nowFormatted = DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss')
+  const nowFormatted = DateTime.now().toFormat('yyyy/MM/dd HH:mm:ss')
   console.log(`[${nowFormatted}] [KBot] [${level}]`, data)
 }
 

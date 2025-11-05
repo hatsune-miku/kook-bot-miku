@@ -11,7 +11,6 @@ import { KCardMessageElement, KCardMessageSubElement } from '../events'
 import { DisplayName } from '../global/shared'
 import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
-import { info } from '../utils/logging/logger'
 
 function mapContextUnit(unit: ContextUnit): ChatCompletionMessageParam {
   const normalUnit: ChatCompletionMessageParam = {
@@ -146,13 +145,11 @@ export async function chatCompletionStreamed(
         mergedChunks.push(content)
         if (mergedChunks.length >= 3) {
           const content = mergedChunks.join('')
-          // info(`[Chat] Merged chunks`, content)
           onMessage(content)
           mergedChunks = []
         }
         responseMessage += content
       } else if (functionsMerged) {
-        // info(`[Chat] Function calls`, mergedToolCalls)
         const mergedToolCallsArray = Object.values(mergedToolCalls)
 
         messages.push({
@@ -193,7 +190,6 @@ export async function chatCompletionStreamed(
   }
 
   if (mergedChunks.length > 0) {
-    // info(`[Chat] Final merged chunks`, mergedChunks)
     const content = mergedChunks.join('')
     onMessage(content)
   }

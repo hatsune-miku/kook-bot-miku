@@ -1,6 +1,7 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { configUtils } from '../../../utils/config/config'
 import { ChatBotBackend, ChatBotBackends } from '../../types'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
+import { respondToUser } from '../utils/events'
 
 export default {
   triggerWord: 'set_backend',
@@ -13,8 +14,7 @@ export default {
     const backend = event.parameter
     const channelId = event.originalEvent.target_id
     const channelName = event.originalEvent.extra.channel_name
-    const channelConfig = await ConfigUtils.main.channelConfigs.getChannelConfig({ channelId })
-    const currentBackend = channelConfig?.backend
+    const channelConfig = await configUtils.main.channelConfigs.getChannelConfig({ channelId })
 
     if (
       [
@@ -26,11 +26,11 @@ export default {
         ChatBotBackends.o3mini,
       ].includes(backend as any)
     ) {
-      ConfigUtils.main.channelConfigs.updateChannelConfig({
+      configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         backend: backend as ChatBotBackend,
       })
-      this.respondToUser({
+      respondToUser({
         originalEvent: event.originalEvent,
         content: `已切换至 ChatGPT (${backend})`,
       })
@@ -38,18 +38,18 @@ export default {
     }
 
     if (backend?.startsWith('deepseek')) {
-      ConfigUtils.main.channelConfigs.updateChannelConfig({
+      configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         backend: backend as ChatBotBackend,
       })
-      this.respondToUser({
+      respondToUser({
         originalEvent: event.originalEvent,
         content: `已切换至 DeepSeek (${backend})`,
       })
       return
     }
 
-    this.respondToUser({
+    respondToUser({
       originalEvent: event.originalEvent,
       content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
         channelConfig.backend

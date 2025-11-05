@@ -1,4 +1,4 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
@@ -19,7 +19,7 @@ export default {
       return
     }
 
-    ConfigUtils.main.whitelistedGuilds.addWhitelistedGuild({ guildId, name: nickname })
+    configUtils.main.whitelistedGuilds.addWhitelistedGuild({ guildId, name: nickname })
     respondToUser({
       originalEvent: event.originalEvent,
       content: `已将 ${guildId} (${nickname}) 加入白名单`,

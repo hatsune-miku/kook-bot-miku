@@ -1,7 +1,3 @@
-import { ParseEventResultValid } from './directives/types'
-
-import { RespondToUserParameters } from '../events'
-
 export const ChatBotBackends = {
   gpt4o: 'gpt-4o',
   gpt4: 'gpt-4',
@@ -15,9 +11,3 @@ export const ChatBotBackends = {
 } as const
 
 export type ChatBotBackend = (typeof ChatBotBackends)[keyof typeof ChatBotBackends]
-
-export interface IChatDirectivesManager {
-  respondToUser(params: RespondToUserParameters): void
-  respondCardMessageToUser(params: RespondToUserParameters): void
-  dispatchDirectives(parsedEvent: ParseEventResultValid): Promise<boolean>
-}

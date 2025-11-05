@@ -29,7 +29,7 @@ export async function initializeLarkBot() {
     if (!lastChatSessionId) {
       return
     }
-    return await client.im.v1.message.create({
+    await client.im.v1.message.create({
       params: {
         receive_id_type: 'chat_id',
       },

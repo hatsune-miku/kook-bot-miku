@@ -1,19 +1,19 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
 export default {
-  triggerWord: 'using_namespace',
+  triggerWord: 'using-namespace',
   parameterDescription: 'on|off',
   description: '是否允许省略"@我"而直接使用指令',
   defaultValue: undefined,
   permissionGroups: ['everyone'],
+  withContext: false,
   async handler(event: ParseEventResultValid) {
-    const guildId = event.originalEvent.extra.guild_id
     const channelId = event.originalEvent.target_id
 
     if (event.parameter === 'on') {
-      ConfigUtils.main.channelConfigs.updateChannelConfig({
+      configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         allowOmittingMentioningMe: true,
       })
@@ -25,7 +25,7 @@ export default {
     }
 
     if (event.parameter === 'off') {
-      ConfigUtils.main.channelConfigs.updateChannelConfig({
+      configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         allowOmittingMentioningMe: false,
       })
@@ -36,7 +36,7 @@ export default {
       return
     }
 
-    ConfigUtils.main.channelConfigs.updateChannelConfig({
+    configUtils.main.channelConfigs.updateChannelConfig({
       channelId,
       allowOmittingMentioningMe: false,
     })

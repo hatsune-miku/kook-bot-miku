@@ -1,7 +1,7 @@
 import { dispatchTool } from './tool-functions/dispatch'
 import { ToolFunctionContext } from './types'
 
-import { info } from '../../utils/logging/logger'
+import { warn } from '../../utils/logging/logger'
 
 export class ToolFunctionInvoker {
   constructor(private context: ToolFunctionContext) {}
@@ -9,7 +9,7 @@ export class ToolFunctionInvoker {
   async invoke(name: string, params: any): Promise<string> {
     const tool = dispatchTool(name)
     if (!tool) {
-      info(`[ToolFunctionInvoker] Tool not found: ${name}`)
+      warn(`[ToolFunctionInvoker] Tool not found: ${name}`)
     }
 
     try {
@@ -17,7 +17,7 @@ export class ToolFunctionInvoker {
         params = JSON.parse(params)
       }
     } catch {
-      info(`[ToolFunctionInvoker] Failed to parse params: ${JSON.stringify(params)}`)
+      warn(`[ToolFunctionInvoker] Failed to parse params: ${JSON.stringify(params)}`)
       return '调用失败：JSON parse failed'
     }
     return await tool.invoke(this.context, params)

@@ -26,10 +26,11 @@ export interface KCardMessageSubTextElement {
 
 export interface KCardMessageContainedElement {
   // TODO
-  type: 'image' | 'file'
+  type: 'image' | 'file' | 'plain-text'
   title?: string
   src?: string
   size?: KCardSize | string
+  content?: string
 }
 export interface KCardMessageSubElement {
   // TODO
@@ -43,7 +44,7 @@ export interface KCardMessageSubElement {
 
 export interface KCardMessageElement {
   // TODO
-  type: 'card' | 'container'
+  type: 'card' | 'container' | 'context'
   theme: 'primary' | 'secondary' | 'invisible'
   size: KCardSize
   color?: string

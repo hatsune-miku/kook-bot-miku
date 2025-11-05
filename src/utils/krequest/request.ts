@@ -19,11 +19,12 @@ import {
   WhoAmIExtendResult as QueryUserResult,
 } from './types'
 
-import { DisplayName, shared } from '../../global/shared'
+import { botKookUserStore } from '../../cached-store/bot-kook-user'
+import { DisplayName } from '../../global/shared'
 import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
-import { ConfigUtils, MessageLengthUpperBound } from '../config/config'
+import { MessageLengthUpperBound, configUtils } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
-import { error, info } from '../logging/logger'
+import { error } from '../logging/logger'
 import { die } from '../server/die'
 
 reloadConfig()
@@ -192,14 +193,12 @@ export class Requests {
     if (props.content.length > MessageLengthUpperBound) {
       return this.createChannelMessageChunk(props)
     }
-    info(props)
     const result: KResponseExt<CreateChannelMessageResult> = await this.request(`/api/v3/message/create`, 'POST', props)
     if (guildId && result.code === 0 && result.data?.msg_id) {
-      info('Appending context', guildId, props.target_id, shared.me.id, originalTextContent)
-      await ConfigUtils.main.contextUnits.createContextUnit({
+      await configUtils.main.contextUnits.createContextUnit({
         guildId,
         channelId: props.target_id,
-        authorUserId: shared.me.id,
+        authorUserId: botKookUserStore.me.id,
         messageId: result.data.msg_id,
         authorName: DisplayName,
         role: 'assistant',
@@ -239,13 +238,13 @@ export class Requests {
     }
     const result: KResponseExt<{}> = await this.request(`/api/v3/message/update`, 'POST', props)
     if (result.code === 0 && guildId) {
-      await ConfigUtils.main.contextUnits.updateContextUnit({
+      await configUtils.main.contextUnits.updateContextUnit({
         guildId,
         channelId: props.extra.target_id,
         messageId: props.msg_id,
         role: 'assistant',
         authorName: DisplayName,
-        authorUserId: shared.me.id,
+        authorUserId: botKookUserStore.me.id,
         content: originalTextContent ?? props.content,
       })
     }
@@ -260,7 +259,6 @@ export class Requests {
     requestData.append('file', fileData, path)
 
     const result = (await this.request(`/api/v3/asset/create`, 'POST', requestData, true, true)) as any as string
-    info(`Upload file result: ${result}`, requestData, fileData)
     const resultParsed = JSON.parse(result)
     const url = resultParsed.data?.url || ''
     const size = fileData.size
@@ -287,10 +285,6 @@ export function queryFromObject(obj: Record<string, any>): string {
 
 function fail(code: number, message: string): KResponseExt<any> {
   return { success: false, message: message, code: code, data: {} }
-}
-
-function success<T>(message: string, data: T): KResponseExt<T> {
-  return { success: true, message: message, code: 0, data: data }
 }
 
 function failureFromCode(statusCode: number): KResponseExt<any> {

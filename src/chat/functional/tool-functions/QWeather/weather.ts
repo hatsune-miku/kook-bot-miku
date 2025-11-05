@@ -1,7 +1,7 @@
 import { SignJWT, importPKCS8 } from 'jose'
 
 import { Env } from '../../../../utils/env/env'
-import { info } from '../../../../utils/logging/logger'
+import { warn } from '../../../../utils/logging/logger'
 
 const keywordToLocationCache: Record<string, LocationResponse> = {}
 
@@ -24,12 +24,11 @@ export async function createQWeatherJWT(): Promise<string> {
           .setProtectedHeader(customHeader)
           .sign(privateKey)
           .then((token) => {
-            info(`[Chat] Create QWeather JWT`, token)
             resolve(token)
           })
       })
       .catch((error) => {
-        info(`[Chat] Create QWeather JWT failed`, error)
+        warn(`[Chat] Create QWeather JWT failed`, error)
         reject(error)
       })
   })
@@ -37,20 +36,18 @@ export async function createQWeatherJWT(): Promise<string> {
 
 export async function searchForLocationId(keyword: string): Promise<LocationResponse> {
   if (keywordToLocationCache[keyword]) {
-    info(`[Chat] Search for location id from cache`, keyword)
     return keywordToLocationCache[keyword]
   }
 
   const url = `https://geoapi.qweather.com/v2/city/lookup?location=${keyword}`
   const result = await requestQWeatherApi<LocationResponseData>(url, 'GET')
-  info(`[Chat] Search for location id`, result)
 
   if (result?.code !== '200') {
-    info(`[Chat] Search for location id failed`, result)
+    warn(`[Chat] Search for location id failed`, result)
     throw new Error(`请求失败，状态码：${result.code}`)
   }
   if (!result?.location?.[0]) {
-    info(`[Chat] Search for location id failed`, result)
+    warn(`[Chat] Search for location id failed`, result)
     throw new Error('未找到该地区/城市')
   }
 
@@ -62,17 +59,15 @@ export async function queryRealtimeWeather(locationId: string): Promise<Friendly
   const url = `https://api.qweather.com/v7/weather/now?lang=zh&unit=m&location=${locationId}`
   const result = await requestQWeatherApi<WeatherResponse>(url, 'GET')
   if (result?.code !== '200') {
-    info(`[Chat] Query realtime weather failed`, result)
+    warn(`[Chat] Query realtime weather failed`, result)
     throw new Error(`请求失败，状态码：${result.code}`)
   }
   return createFriendlyWeatherResult(result)
 }
 
 export async function queryRealtimeWeatherByKeyword(keyword: string): Promise<QueryWeatherResult> {
-  info(`[Chat] Query realtime weather by keyword`, keyword)
   const location = await searchForLocationId(keyword)
 
-  info(`[Chat] Query realtime weather by location`, location)
   return {
     location: location,
     weather: await queryRealtimeWeather(location.id),
@@ -80,10 +75,7 @@ export async function queryRealtimeWeatherByKeyword(keyword: string): Promise<Qu
 }
 
 export async function requestQWeatherApi<T>(url: string, method: string): Promise<T> {
-  info(`[Chat] Request QWeather API`, url)
   const token = await createQWeatherJWT()
-
-  info(`[Chat] Request QWeather API token`, token)
 
   try {
     const response = await fetch(url, {
@@ -93,7 +85,6 @@ export async function requestQWeatherApi<T>(url: string, method: string): Promis
       },
     })
 
-    info(`[Chat] Request QWeather API response`, response)
     if (response.status !== 200) {
       throw new Error(`请求失败，状态码：${response.status}`)
     }
@@ -101,7 +92,7 @@ export async function requestQWeatherApi<T>(url: string, method: string): Promis
     const responseBody = await response.json()
     return responseBody as T
   } catch (e) {
-    info(`[Chat] Request QWeather API failed`, e)
+    warn(`[Chat] Request QWeather API failed`, e)
     throw e
   }
 }

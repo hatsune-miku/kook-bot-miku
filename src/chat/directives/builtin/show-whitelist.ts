@@ -1,4 +1,4 @@
-import { ConfigUtils } from '../../../utils/config/config'
+import { configUtils } from '../../../utils/config/config'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
@@ -10,7 +10,7 @@ export default {
   permissionGroups: ['admin'],
   withContext: false,
   async handler(event: ParseEventResultValid) {
-    const guilds = await ConfigUtils.main.whitelistedGuilds.getWhitelistedGuilds()
+    const guilds = await configUtils.main.whitelistedGuilds.getWhitelistedGuilds()
     respondToUser({
       originalEvent: event.originalEvent,
       content: `白名单服务器: ${Object.entries(guilds)

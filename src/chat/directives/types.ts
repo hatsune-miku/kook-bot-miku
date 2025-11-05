@@ -1,5 +1,5 @@
+import { RespondToUserParameters } from '../../events'
 import { KEvent, KTextChannelExtra, KUser } from '../../websocket/kwebsocket/types'
-import { IChatDirectivesManager } from '../types'
 
 export type ParseEventResult = ParseEventResultDontIntercept | ParseEventResultValid
 
@@ -34,4 +34,10 @@ export interface ChatDirectiveItem {
   permissionGroups: string[]
   handler: ChatDirectiveHandler
   withContext?: boolean
+}
+
+export interface IChatDirectivesManager {
+  respondToUser(params: RespondToUserParameters): void
+  respondCardMessageToUser(params: RespondToUserParameters): void
+  dispatchDirectives(parsedEvent: ParseEventResultValid): Promise<boolean>
 }

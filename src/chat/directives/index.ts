@@ -36,7 +36,9 @@ export async function dispatchDirectives(
     return true
   }
 
-  const directiveItem = builtinDirectives.find((d) => d.triggerWord === directive)
+  const directiveItem = builtinDirectives.find((d) =>
+    Array.isArray(d.triggerWord) ? d.triggerWord.includes(directive) : d.triggerWord === directive
+  )
   if (!directiveItem) {
     warn('Match failed', directiveItem, directive)
     return false

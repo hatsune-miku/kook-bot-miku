@@ -1,4 +1,4 @@
-import { info } from '../../utils/logging/logger'
+import { warn } from '../../utils/logging/logger'
 
 export interface Invocation {
   directive: string
@@ -8,14 +8,14 @@ export interface Invocation {
 
 export function parseDirectiveInvocation(parameter?: string): Invocation | undefined {
   if (!parameter || !parameter.startsWith('/')) {
-    info('[yuki] No parameters found in event')
+    warn('[yuki] No parameters found in event')
     return undefined
   }
 
   parameter = parameter.slice(1)
   const components = parameter.split(' ')
   if (components.length === 0) {
-    info('[yuki] No components found in event')
+    warn('[yuki] No components found in event')
     return undefined
   }
 
@@ -32,11 +32,11 @@ export function takeAndVerifyParameters(
   const { fillInTemplate = true } = options
   const parameters = fillInTemplate ? invocation.parsedParameters : invocation.parameters
   if (!parameters) {
-    info('[yuki] No parameters found in event')
+    warn('[yuki] No parameters found in event')
     return []
   }
   if (parameters.length < expectedLength) {
-    info(`[yuki] Expected ${expectedLength} parameters, but got ${parameters.length}`)
+    warn(`[yuki] Expected ${expectedLength} parameters, but got ${parameters.length}`)
     return []
   }
 
