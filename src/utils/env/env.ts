@@ -24,7 +24,7 @@ export interface EnvType {
 
 export function reloadConfig() {
   const result = dotenv.config({ path: '.env' })
-  const config = result.parsed ?? {}
+  const config = result.parsed || {}
 
   console.log(Env)
   Object.assign(Env, {

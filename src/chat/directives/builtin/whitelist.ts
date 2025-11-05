@@ -10,7 +10,7 @@ export default {
   permissionGroups: ['admin'],
   withContext: false,
   async handler(event: ParseEventResultValid) {
-    const [guildId, nickname] = (event.parameter ?? '').split(' ')
+    const [guildId, nickname] = (event.parameter || '').split(' ')
     if (!guildId || !nickname) {
       respondToUser({
         originalEvent: event.originalEvent,

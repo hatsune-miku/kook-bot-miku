@@ -11,6 +11,13 @@
 
 必须使用 pnpm，因为项目使用了先进的 `package.yaml` 管理依赖，yarn 和 npm 都不支持。
 
+### 安装
+
+```bash
+pnpm install
+pnpm approve-builds # 在交互式界面中选中 sqlite3
+```
+
 ## 功能
 
 - 群聊模式

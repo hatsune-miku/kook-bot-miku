@@ -30,7 +30,7 @@ export default {
     }
 
     const user = await kookUserStore.getUser({
-      userId: mayBeTargetUserId ?? userIds[0],
+      userId: mayBeTargetUserId || userIds[0],
       guildId: event.originalEvent.extra.guild_id,
     })
 

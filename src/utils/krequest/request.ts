@@ -61,7 +61,7 @@ export class Requests {
       }
     }
 
-    const requestData: any = data ?? {}
+    const requestData: any = data || {}
     const headers = {
       Authorization: AUTHORIZATION,
     }
@@ -171,7 +171,7 @@ export class Requests {
       }
 
       // 有奇数个 ``` 标记
-      const markdownMarkCount = (chunk.match(/```/g) ?? []).length
+      const markdownMarkCount = (chunk.match(/```/g) || []).length
       if (markdownMarkCount % 2 !== 0) {
         chunk += '\n```\n'
         shouldPrependMarkdownMark = true
@@ -202,7 +202,7 @@ export class Requests {
         messageId: result.data.msg_id,
         authorName: DisplayName,
         role: 'assistant',
-        content: originalTextContent ?? props.content,
+        content: originalTextContent || props.content,
       })
     }
     return result
@@ -245,7 +245,7 @@ export class Requests {
         role: 'assistant',
         authorName: DisplayName,
         authorUserId: botKookUserStore.me.id,
-        content: originalTextContent ?? props.content,
+        content: originalTextContent || props.content,
       })
     }
     return result

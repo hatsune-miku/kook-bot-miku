@@ -24,10 +24,19 @@ export class KookUserStore {
   }
 
   async getUser({ guildId, userId }): Promise<UserProperties> {
+    let user = null
     if (this.userIdToUser.has(userId)) {
-      return this.userIdToUser.get(userId)!
+      user = this.userIdToUser.get(userId)!
     }
-    return this.queryUser({ guildId, userId })
+    user = await this.queryUser({ guildId, userId })
+
+    configUtils.main.userRoles.getUserRoles({ userId }).then((roles) => {
+      if (roles.length > 0) {
+        user.roles = roles.map((role) => role.role)
+      }
+    })
+
+    return user
   }
 
   async setUser({ userId, user }) {
