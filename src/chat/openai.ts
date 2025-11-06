@@ -147,14 +147,6 @@ export async function chatCompletionStreamed(
       const functionsMerged = noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
       const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
 
-      console.log({
-        functionsFulfilled,
-        functionsMerged,
-        functionsMerging,
-        mergedToolCalls,
-        toolCalls,
-      })
-
       if (functionsFulfilled) {
         const content = delta.content || ''
         mergedChunks.push(content)

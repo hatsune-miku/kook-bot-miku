@@ -7,3 +7,4 @@ config.json
 memory.json
 dist
 config
+plugins

@@ -361,7 +361,7 @@ export class KWSHelper {
   }
 
   handleReceivedHandshakeResult(sessionId: string) {
-    info('Server handshake success', 'sessionId=', sessionId)
+    info('Server handshake success')
     this.lastSessionId = sessionId
 
     if (this.state === KWSState.WAITING_FOR_HANDSHAKE) {
@@ -442,7 +442,6 @@ export class KWSHelper {
   }
 
   handleGatewayReady(gatewayUrl: string) {
-    info('Gateway URL ready', gatewayUrl)
     this.gatewayUrl = gatewayUrl
 
     const ws = new WebSocket(this.gatewayUrl)
@@ -454,7 +453,6 @@ export class KWSHelper {
   }
 
   onWebSocketOpen(ev: WebSocket.Event) {
-    info('onWebSocketOpen', ev)
     botEventEmitter.emit('send-lark-message', {
       title: `${DisplayName} Event`,
       message: 'Socket Open',
@@ -462,7 +460,6 @@ export class KWSHelper {
   }
 
   onWebSocketClose(ev: WebSocket.CloseEvent) {
-    info('onWebSocketClose', ev.reason)
     botEventEmitter.emit('send-lark-message', {
       title: `${DisplayName} Event`,
       message: 'Socket Closed',

@@ -22,7 +22,7 @@ export async function initializeLarkBot() {
   const client = new lark.Client(baseConfig)
   const wsClient = new lark.WSClient({
     ...baseConfig,
-    loggerLevel: lark.LoggerLevel.debug,
+    loggerLevel: lark.LoggerLevel.fatal,
   })
 
   async function sendMessage(title: string, message: string) {

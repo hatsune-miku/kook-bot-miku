@@ -167,7 +167,6 @@ export default class YukiCommandSession {
     }
     commandsSerialized = commandsSerialized.replace(/\\\\"/g, '\\"')
 
-    console.log(commandsSerialized)
     let rawCommands = []
     try {
       rawCommands = JSON.parse(commandsSerialized)

@@ -6,6 +6,7 @@ export interface IKbmPluginContext {
   dispatchDirectives: (event: ParseEventResultValid, onContextReady?: () => void) => Promise<boolean>
   respondToUser: (params: RespondToUserParameters) => void
   respondCardMessageToUser: (params: RespondToUserParameters) => void
+  printLogMessage: (...args: any[]) => void
 }
 
 export interface IKbmPluginLifeCycle extends Omit<KWSHelperOptions, 'autoReconnect'> {
@@ -15,6 +16,7 @@ export interface IKbmPluginLifeCycle extends Omit<KWSHelperOptions, 'autoReconne
 }
 
 export interface IKbmPlugin extends IKbmPluginLifeCycle {
+  kbmPlugin: true
   name: string
   description: string
   providedDirectives?: ChatDirectiveItem[]

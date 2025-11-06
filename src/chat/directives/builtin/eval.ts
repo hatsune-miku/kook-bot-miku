@@ -18,7 +18,6 @@ export default {
       return
     }
 
-    console.log(event.parameter)
     const parameters = event.parameter.split(' ')
     if (parameters.length < 3) {
       respondToUser({
