@@ -544,10 +544,10 @@ export interface KWSOptions {
 }
 
 export interface KWSHelperOptions {
-  onSevereError: OnSevereError | null
-  onTextChannelEvent: OnTextChannelEvent | null
-  onSystemEvent: OnSystemEvent | null
-  onReset: OnReset | null
+  onSevereError?: OnSevereError | null
+  onTextChannelEvent?: OnTextChannelEvent | null
+  onSystemEvent?: OnSystemEvent | null
+  onReset?: OnReset | null
   autoReconnect?: boolean
 }
 
