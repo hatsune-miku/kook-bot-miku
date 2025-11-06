@@ -54,7 +54,7 @@ export class PluginLoader {
       .filter(Boolean) as IKbmPlugin[]
 
     await map(pluginModules, async (p) => {
-      info(`Loading plugin: ${p.name}`)
+      info(`Loading plugin \x1b[32m${p.name}\x1b[0m`)
       if (!p.kbmPlugin) {
         warn(`Plugin ${p.name} is not a valid plugin`)
         return
@@ -73,14 +73,18 @@ export class PluginLoader {
           CardBuilder,
         })
       }
-      info(`Plugin ${p.name} online`)
+      info(`Plugin \x1b[32m${p.name}\x1b[0m online`)
     })
 
     this._plugins = pluginModules.filter((p) => p.kbmPlugin)
   }
 
-  async deinitialize() {
-    this._plugins.map((p) => p.onUnload?.())
+  deinitialize() {
+    this._plugins.map((p) => {
+      info(`Unloading plugin \x1b[32m${p.name}\x1b[0m`)
+      p.onUnload?.()
+      info(`Plugin \x1b[32m${p.name}\x1b[0m offline`)
+    })
   }
 
   get plugins(): readonly IKbmPlugin[] {

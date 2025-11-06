@@ -3,6 +3,7 @@ import deleteContext from './delete-context'
 import evalDirective from './eval'
 import printContext from './print-context'
 import query from './query'
+import reloadPlugins from './reload-plugins'
 import revoke from './revoke'
 import setBackend from './set-backend'
 import showWhitelist from './show-whitelist'
@@ -26,4 +27,5 @@ export const builtinDirectives = [
   evalDirective,
   usingNamespace,
   query,
+  reloadPlugins,
 ] as ChatDirectiveItem[]
