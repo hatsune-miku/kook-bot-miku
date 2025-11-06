@@ -134,6 +134,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   let modelMessageAccumulated = ''
   const queue = new TaskQueue()
+
   const onMessage = async (message: string) => {
     if (message === '') {
       return

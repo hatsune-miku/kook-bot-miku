@@ -26,6 +26,7 @@ pnpm approve-builds # 在交互式界面中选中 sqlite3
 - 遵循 OpenAI 标准的 Vision API
 - Stable Diffusion API
 - 指令支持
+- 插件 API
 - Yuki 系列 API
   - 测试工具
   - 动态指令定义
