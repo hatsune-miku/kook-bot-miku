@@ -1,3 +1,5 @@
+import { ICardBuilderStatic } from 'src/helpers/types'
+
 import { ChatDirectiveItem, ParseEventResultValid } from '../chat/directives/types'
 import { RespondToUserParameters } from '../events'
 import { KWSHelperOptions } from '../websocket/kwebsocket/kws-helper'
@@ -7,6 +9,7 @@ export interface IKbmPluginContext {
   respondToUser: (params: RespondToUserParameters) => void
   respondCardMessageToUser: (params: RespondToUserParameters) => void
   printLogMessage: (...args: any[]) => void
+  CardBuilder: ICardBuilderStatic
 }
 
 export interface IKbmPluginLifeCycle extends Omit<KWSHelperOptions, 'autoReconnect'> {

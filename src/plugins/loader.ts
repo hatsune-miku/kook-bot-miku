@@ -6,6 +6,7 @@ import { IKbmPlugin } from './types'
 
 import { dispatchDirectives } from '../chat/directives'
 import { respondCardMessageToUser, respondToUser } from '../chat/directives/utils/events'
+import { CardBuilder } from '../helpers/card-helper'
 import { getExternalPluginsPath } from '../utils/config/utils'
 import { info, warn } from '../utils/logging/logger'
 
@@ -40,7 +41,17 @@ export class PluginLoader {
         entry.isFile() ? path.join(pluginsPath, entry.name) : path.join(pluginsPath, entry.name, 'index.js')
       )
 
-    const pluginModules = (await map(absolutePaths, (p) => import(p))) as IKbmPlugin[]
+    const pluginModules = (await map(absolutePaths, async (p) => [p, await import(p)]))
+      .map(([pluginPath, PluginClass]) => {
+        try {
+          return new PluginClass.default()
+        } catch (e) {
+          const fileName = path.basename(pluginPath)
+          warn(`Failed to load plugin ${fileName}`, e)
+          return null
+        }
+      })
+      .filter(Boolean) as IKbmPlugin[]
 
     await map(pluginModules, async (p) => {
       info(`Loading plugin: ${p.name}`)
@@ -59,6 +70,7 @@ export class PluginLoader {
           respondToUser,
           respondCardMessageToUser,
           printLogMessage,
+          CardBuilder,
         })
       }
       info(`Plugin ${p.name} online`)

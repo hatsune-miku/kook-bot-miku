@@ -1,12 +1,8 @@
+import { CardBuilderTemplateOptions, ICardBuilder } from './types'
+
 import { KCardMessage, KCardMessageElement, KCardSize } from '../events'
 
-export class CardHelper {}
-
-export interface CardBuilderTemplateOptions {
-  initialCard?: Partial<Omit<KCardMessage[0], 'modules'>>
-}
-
-export class CardBuilder {
+export class CardBuilder implements ICardBuilder {
   private card: KCardMessage = [
     {
       type: 'card',
