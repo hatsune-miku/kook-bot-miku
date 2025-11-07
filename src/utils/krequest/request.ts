@@ -24,7 +24,7 @@ import { DisplayName } from '../../global/shared'
 import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound, configUtils } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
-import { error } from '../logging/logger'
+import { error, info } from '../logging/logger'
 import { die } from '../server/die'
 
 reloadConfig()
@@ -260,6 +260,9 @@ export class Requests {
 
     const result = (await this.request(`/api/v3/asset/create`, 'POST', requestData, true, true)) as any as string
     const resultParsed = JSON.parse(result)
+
+    info('UploadFile', `UploadFile result`, resultParsed)
+
     const url = resultParsed.data?.url || ''
     const size = fileData.size
     return [url, size]
