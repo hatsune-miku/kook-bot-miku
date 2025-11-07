@@ -2,7 +2,6 @@ import { ChatCompletionTool } from 'openai/resources'
 import { map } from 'radash'
 
 import { DownloadFileTool } from './DownloadFile'
-import { DrawImageStableDiffusionTool } from './DrawImageStableDiffusion'
 import { EvaluateJavaScriptTool } from './EvaluateJavaScript'
 import { EvaluatePythonTool } from './EvaluatePython'
 import { GetStandardTimeTool } from './GetStandardTime'
@@ -27,7 +26,6 @@ export const toolFunctions: IFunctionTool[] = [
   RunLinuxCommandTool,
   DownloadFileTool,
   EvaluatePythonTool,
-  DrawImageStableDiffusionTool,
   SendFileTool,
 ].map((Tool) => new Tool())
 

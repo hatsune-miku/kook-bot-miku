@@ -4,10 +4,16 @@ import { map } from 'radash'
 
 import { IKbmPlugin } from './types'
 
+import { botKookUserStore } from '../cached-store/bot-kook-user'
+import { kookUserStore } from '../cached-store/kook-user'
 import { dispatchDirectives } from '../chat/directives'
 import { respondCardMessageToUser, respondToUser } from '../chat/directives/utils/events'
-import { CardBuilder } from '../helpers/card-helper'
+import { DisplayName } from '../global/shared'
+import { CardBuilder, CardIcons } from '../helpers/card-helper'
+import { configUtils } from '../utils/config/config'
 import { getExternalPluginsPath } from '../utils/config/utils'
+import { Env } from '../utils/env/env'
+import { Requests } from '../utils/krequest/request'
 import { info, warn } from '../utils/logging/logger'
 
 export class PluginLoader {
@@ -71,6 +77,13 @@ export class PluginLoader {
           respondCardMessageToUser,
           printLogMessage,
           CardBuilder,
+          CardIcons,
+          Requests,
+          Env,
+          DisplayName,
+          configUtils,
+          botKookUserStore,
+          kookUserStore,
         })
       }
       info(`Plugin \x1b[32m${p.name}\x1b[0m online`)

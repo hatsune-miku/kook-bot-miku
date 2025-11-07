@@ -213,8 +213,8 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   } catch {
     try {
       await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
-    } catch {
-      error('Failed to respond to', displayName, 'reason:', 'unknown')
+    } catch (e) {
+      error('Failed to respond to', displayName, 'reason:', e.message)
     }
   }
 }

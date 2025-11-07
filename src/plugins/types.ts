@@ -1,8 +1,13 @@
-import { IFunctionTool } from 'src/chat/functional/tool-functions/dispatch'
-import { ICardBuilderStatic } from 'src/helpers/types'
-
+import { BotKookUserStore } from '../cached-store/bot-kook-user'
+import { KookUserStore } from '../cached-store/kook-user'
 import { ChatDirectiveItem, ParseEventResultValid } from '../chat/directives/types'
+import { IFunctionTool } from '../chat/functional/tool-functions/dispatch'
 import { RespondToUserParameters } from '../events'
+import { CardIcons } from '../helpers/card-helper'
+import { ICardBuilderStatic } from '../helpers/types'
+import { ConfigUtils } from '../utils/config/config'
+import { Env } from '../utils/env/env'
+import { Requests } from '../utils/krequest/request'
 import { KWSHelperOptions } from '../websocket/kwebsocket/kws-helper'
 
 export interface IKbmPluginContext {
@@ -11,6 +16,13 @@ export interface IKbmPluginContext {
   respondCardMessageToUser: (params: RespondToUserParameters) => void
   printLogMessage: (...args: any[]) => void
   CardBuilder: ICardBuilderStatic
+  CardIcons: typeof CardIcons
+  Requests: typeof Requests
+  Env: typeof Env
+  DisplayName: string
+  configUtils: ConfigUtils
+  botKookUserStore: BotKookUserStore
+  kookUserStore: KookUserStore
 }
 
 export interface IKbmPluginLifeCycle extends Omit<KWSHelperOptions, 'autoReconnect'> {

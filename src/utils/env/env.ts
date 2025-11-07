@@ -33,7 +33,6 @@ export function reloadConfig() {
     OpenAIBaseUrl: config.OPENAI_API_BASE_URL,
     ProxyUrl: config.PROXY_URL,
     DeepSeekKeys: config.DEEPSEEK_API_KEYS?.split(',') || [],
-    StableDiffusionKeys: config.STABLE_DIFFUSION_API_KEYS?.split(',') || [],
     VolcKeys: config.VOLC_API_KEYS?.split(',') || [],
     QWeatherPrivateKey: config.QWEATHER_PRIVATE_KEY.replace('\\n', '\n') || die('环境配置错误：QWEATHER_PRIVATE_KEY'),
     QWeatherKeyId: config.QWEATHER_KID || die('环境配置错误：QWEATHER_KID'),
@@ -42,6 +41,7 @@ export function reloadConfig() {
     LarkAppSecret: config.LARK_APP_SECRET,
     PublicArchivePath: config.PUBLIC_ARCHIVE_PATH,
     LogLevel: config.LOG_LEVEL || 'info',
+    raw: config,
   })
 }
 
