@@ -24,7 +24,7 @@ import { DisplayName } from '../../global/shared'
 import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound, configUtils } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
-import { error, info } from '../logging/logger'
+import { error } from '../logging/logger'
 import { die } from '../server/die'
 
 reloadConfig()
