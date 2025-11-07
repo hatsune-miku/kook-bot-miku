@@ -1,3 +1,4 @@
+import { IFunctionTool } from 'src/chat/functional/tool-functions/dispatch'
 import { ICardBuilderStatic } from 'src/helpers/types'
 
 import { ChatDirectiveItem, ParseEventResultValid } from '../chat/directives/types'
@@ -23,4 +24,5 @@ export interface IKbmPlugin extends IKbmPluginLifeCycle {
   name: string
   description: string
   providedDirectives?: ChatDirectiveItem[]
+  providedTools?: IFunctionTool[]
 }

@@ -25,11 +25,11 @@ export function createChannelConfigHelper(storage: NodeGenericExternalStorage) {
       error(err)
       return null
     }
-    return (config || makeDefaults(channelId)) as ChannelConfig | null
+    return Object.assign({}, makeDefaults(channelId), config)
   }
 
   async function setChannelConfig(config: ChannelConfig) {
-    await s.upsertOne(config)
+    await s.upsertOne(Object.assign({}, makeDefaults(config.channelId), config))
   }
 
   async function updateChannelConfig(config: { channelId: string } & Partial<ChannelConfig>) {

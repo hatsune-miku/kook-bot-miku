@@ -4,7 +4,7 @@ import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
 export default {
-  triggerWord: 'set_backend',
+  triggerWord: 'set-backend',
   parameterDescription: Object.values(ChatBotBackends).join('|'),
   description: `更换当前频道 AI 实现，可选范围：${Object.values(ChatBotBackends).join(', ')}`,
   defaultValue: undefined,
