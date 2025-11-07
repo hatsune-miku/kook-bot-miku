@@ -16,13 +16,33 @@ import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
+const allowedStylePresets = [
+  '3d-model',
+  'analog-film',
+  'anime',
+  'cinematic',
+  'comic-book',
+  'digital-art',
+  'enhance',
+  'fantasy-art',
+  'isometric',
+  'line-art',
+  'low-poly',
+  'modeling-compound',
+  'neon-punk',
+  'origami',
+  'photographic',
+  'pixel-art',
+  'tile-texture',
+]
+
 export class DrawImageStableDiffusionTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
     return {
       type: 'function',
       function: {
         name: 'drawImage',
-        description: '用户请求画图时，你需要根据需求编写英文提示词。。',
+        description: '用户请求画图时，你需要根据需求编写英文提示词。',
         parameters: {
           type: 'object',
           properties: {
@@ -34,6 +54,10 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
               type: 'string',
               description: '负面prompt。如果用户没明确指定，你可以自行发挥或者采用空字符串。',
             },
+            style_preset: {
+              type: 'string',
+              description: `MUST be one of: ${allowedStylePresets.join(',')}`,
+            },
           },
           required: ['prompt', 'negative_prompt'],
           additionalProperties: false,
@@ -44,7 +68,7 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
   }
 
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    const { prompt, negative_prompt } = params || {}
+    const { prompt, negative_prompt, style_preset } = params || {}
     const guildId = context.event.extra?.guild_id
     const channelId = context.event.target_id
 
@@ -87,10 +111,14 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
       form.append('prompt', prompt)
       form.append('negative_prompt', negative_prompt)
       form.append('output_format', 'jpeg')
-      form.append('mode', 'text-to-image')
-      form.append('model', 'sd3.5-large-turbo')
 
-      res = await fetch('https://api.stability.ai/v2beta/stable-image/generate/sd3', {
+      if (allowedStylePresets.includes(style_preset)) {
+        form.append('style_preset', style_preset)
+      }
+      // form.append('mode', 'text-to-image')
+      // form.append('model', 'sd3.5-large-turbo')
+
+      res = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
         method: 'POST',
         headers: {
           ...form.getHeaders(),
@@ -132,6 +160,9 @@ export class DrawImageStableDiffusionTool implements IFunctionTool {
         content: message,
       })
     }
-    return '已调用 drawImage 完成并发送了绘画'
+    return (
+      '已调用 drawImage 完成并向用户发送了绘画。你选择的风格: ' +
+      (allowedStylePresets.includes(style_preset) ? style_preset : `${style_preset} 不是一个有效的风格，已使用默认风格`)
+    )
   }
 }
