@@ -260,9 +260,6 @@ export class Requests {
 
     const result = (await this.request(`/api/v3/asset/create`, 'POST', requestData, true, true)) as any as string
     const resultParsed = JSON.parse(result)
-
-    info('UploadFile', `UploadFile result`, JSON.stringify(resultParsed))
-
     const url = resultParsed.data?.url || ''
     const size = fileData.size
     return [url, size]
