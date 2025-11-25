@@ -39,6 +39,8 @@ export default class YukiCommandSession {
       guildId: this.context.guildId,
       name: directive,
     })
+    info('[yuki] found user defined scripts', scripts, directive, parameters)
+
     let commandBody = scripts[0]?.script
     if (!commandBody) {
       this.chatManager.respondCardMessageToUser({
