@@ -98,6 +98,7 @@ export default class YukiCommandSession {
 
     const awaitble = this.builtinCommands[this.invocation.directive]
     if (awaitble) {
+      info('[yuki] executing builtin command', this.invocation.directive)
       return await awaitble()
     }
 
@@ -106,10 +107,12 @@ export default class YukiCommandSession {
       directive: this.invocation.directive,
       parameter: this.invocation.parameters.join(' '),
     })
+    info('[yuki] dispatched directives did intercept', didIntercept)
     if (didIntercept) {
       return
     }
 
+    info('[yuki] interpreting user defined command', this.invocation.directive)
     return await this.interpretUserDefinedCommand()
   }
 
