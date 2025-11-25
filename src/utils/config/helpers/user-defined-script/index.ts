@@ -17,14 +17,15 @@ export function createUserDefinedScriptHelper(storage: NodeGenericExternalStorag
       error(err)
       return []
     }
+    info('[user-defined-script] found scripts', scripts.length)
     return scripts as UserDefinedScript[]
   }
 
   async function createUserDefinedScript(script: Omit<UserDefinedScript, 'uid'>) {
     const existing = await findUserDefinedScripts({ guildId: script.guildId, userId: script.userId, name: script.name })
     if (existing.length > 0) {
-      info('[user-defined-script] script already exists', script.name)
-      return
+      await s.delete({ where: { guildId: script.guildId, userId: script.userId, name: script.name }, limit: 1 })
+      info('[user-defined-script] script already exists. Overwriting...')
     }
     info('[user-defined-script] creating script', script.name)
     await s.insertOne({ uid: createUid(), ...script })
