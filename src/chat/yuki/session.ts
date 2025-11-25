@@ -234,6 +234,7 @@ export default class YukiCommandSession {
       return
     }
 
+    info('[yuki] creating user defined script', commandName, commandBody)
     configUtils.main.userDefinedScripts.createUserDefinedScript({
       guildId,
       userId: this.context.author.id,

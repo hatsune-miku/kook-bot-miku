@@ -1,6 +1,6 @@
 import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
-import { error } from '../../../logging/logger'
+import { error, info } from '../../../logging/logger'
 import { die } from '../../../server/die'
 import { UserDefinedScript } from '../../types'
 import { createUid } from '../../utils'
@@ -23,8 +23,10 @@ export function createUserDefinedScriptHelper(storage: NodeGenericExternalStorag
   async function createUserDefinedScript(script: Omit<UserDefinedScript, 'uid'>) {
     const existing = await findUserDefinedScripts({ guildId: script.guildId, userId: script.userId, name: script.name })
     if (existing.length > 0) {
+      info('[user-defined-script] script already exists', script.name)
       return
     }
+    info('[user-defined-script] creating script', script.name)
     await s.insertOne({ uid: createUid(), ...script })
   }
 
