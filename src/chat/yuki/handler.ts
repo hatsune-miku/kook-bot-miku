@@ -1,3 +1,5 @@
+import { info, warn } from 'src/utils/logging/logger'
+
 import { YukiContext } from './context'
 import YukiCommandSession from './session'
 import { parseDirectiveInvocation } from './utils'
@@ -7,6 +9,7 @@ import { IChatDirectivesManager, ParseEventResultValid } from '../directives/typ
 export default function yukiSubCommandHandler(manager: IChatDirectivesManager, event: ParseEventResultValid) {
   const invocation = parseDirectiveInvocation(event.parameter)
   if (!invocation) {
+    warn('[yuki] No invocation found', event.parameter)
     return
   }
 
@@ -17,6 +20,7 @@ export default function yukiSubCommandHandler(manager: IChatDirectivesManager, e
     event: event,
   }
 
+  info('[yuki] creating session', invocation)
   const session = new YukiCommandSession(manager, invocation, context)
   session.interpretInvocation()
 }
