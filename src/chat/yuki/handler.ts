@@ -1,9 +1,8 @@
-import { info, warn } from 'src/utils/logging/logger'
-
 import { YukiContext } from './context'
 import YukiCommandSession from './session'
 import { parseDirectiveInvocation } from './utils'
 
+import { info, warn } from '../../utils/logging/logger'
 import { IChatDirectivesManager, ParseEventResultValid } from '../directives/types'
 
 export default function yukiSubCommandHandler(manager: IChatDirectivesManager, event: ParseEventResultValid) {
