@@ -13,9 +13,19 @@ export function createUserDefinedScriptHelper(storage: NodeGenericExternalStorag
 
   async function findUserDefinedScripts({ guildId, userId, name }: any = {}): Promise<UserDefinedScript[]> {
     info('[user-defined-script] finding by', guildId, userId, name)
-    console.log('xx', { guildId, userId, name })
 
-    const [err, scripts] = await s.findAll({ where: { guildId, name } })
+    const conditions = { guildId, userId, name }
+    if (!guildId) {
+      delete conditions.guildId
+    }
+    if (!userId) {
+      delete conditions.userId
+    }
+    if (!name) {
+      delete conditions.name
+    }
+
+    const [err, scripts] = await s.findAll({ where: conditions })
     if (err) {
       error(err)
       return []

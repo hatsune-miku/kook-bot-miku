@@ -60,8 +60,6 @@ export default class YukiCommandSession {
       commandBody = commandBody.replace(pattern, parameters[i])
     }
 
-    info('Interpreting user-defined command', commandBody)
-
     const invocation = parseDirectiveInvocation(commandBody)
     if (!invocation) {
       this.chatManager.respondCardMessageToUser({
