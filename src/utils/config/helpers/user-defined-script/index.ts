@@ -13,6 +13,7 @@ export function createUserDefinedScriptHelper(storage: NodeGenericExternalStorag
 
   async function findUserDefinedScripts({ guildId, userId, name }: any = {}): Promise<UserDefinedScript[]> {
     info('[user-defined-script] finding by', guildId, userId, name)
+    console.log('xx', { guildId, userId, name })
 
     const [err, scripts] = await s.findAll({ where: { guildId, userId, name } })
     if (err) {
