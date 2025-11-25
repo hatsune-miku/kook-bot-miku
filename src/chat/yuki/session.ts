@@ -102,7 +102,7 @@ export default class YukiCommandSession {
       return await awaitble()
     }
 
-    const didIntercept = this.chatManager.dispatchDirectives({
+    const didIntercept = await this.chatManager.dispatchDirectives({
       ...this.context.event,
       directive: this.invocation.directive,
       parameter: this.invocation.parameters.join(' '),
