@@ -102,8 +102,10 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: (message: string) => void
+  onMessageEnd: (message: string) => void,
+  onTokenReport: ((tokens: number) => void) | null = null
 ) {
+  void onTokenReport
   const openai = new OpenAI({
     // baseURL: "https://api.deepseek.com",
     baseURL: 'https://ark.cn-beijing.volces.com/api/v3',

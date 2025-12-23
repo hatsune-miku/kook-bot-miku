@@ -1,13 +1,11 @@
 export const ChatBotBackends = {
-  gpt4o: 'gpt-4o',
-  gpt4: 'gpt-4',
-  gpt5: 'gpt-5',
-  o1: 'o1',
-  o1mini: 'o1-mini',
-  o3mini: 'o3-mini',
-  deepseekv3: 'deepseek-chat',
-  deepseekr1: 'deepseek-reasoner',
+  gpt52: 'gpt-5.2',
+  gpt5t: 'gpt-5-thinking',
   deepseekv31volc: 'deepseek-v3-1-250821',
 } as const
 
 export type ChatBotBackend = (typeof ChatBotBackends)[keyof typeof ChatBotBackends]
+
+export function isReasonerBackend(backend: ChatBotBackend) {
+  return [ChatBotBackends.gpt5t, ChatBotBackends.gpt52].includes(backend as any)
+}

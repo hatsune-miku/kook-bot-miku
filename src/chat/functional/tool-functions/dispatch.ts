@@ -44,7 +44,9 @@ export async function getChatCompletionTools(): Promise<ChatCompletionTool[]> {
 
   await map(toolFunctions, async (t) => {
     const defined = await t.defineOpenAICompletionTool()
-    toolDefinitionCache[defined.function.name] = [t, defined]
+    if (defined.type === 'function') {
+      toolDefinitionCache[defined.function.name] = [t, defined]
+    }
   })
   return Object.values(toolDefinitionCache).map(([_, defined]) => defined)
 }

@@ -8,6 +8,7 @@ import { DisplayName } from '../../global/shared'
 import { CardBuilder, CardIcons } from '../../helpers/card-helper'
 import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
+import { formatNumber } from '../../utils/algorithm/format'
 import { TaskQueue } from '../../utils/algorithm/task-queue'
 import { configUtils } from '../../utils/config/config'
 import { extractContent, isExplicitlyMentioningBot } from '../../utils/kevent/utils'
@@ -206,15 +207,39 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
   }
 
+  const onTokenReport = (tokens: number) => {
+    const formattedTokens = formatNumber(tokens)
+    Requests.createChannelMessage({
+      type: KEventType.Card,
+      target_id: event.target_id,
+      content: CardBuilder.fromTemplate()
+        .addIconWithKMarkdownText(CardIcons.IconCute, `Token 消耗: ${formattedTokens}`)
+        .build(),
+      quote: event.msg_id,
+    })
+  }
+
   const backend = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
 
   try {
-    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
+    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd, onTokenReport)
   } catch {
     try {
       await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
     } catch (e) {
       error('Failed to respond to', displayName, 'reason:', e.message)
+      Requests.updateChannelMessage({
+        msg_id: createdMessage.msg_id,
+        content: CardBuilder.fromTemplate()
+          .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
+          .addKMarkdownText(e.message)
+          .build(),
+        extra: {
+          type: KEventType.Card,
+          target_id: event.target_id,
+        },
+        quote: event.msg_id,
+      })
     }
   }
 }

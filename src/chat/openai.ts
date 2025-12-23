@@ -1,4 +1,4 @@
-import { HttpProxyAgent } from 'http-proxy-agent'
+// import { HttpProxyAgent } from 'http-proxy-agent'
 import OpenAI from 'openai'
 import { ChatCompletionContentPart, ChatCompletionMessageParam } from 'openai/resources'
 import { Completions } from 'openai/resources/chat'
@@ -7,6 +7,7 @@ import { draw } from 'radash'
 import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionTools } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
+import { isReasonerBackend } from './types'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
 import { DisplayName } from '../global/shared'
@@ -109,46 +110,40 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: (message: string) => void
+  onMessageEnd: (message: string) => void,
+  onTokenReport: ((tokens: number) => void) | null = null
 ) {
   const openai = new OpenAI({
     apiKey: draw(Env.OpenAIKeys)!,
     baseURL: Env.OpenAIBaseUrl || undefined,
-    httpAgent: Env.ProxyUrl ? new HttpProxyAgent(Env.ProxyUrl) : undefined,
+    // fetch: (url, options) => {
+    //   if (Env.ProxyUrl) {
+    //     options.agent = new HttpProxyAgent(Env.ProxyUrl)
+    //   }
+    //   return fetch(url, options)
+    // },
   })
 
   const messages = makeContext(context)
   const toolInvoker = new ToolFunctionInvoker(toolFunctionContext)
 
   let functionsFulfilled = false
-  let mergedChunks = []
+  let mergedChunks: string[] = []
   let responseMessage = ''
+  let totalTokens = 0
+  const isReasoner = isReasonerBackend(model as any)
 
-  while (!functionsFulfilled) {
-    const completionStreamed = await openai.chat.completions.create({
-      messages,
+  if (isReasoner) {
+    // Use Responses API for reasoning models
+    const responseStream = await openai.responses.create({
       model,
-      tools: await getChatCompletionTools(),
+      input: messages as any,
       stream: true,
     })
 
-    const mergedToolCalls: Record<number, Completions.ChatCompletionChunk.Choice.Delta.ToolCall> = {}
-
-    for await (const part of completionStreamed) {
-      const delta = part.choices?.[0]?.delta
-
-      if (!delta) {
-        continue
-      }
-
-      const toolCalls = delta.tool_calls
-      const noToolCallsPresent = !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
-      functionsFulfilled = noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
-      const functionsMerged = noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
-      const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
-
-      if (functionsFulfilled) {
-        const content = delta.content || ''
+    for await (const event of responseStream) {
+      if (event.type === 'response.output_text.delta') {
+        const content = event.delta || ''
         mergedChunks.push(content)
         if (mergedChunks.length >= 3) {
           const content = mergedChunks.join('')
@@ -156,40 +151,87 @@ export async function chatCompletionStreamed(
           mergedChunks = []
         }
         responseMessage += content
-      } else if (functionsMerged) {
-        const mergedToolCallsArray = Object.values(mergedToolCalls)
-
-        messages.push({
-          role: 'assistant',
-          tool_calls: mergedToolCallsArray.map((toolCall) => ({
-            id: toolCall.id!,
-            function: {
-              name: toolCall.function?.name || '',
-              arguments: toolCall.function?.arguments || '',
-            },
-            type: toolCall.type!,
-          })),
-        })
-
-        for (const toolCall of mergedToolCallsArray) {
-          if (!toolCall?.id || !toolCall.function?.name || !toolCall.function?.arguments) {
-            continue
-          }
-          const result = await toolInvoker.invoke(toolCall.function.name, toolCall.function.arguments)
-          messages.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            content: `${result}`,
-          })
+      } else if (event.type === 'response.completed') {
+        const usage = event.response?.usage
+        if (usage?.total_tokens) {
+          totalTokens = usage.total_tokens
         }
-      } else if (functionsMerging) {
-        for (const toolCallChunk of toolCalls!) {
-          const index = toolCallChunk.index
-          if (!mergedToolCalls[index]) {
-            mergedToolCalls[index] = toolCallChunk
-            mergedToolCalls[index].function ||= { arguments: '' }
-          } else {
-            mergedToolCalls[index]!.function!.arguments += toolCallChunk!.function!.arguments || ''
+      }
+    }
+  } else {
+    // Use Chat Completions API for non-reasoning models
+    while (!functionsFulfilled) {
+      const completionStreamed = await openai.chat.completions.create({
+        messages,
+        model,
+        tools: await getChatCompletionTools(),
+        stream: true,
+      })
+
+      const mergedToolCalls: Record<number, Completions.ChatCompletionChunk.Choice.Delta.ToolCall> = {}
+
+      for await (const part of completionStreamed) {
+        const usage = part.usage
+        if (usage?.total_tokens) {
+          totalTokens += usage.total_tokens
+        }
+
+        const delta = part.choices?.[0]?.delta
+
+        if (!delta) {
+          continue
+        }
+
+        const toolCalls = delta.tool_calls
+        const noToolCallsPresent = !toolCalls || !Array.isArray(toolCalls) || toolCalls.length === 0
+        functionsFulfilled = noToolCallsPresent && Object.keys(mergedToolCalls).length === 0
+        const functionsMerged = noToolCallsPresent && Object.keys(mergedToolCalls).length > 0
+        const functionsMerging = !noToolCallsPresent && Array.isArray(toolCalls)
+
+        if (functionsFulfilled) {
+          const content = delta.content || ''
+          mergedChunks.push(content)
+          if (mergedChunks.length >= 3) {
+            const content = mergedChunks.join('')
+            onMessage(content)
+            mergedChunks = []
+          }
+          responseMessage += content
+        } else if (functionsMerged) {
+          const mergedToolCallsArray = Object.values(mergedToolCalls)
+
+          messages.push({
+            role: 'assistant',
+            tool_calls: mergedToolCallsArray.map((toolCall) => ({
+              id: toolCall.id!,
+              function: {
+                name: toolCall.function?.name || '',
+                arguments: toolCall.function?.arguments || '',
+              },
+              type: toolCall.type!,
+            })),
+          })
+
+          for (const toolCall of mergedToolCallsArray) {
+            if (!toolCall?.id || !toolCall.function?.name || !toolCall.function?.arguments) {
+              continue
+            }
+            const result = await toolInvoker.invoke(toolCall.function.name, toolCall.function.arguments)
+            messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: `${result}`,
+            })
+          }
+        } else if (functionsMerging) {
+          for (const toolCallChunk of toolCalls!) {
+            const index = toolCallChunk.index
+            if (!mergedToolCalls[index]) {
+              mergedToolCalls[index] = toolCallChunk
+              mergedToolCalls[index].function ||= { arguments: '' }
+            } else {
+              mergedToolCalls[index]!.function!.arguments += toolCallChunk!.function!.arguments || ''
+            }
           }
         }
       }
@@ -200,6 +242,7 @@ export async function chatCompletionStreamed(
     const content = mergedChunks.join('')
     onMessage(content)
   }
+  onTokenReport(totalTokens)
   onMessageEnd(responseMessage)
   messages.push({
     content: responseMessage,

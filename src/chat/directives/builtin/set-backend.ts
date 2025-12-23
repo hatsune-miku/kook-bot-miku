@@ -16,16 +16,7 @@ export default {
     const channelName = event.originalEvent.extra.channel_name
     const channelConfig = await configUtils.main.channelConfigs.getChannelConfig({ channelId })
 
-    if (
-      [
-        ChatBotBackends.gpt4,
-        ChatBotBackends.gpt5,
-        ChatBotBackends.gpt4o,
-        ChatBotBackends.o1,
-        ChatBotBackends.o1mini,
-        ChatBotBackends.o3mini,
-      ].includes(backend as any)
-    ) {
+    if (backend && Object.values(ChatBotBackends).includes(backend as ChatBotBackend)) {
       configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         backend: backend as ChatBotBackend,
@@ -34,26 +25,13 @@ export default {
         originalEvent: event.originalEvent,
         content: `已切换至 ChatGPT (${backend})`,
       })
-      return
-    }
-
-    if (backend?.startsWith('deepseek')) {
-      configUtils.main.channelConfigs.updateChannelConfig({
-        channelId,
-        backend: backend as ChatBotBackend,
-      })
+    } else {
       respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 DeepSeek (${backend})`,
+        content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
+          channelConfig.backend
+        }，可选: ${Object.values(ChatBotBackends).join(', ')}`,
       })
-      return
     }
-
-    respondToUser({
-      originalEvent: event.originalEvent,
-      content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
-        channelConfig.backend
-      }，可选: ${Object.values(ChatBotBackends).join(', ')}`,
-    })
   },
 } satisfies ChatDirectiveItem
