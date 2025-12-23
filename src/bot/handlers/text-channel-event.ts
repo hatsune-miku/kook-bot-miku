@@ -1,3 +1,5 @@
+import { sleep } from 'radash'
+
 import { botKookUserStore } from '../../cached-store/bot-kook-user'
 import { chatCompletionStreamed as chatCompletionDeepSeek } from '../../chat/deepseek'
 import { dispatchDirectives } from '../../chat/directives'
@@ -164,18 +166,30 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     })
   }
 
-  const onMessageEnd = async (message: string) => {
+  const onMessageEnd = async (message: string, tokens: number, reasoningSummary: string | null) => {
     queue.stop()
     let lastUpdateErrorMessage = ''
 
     modelMessageAccumulated = message
+    const cardBuilder = CardBuilder.fromTemplate()
+      .addIconWithKMarkdownText(CardIcons.IconCute, '')
+      .addKMarkdownText(modelMessageAccumulated)
+    if (reasoningSummary) {
+      cardBuilder.addDivider()
+      cardBuilder.addKMarkdownContext(`> **思考过程:** ${reasoningSummary.replace(/\n/g, ' ')}`)
+    }
+    if (tokens > 0) {
+      cardBuilder.addContext(`Token 消耗: ${formatNumber(tokens)}`)
+    }
+
+    // Use buildSplit to handle long messages
+    const cardContents = cardBuilder.buildSplit()
+
+    // Update the first card
     const result = await Requests.updateChannelMessage(
       {
         msg_id: createdMessage.msg_id,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.IconCute, '')
-          .addKMarkdownText(modelMessageAccumulated)
-          .build(),
+        content: cardContents[0],
         quote: event.msg_id,
         extra: {
           type: KEventType.KMarkdown,
@@ -184,6 +198,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       },
       { guildId, originalTextContent: modelMessageAccumulated }
     )
+
     if (!result.success || result.code !== 0) {
       lastUpdateErrorMessage = result.message
       const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
@@ -205,42 +220,37 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
       error('Failed to update message', createdMessage.msg_id, 'reason:', lastUpdateErrorMessage)
       return
     }
-  }
 
-  const onTokenReport = (tokens: number) => {
-    const formattedTokens = formatNumber(tokens)
-    Requests.createChannelMessage({
-      type: KEventType.Card,
-      target_id: event.target_id,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.IconCute, `Token 消耗: ${formattedTokens}`)
-        .build(),
-      quote: event.msg_id,
-    })
+    // Send additional cards if content was split
+    for (let i = 1; i < cardContents.length; i++) {
+      await sleep(100)
+      await Requests.createChannelMessage({
+        type: KEventType.Card,
+        target_id: event.target_id,
+        content: cardContents[i],
+        quote: event.msg_id,
+      })
+    }
   }
 
   const backend = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
 
   try {
-    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd, onTokenReport)
-  } catch {
-    try {
-      await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
-    } catch (e) {
-      error('Failed to respond to', displayName, 'reason:', e.message)
-      Requests.updateChannelMessage({
-        msg_id: createdMessage.msg_id,
-        content: CardBuilder.fromTemplate()
-          .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
-          .addKMarkdownText(e.message)
-          .build(),
-        extra: {
-          type: KEventType.Card,
-          target_id: event.target_id,
-        },
-        quote: event.msg_id,
-      })
-    }
+    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
+  } catch (e) {
+    error('Failed to respond to', displayName, 'reason:', e.message)
+    Requests.updateChannelMessage({
+      msg_id: createdMessage.msg_id,
+      content: CardBuilder.fromTemplate()
+        .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
+        .addKMarkdownText(e.message)
+        .build(),
+      extra: {
+        type: KEventType.Card,
+        target_id: event.target_id,
+      },
+      quote: event.msg_id,
+    })
   }
 }
 

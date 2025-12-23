@@ -33,17 +33,18 @@ export const toolFunctions: IFunctionTool[] = [
 export const toolDefinitionCache: Record<string, [IFunctionTool, FunctionTool]> = {}
 
 export async function getChatCompletionTools(): Promise<FunctionTool[]> {
+  const tools = [...toolFunctions]
   if (Object.keys(toolDefinitionCache).length > 0) {
     return Object.values(toolDefinitionCache).map(([_, defined]) => defined)
   }
 
   pluginLoader.plugins.forEach((p) => {
     p.providedTools?.forEach((t) => {
-      toolFunctions.push(t)
+      tools.push(t)
     })
   })
 
-  await map(toolFunctions, async (t) => {
+  await map(tools, async (t) => {
     const defined = await t.defineOpenAICompletionTool()
     if (defined.type === 'function') {
       toolDefinitionCache[defined.name] = [t, defined]

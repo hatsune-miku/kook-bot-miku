@@ -102,10 +102,8 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: (message: string) => void,
-  onTokenReport: ((tokens: number) => void) | null = null
+  onMessageEnd: (message: string, tokens: number, reasoningSummary: string | null) => void
 ) {
-  void onTokenReport
   const openai = new OpenAI({
     // baseURL: "https://api.deepseek.com",
     baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
@@ -195,7 +193,7 @@ export async function chatCompletionStreamed(
     const content = mergedChunks.join('')
     onMessage(content)
   }
-  onMessageEnd(responseMessage)
+  onMessageEnd(responseMessage, 0, null)
   messages.push({
     content: responseMessage,
     role: 'assistant',

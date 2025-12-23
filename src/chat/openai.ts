@@ -110,8 +110,7 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => void,
-  onMessageEnd: (message: string) => void,
-  onTokenReport: ((tokens: number) => void) | null = null
+  onMessageEnd: (message: string, tokens: number, reasoningSummary: string | null) => void
 ) {
   const openai = new OpenAI({
     apiKey: draw(Env.OpenAIKeys)!,
@@ -130,33 +129,102 @@ export async function chatCompletionStreamed(
   let functionsFulfilled = false
   let mergedChunks: string[] = []
   let responseMessage = ''
+  let reasoningSummary = ''
   let totalTokens = 0
   const isReasoner = isReasonerBackend(model as any)
 
   if (isReasoner) {
     // Use Responses API for reasoning models
-    const responseStream = await openai.responses.create({
-      model,
-      input: messages as any,
-      stream: true,
-      tools: await getChatCompletionTools(),
-    })
+    const conversationInput: any[] = [...messages]
 
-    for await (const event of responseStream) {
-      if (event.type === 'response.output_text.delta') {
-        const content = event.delta || ''
-        mergedChunks.push(content)
-        if (mergedChunks.length >= 3) {
-          const content = mergedChunks.join('')
-          onMessage(content)
-          mergedChunks = []
+    while (!functionsFulfilled) {
+      const responseStream = await openai.responses.create({
+        model,
+        input: conversationInput,
+        stream: true,
+        tools: await getChatCompletionTools(),
+        reasoning: { summary: 'auto' },
+      })
+
+      const pendingToolCalls: Map<string, { id: string; callId: string; name: string; arguments: string }> = new Map()
+      let hasToolCalls = false
+
+      for await (const event of responseStream) {
+        if (event.type === 'response.output_text.delta') {
+          const content = event.delta || ''
+          mergedChunks.push(content)
+          if (mergedChunks.length >= 3) {
+            const content = mergedChunks.join('')
+            onMessage(content)
+            mergedChunks = []
+          }
+          responseMessage += content
+        } else if (event.type === 'response.reasoning_summary_text.delta') {
+          reasoningSummary += (event as any).delta || ''
+        } else if (event.type === 'response.output_item.added') {
+          const item = event.item as any
+          if (item?.type === 'function_call') {
+            hasToolCalls = true
+            pendingToolCalls.set(item.id, {
+              id: item.id,
+              callId: item.call_id || item.id,
+              name: item.name || '',
+              arguments: '',
+            })
+          }
+        } else if (event.type === 'response.function_call_arguments.delta') {
+          const itemId = (event as any).item_id
+          const pending = pendingToolCalls.get(itemId)
+          if (pending) {
+            pending.arguments += event.delta || ''
+          }
+        } else if (event.type === 'response.completed') {
+          const response = event.response
+          const usage = response?.usage
+          if (usage?.total_tokens) {
+            totalTokens += usage.total_tokens
+          }
+
+          // Check for function calls in the completed response
+          const output = response?.output
+          if (Array.isArray(output)) {
+            for (const item of output) {
+              if (item.type === 'function_call') {
+                hasToolCalls = true
+                pendingToolCalls.set(item.id, {
+                  id: item.id,
+                  callId: item.call_id || item.id,
+                  name: item.name || '',
+                  arguments: item.arguments || '',
+                })
+              }
+            }
+          }
         }
-        responseMessage += content
-      } else if (event.type === 'response.completed') {
-        const usage = event.response?.usage
-        if (usage?.total_tokens) {
-          totalTokens = usage.total_tokens
+      }
+
+      if (hasToolCalls && pendingToolCalls.size > 0) {
+        // Add function calls to conversation and execute them
+        for (const toolCall of pendingToolCalls.values()) {
+          if (!toolCall.name) continue
+          // Add the function call to conversation
+          conversationInput.push({
+            type: 'function_call',
+            id: toolCall.id,
+            call_id: toolCall.callId,
+            name: toolCall.name,
+            arguments: toolCall.arguments,
+          })
+          // Execute and add result
+          const result = await toolInvoker.invoke(toolCall.name, toolCall.arguments)
+          conversationInput.push({
+            type: 'function_call_output',
+            call_id: toolCall.callId,
+            output: `${result}`,
+          })
         }
+      } else {
+        functionsFulfilled = true
       }
     }
   } else {
@@ -243,8 +311,7 @@ export async function chatCompletionStreamed(
     const content = mergedChunks.join('')
     onMessage(content)
   }
-  onTokenReport(totalTokens)
-  onMessageEnd(responseMessage)
+  onMessageEnd(responseMessage, totalTokens, isReasoner && reasoningSummary ? reasoningSummary : null)
   messages.push({
     content: responseMessage,
     role: 'assistant',

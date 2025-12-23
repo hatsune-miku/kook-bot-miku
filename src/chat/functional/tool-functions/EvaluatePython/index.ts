@@ -17,8 +17,7 @@ export class EvaluatePythonTool implements IFunctionTool {
         properties: {
           code: {
             type: 'string',
-            description:
-              '一个 Python 3 程序。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。你可以假定各种库都已安装。',
+            description: '一段 Python 3 程序。',
           },
         },
         required: ['code'],
@@ -28,19 +27,7 @@ export class EvaluatePythonTool implements IFunctionTool {
     }
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    const { code, showCommand: _ = true } = params
-
-    // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
-    //   createCodeBlock({
-    //     guildId: context.event.extra.guild_id,
-    //     channelId: context.event.target_id,
-    //     code: code,
-    //     language: 'Python',
-    //     markdownCodeLanguage: 'python',
-    //   })
-    //   await sleep(100)
-    // }
-
+    const { code } = params
     try {
       writeFileSync('/tmp/eval.py', code)
       const result = execSync(`python3 /tmp/eval.py`, {

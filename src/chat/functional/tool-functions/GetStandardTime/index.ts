@@ -9,12 +9,7 @@ export class GetStandardTimeTool implements IFunctionTool {
       type: 'function',
       name: 'getDateTime',
       description: '获取当前时间（北京时间）',
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: [],
-        additionalProperties: false,
-      },
+      parameters: {},
       strict: false,
     }
   }

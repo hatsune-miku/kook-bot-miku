@@ -1,7 +1,6 @@
 import { readFile } from 'fs/promises'
 import { DateTime } from 'luxon'
 import { lookup } from 'mime-types'
-import { sleep } from 'radash'
 
 import {
   ContextProps,
@@ -155,43 +154,13 @@ export class Requests {
     })
   }
 
-  static async createChannelMessageChunk(
-    props: CreateChannelMessageProps
-  ): Promise<KResponseExt<CreateChannelMessageResult>> {
-    const chunks = Math.ceil(props.content.length / MessageLengthUpperBound)
-    let ret: KResponseExt<CreateChannelMessageResult> | null = null
-    let shouldPrependMarkdownMark = false
-
-    for (let i = 0; i < chunks; ++i) {
-      let chunk = props.content.slice(i * MessageLengthUpperBound, (i + 1) * MessageLengthUpperBound)
-
-      if (shouldPrependMarkdownMark) {
-        chunk = '\n```\n' + chunk
-        shouldPrependMarkdownMark = false
-      }
-
-      // 有奇数个 ``` 标记
-      const markdownMarkCount = (chunk.match(/```/g) || []).length
-      if (markdownMarkCount % 2 !== 0) {
-        chunk += '\n```\n'
-        shouldPrependMarkdownMark = true
-      }
-
-      ret = await this.request(`/api/v3/message/create`, 'POST', {
-        ...props,
-        content: `(${i + 1}/${chunks}) ${chunk}`,
-      })
-      await sleep(100)
-    }
-    return ret!
-  }
-
   static async createChannelMessage(
     props: CreateChannelMessageProps,
     { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<CreateChannelMessageResult>> {
     if (props.content.length > MessageLengthUpperBound) {
-      return this.createChannelMessageChunk(props)
+      error('Message content exceeds length limit. Use CardBuilder.buildSplit() for long messages.')
+      return { success: false, code: 1149, message: 'Message too long', data: {} as any }
     }
     const result: KResponseExt<CreateChannelMessageResult> = await this.request(`/api/v3/message/create`, 'POST', props)
     if (guildId && result.code === 0 && result.data?.msg_id) {
@@ -230,11 +199,8 @@ export class Requests {
     { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<{}>> {
     if (props.content.length > MessageLengthUpperBound) {
-      return this.createChannelMessageChunk({
-        type: props.extra.type,
-        target_id: props.extra.target_id,
-        ...props,
-      })
+      error('Message content exceeds length limit. Use CardBuilder.buildSplit() for long messages.')
+      return { success: false, code: 1149, message: 'Message too long', data: {} }
     }
     const result: KResponseExt<{}> = await this.request(`/api/v3/message/update`, 'POST', props)
     if (result.code === 0 && guildId) {
