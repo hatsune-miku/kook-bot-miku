@@ -1,4 +1,4 @@
-import { DisplayName } from 'src/global/shared'
+import { DisplayName } from '../global/shared'
 
 export function makeInitialSystemPrompt() {
   return `
