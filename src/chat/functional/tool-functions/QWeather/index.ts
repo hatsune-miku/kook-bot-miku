@@ -1,4 +1,4 @@
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { queryRealtimeWeatherByKeyword } from './weather'
 
@@ -7,25 +7,23 @@ import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class QWeatherTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'getRealtimeWeather',
-        description: '获取实时天气',
-        parameters: {
-          type: 'object',
-          properties: {
-            city: {
-              type: 'string',
-              description: '城市名',
-            },
+      name: 'getRealtimeWeather',
+      description: '获取实时天气',
+      parameters: {
+        type: 'object',
+        properties: {
+          city: {
+            type: 'string',
+            description: '城市名',
           },
-          required: ['city'],
-          additionalProperties: false,
         },
-        strict: false,
+        required: ['city'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

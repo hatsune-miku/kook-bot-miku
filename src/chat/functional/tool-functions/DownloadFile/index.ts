@@ -1,7 +1,7 @@
 import { createWriteStream } from 'fs'
 import http from 'http'
 import https from 'https'
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { DisplayName } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
@@ -13,29 +13,27 @@ import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class DownloadFileTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'downloadFile',
-        description: '从给定URL直链中下载对应文件，并存到临时文件目录中。返回下载到的文件的绝对路径。',
-        parameters: {
-          type: 'object',
-          properties: {
-            url: {
-              type: 'string',
-              description: '文件URL',
-            },
-            fileName: {
-              type: 'string',
-              description: '为临时文件取一个名字',
-            },
+      name: 'downloadFile',
+      description: '从给定URL直链中下载对应文件，并存到临时文件目录中。返回下载到的文件的绝对路径。',
+      parameters: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: '文件URL',
           },
-          required: ['url', 'fileName'],
-          additionalProperties: false,
+          fileName: {
+            type: 'string',
+            description: '为临时文件取一个名字',
+          },
         },
-        strict: false,
+        required: ['url', 'fileName'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

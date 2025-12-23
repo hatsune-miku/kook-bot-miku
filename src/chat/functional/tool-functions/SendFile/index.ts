@@ -1,4 +1,4 @@
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { CardBuilder } from '../../../../helpers/card-helper'
 import { Requests } from '../../../../utils/krequest/request'
@@ -7,29 +7,27 @@ import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class SendFileTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'sendFile',
-        description: '从本地路径发送文件给用户。',
-        parameters: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: '文件本地绝对路径',
-            },
-            fileName: {
-              type: 'string',
-              description: '取个文件名',
-            },
+      name: 'sendFile',
+      description: '从本地路径发送文件给用户。',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: '文件本地绝对路径',
           },
-          required: ['path', 'fileName'],
-          additionalProperties: false,
+          fileName: {
+            type: 'string',
+            description: '取个文件名',
+          },
         },
-        strict: false,
+        required: ['path', 'fileName'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

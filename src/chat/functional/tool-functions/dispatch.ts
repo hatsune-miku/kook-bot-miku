@@ -1,4 +1,5 @@
 import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 import { map } from 'radash'
 
 import { DownloadFileTool } from './DownloadFile'
@@ -15,7 +16,7 @@ import { ToolFunctionContext } from '../types'
 
 export interface IFunctionTool {
   invoke(context: ToolFunctionContext, params: any): Promise<string>
-  defineOpenAICompletionTool(): Promise<ChatCompletionTool>
+  defineOpenAICompletionTool(): Promise<FunctionTool>
 }
 
 export const toolFunctions: IFunctionTool[] = [
@@ -29,9 +30,9 @@ export const toolFunctions: IFunctionTool[] = [
   SendFileTool,
 ].map((Tool) => new Tool())
 
-export const toolDefinitionCache: Record<string, [IFunctionTool, ChatCompletionTool]> = {}
+export const toolDefinitionCache: Record<string, [IFunctionTool, FunctionTool]> = {}
 
-export async function getChatCompletionTools(): Promise<ChatCompletionTool[]> {
+export async function getChatCompletionTools(): Promise<FunctionTool[]> {
   if (Object.keys(toolDefinitionCache).length > 0) {
     return Object.values(toolDefinitionCache).map(([_, defined]) => defined)
   }
@@ -45,10 +46,18 @@ export async function getChatCompletionTools(): Promise<ChatCompletionTool[]> {
   await map(toolFunctions, async (t) => {
     const defined = await t.defineOpenAICompletionTool()
     if (defined.type === 'function') {
-      toolDefinitionCache[defined.function.name] = [t, defined]
+      toolDefinitionCache[defined.name] = [t, defined]
     }
   })
   return Object.values(toolDefinitionCache).map(([_, defined]) => defined)
+}
+
+export async function getChatCompletionToolsCompat(): Promise<ChatCompletionTool[]> {
+  const tools = await getChatCompletionTools()
+  return tools.map((t) => ({
+    type: 'function',
+    function: t,
+  }))
 }
 
 export function dispatchTool(name: string): IFunctionTool {

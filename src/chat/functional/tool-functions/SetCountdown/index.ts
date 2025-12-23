@@ -1,4 +1,4 @@
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { CardBuilder } from '../../../../helpers/card-helper'
 import { respondCardMessageToUser } from '../../../directives/utils/events'
@@ -6,25 +6,23 @@ import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class SetCountdownTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'setCountdown',
-        description: '设置一个倒计时',
-        parameters: {
-          type: 'object',
-          properties: {
-            time: {
-              type: 'number',
-              description: '倒计时间隔，单位为毫秒',
-            },
+      name: 'setCountdown',
+      description: '设置一个倒计时',
+      parameters: {
+        type: 'object',
+        properties: {
+          time: {
+            type: 'number',
+            description: '倒计时间隔，单位为毫秒',
           },
-          required: ['time'],
-          additionalProperties: false,
         },
-        strict: false,
+        required: ['time'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

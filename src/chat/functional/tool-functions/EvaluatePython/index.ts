@@ -1,32 +1,30 @@
 import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class EvaluatePythonTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'pythonEvalSandboxed',
-        description:
-          '执行一段 Python 3 程序，其解释器将运行于隔离环境，不会造成任何破坏，也可以安全放心地访问文件系统。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。仅在你别无选择、必须通过外部调用来获取数据、LLM自身能力不足时才使用。',
-        parameters: {
-          type: 'object',
-          properties: {
-            code: {
-              type: 'string',
-              description:
-                '一个 Python 3 程序。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。你可以假定各种库都已安装。',
-            },
+      name: 'pythonEvalSandboxed',
+      description:
+        '执行一段 Python 3 程序，其解释器将运行于隔离环境，不会造成任何破坏，也可以安全放心地访问文件系统。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。仅在你别无选择、必须通过外部调用来获取数据、LLM自身能力不足时才使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          code: {
+            type: 'string',
+            description:
+              '一个 Python 3 程序。必须显式使用 print 打印结果，不可以采用 interactive 风格写法。你可以假定各种库都已安装。',
           },
-          required: ['code'],
-          additionalProperties: false,
         },
-        strict: false,
+        required: ['code'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {

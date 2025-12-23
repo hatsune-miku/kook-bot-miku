@@ -1,5 +1,5 @@
 import { execSync } from 'child_process'
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 import { sleep } from 'radash'
 
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
@@ -8,26 +8,24 @@ import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class RunLinuxCommandTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'runLinuxCommand',
-        description:
-          '运行一个 Linux 命令。可以是任何合法命令甚至是危险命令，这些总是运行在安全的沙盒环境中。只在有需要时使用。',
-        parameters: {
-          type: 'object',
-          properties: {
-            expression: {
-              type: 'string',
-              description: '一个 Linux (Bash) 命令。你可假设任何工具都已安装。',
-            },
+      name: 'runLinuxCommand',
+      description:
+        '运行一个 Linux 命令。可以是任何合法命令甚至是危险命令，这些总是运行在安全的沙盒环境中。只在有需要时使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          expression: {
+            type: 'string',
+            description: '一个 Linux (Bash) 命令。你可假设任何工具都已安装。',
           },
-          required: ['expression'],
-          additionalProperties: false,
         },
-        strict: false,
+        required: ['expression'],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

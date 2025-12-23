@@ -1,23 +1,21 @@
-import { ChatCompletionTool } from 'openai/resources'
+import { FunctionTool } from 'openai/resources/responses/responses'
 
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
 export class GetStandardTimeTool implements IFunctionTool {
-  async defineOpenAICompletionTool(): Promise<ChatCompletionTool> {
+  async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
       type: 'function',
-      function: {
-        name: 'getDateTime',
-        description: '获取当前时间（北京时间）',
-        parameters: {
-          type: 'object',
-          properties: {},
-          required: [],
-          additionalProperties: false,
-        },
-        strict: false,
+      name: 'getDateTime',
+      description: '获取当前时间（北京时间）',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+        additionalProperties: false,
       },
+      strict: false,
     }
   }
 

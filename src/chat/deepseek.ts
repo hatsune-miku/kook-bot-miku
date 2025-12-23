@@ -4,7 +4,7 @@ import { ChatCompletionContentPart, Completions } from 'openai/resources/chat'
 import { draw } from 'radash'
 
 import { ToolFunctionInvoker } from './functional/tool-function'
-import { getChatCompletionTools } from './functional/tool-functions/dispatch'
+import { getChatCompletionToolsCompat } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
@@ -123,7 +123,7 @@ export async function chatCompletionStreamed(
     const completionStreamed = await openai.chat.completions.create({
       messages,
       model: model,
-      tools: await getChatCompletionTools(),
+      tools: await getChatCompletionToolsCompat(),
       stream: true,
     })
 

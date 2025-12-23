@@ -5,7 +5,7 @@ import { Completions } from 'openai/resources/chat'
 import { draw } from 'radash'
 
 import { ToolFunctionInvoker } from './functional/tool-function'
-import { getChatCompletionTools } from './functional/tool-functions/dispatch'
+import { getChatCompletionTools, getChatCompletionToolsCompat } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
 import { isReasonerBackend } from './types'
 
@@ -139,6 +139,7 @@ export async function chatCompletionStreamed(
       model,
       input: messages as any,
       stream: true,
+      tools: await getChatCompletionTools(),
     })
 
     for await (const event of responseStream) {
@@ -164,7 +165,7 @@ export async function chatCompletionStreamed(
       const completionStreamed = await openai.chat.completions.create({
         messages,
         model,
-        tools: await getChatCompletionTools(),
+        tools: await getChatCompletionToolsCompat(),
         stream: true,
       })
 
