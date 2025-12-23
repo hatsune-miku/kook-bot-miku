@@ -6,9 +6,9 @@ import { draw } from 'radash'
 import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionToolsCompat } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
+import { makeInitialSystemPrompt } from './shared'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
-import { DisplayName } from '../global/shared'
 import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
 
@@ -81,17 +81,7 @@ function makeContext(context: ContextUnit[]): ChatCompletionMessageParam[] {
   return [
     {
       role: 'system',
-      content: `请你作为KOOK平台的活泼群聊成员${DisplayName}参与讨论，以最后一条消息为最高优先级。注意：
-        - 直接开始回答，不要带"${DisplayName}(id=xxx)说:"的前缀
-        - 可以借助 node 环境运行 Linux 命令，这是安全的、沙盒内的、预先做好隔离的，但仅在你必须通过外部调用来获取数据、LLM自身能力不足时才使用
-        - 只在必要的时候（如确实需要计算或处理数据，或用户需要）才执行代码或命令
-        - 下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件
-        - 如有需要，请在 /tmp 下存放任何临时文件
-        - 若需要输出 Markdown，则下列额外规则适用：
-            - 请勿使用 #, ##, ###
-            - 必须使用半角括号
-            - 支持 (spl)文字点击后显示(spl) 语法来显示带有剧透的内容
-            - 支持 (met)对方整数id(met) 语法来提及（@）对方，例如 (met)123456(met)`,
+      content: makeInitialSystemPrompt(),
     },
     ...(units as ChatCompletionMessageParam[]),
   ]

@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@a1knla/likely": "^1.0.1",
     "@kookapp/klee-core": "0.1.22",
     "@kookapp/klee-node-toolkit": "0.1.22",
     "@kookapp/klee-sqlite3": "0.1.22",

@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@a1knla/likely@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/@a1knla/likely/-/likely-1.0.1.tgz#0d10083e2654c0ccda92f105a0dfbb43a88a71a1"
+  integrity sha512-cfLYyGflOV2H7K2r9bvzC5xmtaNBzr3Ps5jBUc56iQBvVo14FV0DvQczkGoYmx6+kxP1iiPag+0B1hfhklpFGQ==
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.27.1":
   version "7.27.1"
   resolved "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.27.1.tgz#200f715e66d52a23b221a9435534a91cc13ad5be"

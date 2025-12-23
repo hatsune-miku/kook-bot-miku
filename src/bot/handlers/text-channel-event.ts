@@ -133,7 +133,6 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   const createdMessage = sendResult.data
   const contextUnits = await configUtils.main.contextUnits.getContextUnits({ guildId, channelId })
-  const toolFunctionContext: ToolFunctionContext = { event }
 
   let modelMessageAccumulated = ''
   const queue = new TaskQueue()
@@ -233,6 +232,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
   }
 
+  const toolFunctionContext: ToolFunctionContext = { event, onMessage }
   const backend = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
 
   try {

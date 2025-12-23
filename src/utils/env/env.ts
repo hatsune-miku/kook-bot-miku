@@ -1,5 +1,7 @@
 import dotenv from 'dotenv'
 
+import { likely } from '@a1knla/likely'
+
 import { die } from '../server/die'
 
 export const Env: EnvType = {} as any
@@ -20,6 +22,7 @@ export interface EnvType {
   LarkAppSecret: string
   PublicArchivePath: string
   LogLevel: string
+  LarkBotEnable: boolean
 }
 
 export function reloadConfig() {
@@ -41,6 +44,7 @@ export function reloadConfig() {
     LarkAppSecret: config.LARK_APP_SECRET,
     PublicArchivePath: config.PUBLIC_ARCHIVE_PATH,
     LogLevel: config.LOG_LEVEL || 'info',
+    LarkBotEnable: likely.truthy(config.LARK_BOT_ENABLE),
     raw: config,
   })
 }

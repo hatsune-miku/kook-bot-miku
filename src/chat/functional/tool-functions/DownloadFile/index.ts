@@ -17,7 +17,8 @@ export class DownloadFileTool implements IFunctionTool {
     return {
       type: 'function',
       name: 'downloadFile',
-      description: '从给定URL直链中下载对应文件，并存到临时文件目录中。返回下载到的文件的绝对路径。',
+      description:
+        '从给定URL直链中下载对应文件，并存到临时文件目录中。返回下载到的文件的绝对路径。下载用户给的文件时，留意URL附近的size字段(单位字节)，请拒绝下载超过500MB的文件。',
       parameters: {
         type: 'object',
         properties: {

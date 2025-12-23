@@ -28,6 +28,7 @@ export class EvaluatePythonTool implements IFunctionTool {
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
     const { code } = params
+    context.onMessage('\n\n<已执行 Python 代码>\n\n')
     try {
       writeFileSync('/tmp/eval.py', code)
       const result = execSync(`python3 /tmp/eval.py`, {
