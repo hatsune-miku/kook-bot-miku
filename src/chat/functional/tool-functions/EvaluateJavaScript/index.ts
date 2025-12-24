@@ -39,7 +39,7 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     // }
 
     try {
-      context.onMessage('\n\n<已执行 JavaScript 代码>\n\n')
+      context.onMessage('\n<已执行 JavaScript 代码>\n')
       const result = eval(expression)
       return result
     } catch (e: any) {

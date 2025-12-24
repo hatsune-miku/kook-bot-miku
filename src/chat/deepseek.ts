@@ -9,6 +9,7 @@ import { ToolFunctionContext } from './functional/types'
 import { makeInitialSystemPrompt } from './shared'
 
 import { KCardMessageElement, KCardMessageSubElement } from '../events'
+import { TaskQueue } from '../utils/algorithm/task-queue'
 import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
 
@@ -91,7 +92,7 @@ export async function chatCompletionStreamed(
   toolFunctionContext: ToolFunctionContext,
   context: ContextUnit[],
   model: string,
-  onMessage: (message: string) => void,
+  onMessage: (message: string) => Promise<void>,
   onMessageEnd: (message: string, tokens: number, reasoningSummary: string | null) => void
 ) {
   const openai = new OpenAI({
@@ -106,6 +107,7 @@ export async function chatCompletionStreamed(
   let functionsFulfilled = false
   let mergedChunks = []
   let responseMessage = ''
+  const queue = new TaskQueue()
 
   while (!functionsFulfilled) {
     const completionStreamed = await openai.chat.completions.create({
@@ -133,9 +135,9 @@ export async function chatCompletionStreamed(
       if (functionsFulfilled) {
         const content = delta.content || ''
         mergedChunks.push(content)
-        if (mergedChunks.length >= 3) {
+        if (mergedChunks.length >= 50) {
           const content = mergedChunks.join('')
-          onMessage(content)
+          queue.submit(() => onMessage(content))
           mergedChunks = []
         }
         responseMessage += content
@@ -181,9 +183,9 @@ export async function chatCompletionStreamed(
 
   if (mergedChunks.length > 0) {
     const content = mergedChunks.join('')
-    onMessage(content)
+    queue.submit(() => onMessage(content))
   }
-  onMessageEnd(responseMessage, 0, null)
+  queue.submit(async () => onMessageEnd(responseMessage, 0, null))
   messages.push({
     content: responseMessage,
     role: 'assistant',

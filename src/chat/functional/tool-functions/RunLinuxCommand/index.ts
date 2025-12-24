@@ -32,7 +32,7 @@ export class RunLinuxCommandTool implements IFunctionTool {
     const { expression, showCommand = true } = params
 
     if (showCommand) {
-      context.onMessage('\n\n<已执行 Linux 命令>\n\n')
+      context.onMessage('\n<已执行 Linux 命令>\n')
       // const card = CardBuilder.fromTemplate()
       //   .addIconWithKMarkdownText(CardIcons.IconCute, `已执行:\n\`\`\`bash\n${expression}\n\`\`\``)
       //   .build()

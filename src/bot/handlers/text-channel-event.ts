@@ -1,5 +1,3 @@
-import { sleep } from 'radash'
-
 import { botKookUserStore } from '../../cached-store/bot-kook-user'
 import { chatCompletionStreamed as chatCompletionDeepSeek } from '../../chat/deepseek'
 import { dispatchDirectives } from '../../chat/directives'
@@ -7,15 +5,14 @@ import { tryParseEvent } from '../../chat/directives/utils/events'
 import { ToolFunctionContext } from '../../chat/functional/types'
 import { chatCompletionStreamed as chatCompletionChatGpt } from '../../chat/openai'
 import { DisplayName } from '../../global/shared'
-import { CardBuilder, CardIcons } from '../../helpers/card-helper'
 import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
 import { formatNumber } from '../../utils/algorithm/format'
-import { TaskQueue } from '../../utils/algorithm/task-queue'
 import { configUtils } from '../../utils/config/config'
 import { extractContent, isExplicitlyMentioningBot } from '../../utils/kevent/utils'
+import { Dialogue } from '../../utils/krequest/dialogue'
 import { Requests } from '../../utils/krequest/request'
-import { error } from '../../utils/logging/logger'
+import { error, info } from '../../utils/logging/logger'
 import { KEvent, KEventType, KTextChannelExtra } from '../../websocket/kwebsocket/types'
 
 export async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>, sn: number | undefined) {
@@ -116,141 +113,37 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     return
   }
 
-  const initialResponse = `${DisplayName}打字中...`
-  const sendResult = await Requests.createChannelMessage(
-    {
-      type: KEventType.Card,
-      target_id: event.target_id,
-      content: CardBuilder.fromTemplate().addIconWithKMarkdownText(CardIcons.IconHappy, initialResponse).build(),
-      quote: event.msg_id,
-    },
-    { guildId, originalTextContent: initialResponse }
-  )
-
-  if (!sendResult.success) {
-    return
-  }
-
-  const createdMessage = sendResult.data
   const contextUnits = await configUtils.main.contextUnits.getContextUnits({ guildId, channelId })
-
-  let modelMessageAccumulated = ''
-  const queue = new TaskQueue()
+  const dialogue = new Dialogue(guildId, event.target_id, event.msg_id)
+  await dialogue.initialize()
 
   const onMessage = async (message: string) => {
     if (message === '') {
       return
     }
-    modelMessageAccumulated += message
-    queue.submit(async () => {
-      try {
-        await Requests.updateChannelMessage(
-          {
-            msg_id: createdMessage.msg_id,
-            content: CardBuilder.fromTemplate()
-              .addIconWithKMarkdownText(CardIcons.IconCute, '')
-              .addKMarkdownText(modelMessageAccumulated)
-              .build(),
-            quote: event.msg_id,
-            extra: {
-              type: KEventType.KMarkdown,
-              target_id: event.target_id,
-            },
-          },
-          { guildId, originalTextContent: modelMessageAccumulated }
-        )
-      } catch {
-        // ignored
-      }
-    })
+    await dialogue.appendContent(message)
   }
 
-  const onMessageEnd = async (message: string, tokens: number, reasoningSummary: string | null) => {
-    queue.stop()
-    let lastUpdateErrorMessage = ''
-
-    modelMessageAccumulated = message
-    const cardBuilder = CardBuilder.fromTemplate()
-      .addIconWithKMarkdownText(CardIcons.IconCute, '')
-      .addKMarkdownText(modelMessageAccumulated)
+  const onMessageEnd = async (_message: string, tokens: number, reasoningSummary: string | null) => {
     if (reasoningSummary) {
-      cardBuilder.addDivider()
-      cardBuilder.addKMarkdownContext(`> **思考过程:** ${reasoningSummary.replace(/\n/g, ' ')}`)
+      console.log('xx', 'reasoningSummary', reasoningSummary)
     }
-    if (tokens > 0) {
-      cardBuilder.addContext(`Token 消耗: ${formatNumber(tokens)}`)
-    }
+    const tokenUsage = tokens > 0 ? formatNumber(tokens) : 'N/A'
+    const backendName = channelConfig.backend
+    info(`[${backendName}] Token usage: ${tokenUsage}`)
+  }
 
-    // Use buildSplit to handle long messages
-    const cardContents = cardBuilder.buildSplit()
-
-    // Update the first card
-    const result = await Requests.updateChannelMessage(
-      {
-        msg_id: createdMessage.msg_id,
-        content: cardContents[0],
-        quote: event.msg_id,
-        extra: {
-          type: KEventType.KMarkdown,
-          target_id: event.target_id,
-        },
-      },
-      { guildId, originalTextContent: modelMessageAccumulated }
-    )
-
-    if (!result.success || result.code !== 0) {
-      lastUpdateErrorMessage = result.message
-      const userSideErrorMessage = `刚才的消息没能发送成功，因为【${lastUpdateErrorMessage}】~`
-      Requests.updateChannelMessage(
-        {
-          msg_id: createdMessage.msg_id,
-          content: CardBuilder.fromTemplate()
-            .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
-            .addKMarkdownText(userSideErrorMessage)
-            .build(),
-          quote: event.msg_id,
-          extra: {
-            type: KEventType.KMarkdown,
-            target_id: event.target_id,
-          },
-        },
-        { guildId, originalTextContent: userSideErrorMessage }
-      )
-      error('Failed to update message', createdMessage.msg_id, 'reason:', lastUpdateErrorMessage)
-      return
-    }
-
-    // Send additional cards if content was split
-    for (let i = 1; i < cardContents.length; i++) {
-      await sleep(100)
-      await Requests.createChannelMessage({
-        type: KEventType.Card,
-        target_id: event.target_id,
-        content: cardContents[i],
-        quote: event.msg_id,
-      })
-    }
+  const onMessageError = async (message: string) => {
+    error(`Failed to respond to ${displayName} reason: ${message}`)
   }
 
   const toolFunctionContext: ToolFunctionContext = { event, onMessage }
-  const backend = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
+  const backendImpl = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
 
   try {
-    await backend(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
+    await backendImpl(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
   } catch (e) {
-    error('Failed to respond to', displayName, 'reason:', e.message)
-    Requests.updateChannelMessage({
-      msg_id: createdMessage.msg_id,
-      content: CardBuilder.fromTemplate()
-        .addIconWithKMarkdownText(CardIcons.IconSad, '消息发送失败了！')
-        .addKMarkdownText(e.message)
-        .build(),
-      extra: {
-        type: KEventType.Card,
-        target_id: event.target_id,
-      },
-      quote: event.msg_id,
-    })
+    await onMessageError(e.message)
   }
 }
 

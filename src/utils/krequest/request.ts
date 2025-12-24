@@ -159,7 +159,7 @@ export class Requests {
     { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<CreateChannelMessageResult>> {
     if (props.content.length > MessageLengthUpperBound) {
-      error('Message content exceeds length limit. Use CardBuilder.buildSplit() for long messages.')
+      error('Message content exceeds length limit.')
       return { success: false, code: 1149, message: 'Message too long', data: {} as any }
     }
     const result: KResponseExt<CreateChannelMessageResult> = await this.request(`/api/v3/message/create`, 'POST', props)
@@ -199,7 +199,7 @@ export class Requests {
     { guildId, originalTextContent }: ContextProps = {}
   ): Promise<KResponseExt<{}>> {
     if (props.content.length > MessageLengthUpperBound) {
-      error('Message content exceeds length limit. Use CardBuilder.buildSplit() for long messages.')
+      error('Message content exceeds length limit.')
       return { success: false, code: 1149, message: 'Message too long', data: {} }
     }
     const result: KResponseExt<{}> = await this.request(`/api/v3/message/update`, 'POST', props)

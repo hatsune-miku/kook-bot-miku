@@ -16,7 +16,7 @@ import { getExternalConfigPath } from './utils'
 
 import { die } from '../server/die'
 
-export const MessageLengthUpperBound = Math.round(4000 * 0.9)
+export const MessageLengthUpperBound = 1000 // Math.round(4000 * 0.9)
 
 export interface Config {
   whitelistedGuilds: ReturnType<typeof createWhitelistedGuildHelper>

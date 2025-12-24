@@ -66,6 +66,8 @@ export interface CreateChannelMessageProps {
   nonce?: string
 
   temp_target_id?: string
+
+  reply_msg_id?: string
 }
 
 export interface CreateChannelPrivateMessageProps {
@@ -79,6 +81,7 @@ export interface EditChannelMessageProps {
   content: string
   quote?: string
   temp_target_id?: string
+  reply_msg_id?: string
   extra: {
     type: KEventType
     target_id: string
