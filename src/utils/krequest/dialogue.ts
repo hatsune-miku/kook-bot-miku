@@ -30,7 +30,7 @@ export class Dialogue {
     this.activeCard = CardBuilder.fromTemplate()
       .addIconWithKMarkdownText(CardIcons.IconCute, '')
       .addKMarkdownText('Miku打字中...')
-    Requests.createChannelMessage(
+    const { success, data, code } = await Requests.createChannelMessage(
       {
         type: KEventType.Card,
         target_id: this.targetId,
@@ -38,15 +38,13 @@ export class Dialogue {
         reply_msg_id: this.triggerMessageId || undefined,
       },
       { guildId: this.guildId }
-    ).then(({ success, data, code }) => {
-      if (code === 1149) {
-        die('Message length upper bound is too low.')
-      }
-      if (success && data) {
-        this.activeMessageId = data.msg_id
-      }
-    })
-    await sleep(300)
+    )
+    if (code === 1149) {
+      die('Message length upper bound is too low.')
+    }
+    if (success && data) {
+      this.activeMessageId = data.msg_id
+    }
     return this.activeCard
   }
 

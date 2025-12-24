@@ -185,6 +185,7 @@ export async function chatCompletionStreamed(
 
     let hasToolCalls = false
     const toolCalls: any[] = []
+    const turnParts: Part[] = []
 
     for await (const chunk of result) {
       const candidates = chunk.candidates
@@ -195,6 +196,7 @@ export async function chatCompletionStreamed(
 
       if (parts) {
         for (const part of parts) {
+          turnParts.push(part)
           if (part.text) {
             const text = part.text
             responseMessage += text
@@ -217,10 +219,10 @@ export async function chatCompletionStreamed(
     }
 
     if (hasToolCalls) {
-      // Gemini expects the assistant's function call part to be followed by a function response part
+      // Gemini expects the assistant's parts to be replayed exactly
       const assistantContent: Content = {
         role: 'model',
-        parts: toolCalls.map((tc) => ({ functionCall: tc })),
+        parts: turnParts,
       }
       currentContents.push(assistantContent)
 
@@ -236,7 +238,7 @@ export async function chatCompletionStreamed(
       }
 
       const functionResponseContent: Content = {
-        role: 'user', // In Gemini, function responses are often role: 'user' or handled via ChatSession
+        role: 'user',
         parts: functionResponseParts,
       }
       currentContents.push(functionResponseContent)
