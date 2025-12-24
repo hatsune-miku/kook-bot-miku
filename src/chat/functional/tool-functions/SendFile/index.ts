@@ -11,7 +11,12 @@ export class SendFileTool implements IFunctionTool {
     return {
       type: 'function',
       name: 'sendFile',
-      description: '从本地路径发送文件给用户。',
+      description: `
+        从本地路径发送文件给用户。
+        
+        - 不要将用户发来的文件，原封不动又发回去。
+        - 你应当只用这个函数来发送经过你处理后的文件。
+        `,
       parameters: {
         type: 'object',
         properties: {
