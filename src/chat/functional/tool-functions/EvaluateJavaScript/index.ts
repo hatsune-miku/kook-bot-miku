@@ -39,7 +39,8 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     // }
 
     try {
-      context.onMessage('\n<已执行 JavaScript 代码>\n')
+      context.onMessage(' <已执行 JavaScript 代码> ')
+      // eslint-disable-next-line no-eval
       const result = eval(expression)
       return result
     } catch (e: any) {

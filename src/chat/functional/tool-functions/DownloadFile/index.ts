@@ -12,6 +12,8 @@ import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
+const downloadedMap: Record<string, string> = {}
+
 export class DownloadFileTool implements IFunctionTool {
   async defineOpenAICompletionTool(): Promise<FunctionTool> {
     return {
@@ -43,6 +45,10 @@ export class DownloadFileTool implements IFunctionTool {
 
     if (!url || !fileName) {
       return '错误的URL'
+    }
+
+    if (downloadedMap[url]) {
+      return downloadedMap[url]
     }
 
     const {
@@ -103,6 +109,7 @@ export class DownloadFileTool implements IFunctionTool {
           stream.on('finish', () => {
             clearTimeout(timeout)
             updateMessage(CardIcons.IconHappy, `${DisplayName}已收到文件\n\n\`${url}\``)
+            downloadedMap[url] = targetPath
             resolve(targetPath)
           })
         })
