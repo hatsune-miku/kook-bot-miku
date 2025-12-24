@@ -5,6 +5,7 @@ export const ChatBotBackends = {
   gemini3flash: 'gemini-3-flash-preview',
   gemini3pro: 'gemini-3-pro-preview',
   deepseekv31volc: 'deepseek-v3-1-250821',
+  hidden: 'hidden',
 } as const
 
 export type ChatBotBackend = (typeof ChatBotBackends)[keyof typeof ChatBotBackends]
