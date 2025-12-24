@@ -82,7 +82,7 @@ function makeContext(context: ContextUnit[]): ChatCompletionMessageParam[] {
   return [
     {
       role: 'system',
-      content: makeInitialSystemPrompt(),
+      content: makeInitialSystemPrompt('DeepSeek'),
     },
     ...(units as ChatCompletionMessageParam[]),
   ]

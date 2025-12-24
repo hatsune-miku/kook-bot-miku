@@ -23,7 +23,7 @@ export default {
       })
       respondToUser({
         originalEvent: event.originalEvent,
-        content: `已切换至 ChatGPT (${backend})`,
+        content: `已切换至 ${backend}`,
       })
     } else {
       respondToUser({

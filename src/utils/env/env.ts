@@ -11,6 +11,8 @@ export interface EnvType {
   BotToken: string
   OpenAIKeys: string[]
   OpenAIBaseUrl: string
+  GoogleGeminiKeys: string[]
+  GoogleGeminiBaseUrl: string
   ProxyUrl: string
   DeepSeekKeys: string[]
   StableDiffusionKeys: string[]
@@ -32,6 +34,8 @@ export function reloadConfig() {
   Object.assign(Env, {
     KOOKBaseUrl: config.KOOK_BASE_URL || die('环境配置错误：KOOK_BASE_URL'),
     BotToken: config.BOT_TOKEN || die('环境配置错误：BOT_TOKEN'),
+    GoogleGeminiKeys: config.GOOGLE_GEMINI_API_KEYS?.split(',') || [],
+    GoogleGeminiBaseUrl: config.GOOGLE_GEMINI_API_BASE_URL,
     OpenAIKeys: config.OPENAI_API_KEYS?.split(',') || [],
     OpenAIBaseUrl: config.OPENAI_API_BASE_URL,
     ProxyUrl: config.PROXY_URL,

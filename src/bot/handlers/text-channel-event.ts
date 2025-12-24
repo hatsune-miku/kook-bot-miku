@@ -3,6 +3,7 @@ import { chatCompletionStreamed as chatCompletionDeepSeek } from '../../chat/dee
 import { dispatchDirectives } from '../../chat/directives'
 import { tryParseEvent } from '../../chat/directives/utils/events'
 import { ToolFunctionContext } from '../../chat/functional/types'
+import { chatCompletionStreamed as chatCompletionGoogleGemini } from '../../chat/genai'
 import { chatCompletionStreamed as chatCompletionChatGpt } from '../../chat/openai'
 import { DisplayName } from '../../global/shared'
 import { pluginLoader } from '../../plugins/loader'
@@ -138,7 +139,11 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const toolFunctionContext: ToolFunctionContext = { event, onMessage }
-  const backendImpl = channelConfig.backend.startsWith('deepseek') ? chatCompletionDeepSeek : chatCompletionChatGpt
+  const backendImpl = channelConfig.backend.startsWith('deepseek')
+    ? chatCompletionDeepSeek
+    : channelConfig.backend.startsWith('gemini')
+      ? chatCompletionGoogleGemini
+      : chatCompletionChatGpt
 
   try {
     await backendImpl(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
