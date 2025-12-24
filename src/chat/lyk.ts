@@ -32,6 +32,6 @@ export async function chatCompletionStreamed(
     onMessage(prompt + 'aa')
     setTimeout(() => {
       onMessageEnd(prompt, 0, null)
-    }, 300)
-  }, 400)
+    }, 2000)
+  }, 2000)
 }
