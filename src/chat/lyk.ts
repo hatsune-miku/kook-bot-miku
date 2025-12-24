@@ -29,7 +29,9 @@ export async function chatCompletionStreamed(
   prompt = prompt.replace(/有/g, '没有')
   prompt = prompt.replace(/？/g, '！')
   setTimeout(() => {
-    onMessage(prompt)
-    onMessageEnd(prompt, 0, null)
+    onMessage(prompt + 'aa')
+    setTimeout(() => {
+      onMessageEnd(prompt, 0, null)
+    }, 300)
   }, 400)
 }
