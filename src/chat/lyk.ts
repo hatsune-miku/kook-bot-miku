@@ -27,6 +27,7 @@ export async function chatCompletionStreamed(
   prompt = prompt.replace(/不/g, '')
   prompt = prompt.replace(/你/g, '我')
   prompt = prompt.replace(/有/g, '没有')
+  prompt = prompt.replace(/吧/g, '')
   prompt = prompt.replace(/？/g, '！')
   setTimeout(() => {
     onMessage(prompt)
