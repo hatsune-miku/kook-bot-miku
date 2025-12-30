@@ -7,6 +7,11 @@ import { KEventType } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound } from '../config/config'
 import { die } from '../server/die'
 
+export interface IDialogueSession {
+  update(atomicProcedure: (card: CardBuilder) => CardBuilder, contextToAppend?: string): Promise<void>
+  commit(): void
+}
+
 export class Dialogue {
   private activeCard: CardBuilder | null = null
   private activeMessageId: string | null = null
@@ -48,7 +53,15 @@ export class Dialogue {
     return this.activeCard
   }
 
-  private async updateActiveCard(nextState: CardBuilder, originalTextContent: string) {
+  private removingWaitingText(card: CardBuilder) {
+    if (!card.lastModule?.text?.content?.includes('Miku打字中...')) {
+      return card
+    }
+    card.undoLastAdd()
+    return card
+  }
+
+  private async updateActiveCard(nextState: CardBuilder, originalTextContent?: string) {
     this.activeCard = nextState
     if (!this.activeMessageId) {
       return
@@ -73,11 +86,51 @@ export class Dialogue {
     this.activeAccumulatedContent = ''
   }
 
-  async appendContent(content: string) {
+  createTransaction(processor: (session: IDialogueSession) => void) {
+    const session: IDialogueSession = {
+      update: async (atomicUpdateProcedure, contextToAppend) => {
+        let card = await this.ensureActiveCard()
+        const snapshot = card.createSnapshot()
+
+        card = await atomicUpdateProcedure(card)
+
+        // 本次更新没超过长度限制，直接更新
+        const serializedLength = card.serializedLength
+        if (serializedLength < MessageLengthUpperBound) {
+          if (contextToAppend) {
+            this.activeAccumulatedContent += contextToAppend
+          }
+          await this.updateActiveCard(card, this.activeAccumulatedContent)
+          return
+        }
+
+        // 超过长度限制，先回退进度
+        card.restore(snapshot)
+
+        // 看看全新的空卡片会不会超
+        let emptyCard = CardBuilder.fromTemplate()
+        emptyCard = atomicUpdateProcedure(emptyCard)
+
+        // 空卡片也会超过长度限制，报告错误
+        if (emptyCard.serializedLength > MessageLengthUpperBound) {
+          throw new Error('Message length upper bound is too low.')
+        }
+
+        this.finalizeCurrentCard()
+        return session.update(atomicUpdateProcedure, contextToAppend)
+      },
+      commit: () => {
+        this.finalizeCurrentCard()
+      },
+    }
+    processor(session)
+  }
+
+  async createNonAtomicTextMessage(content: string) {
     const merged = this.activeAccumulatedContent + content
     const activeCard = await this.ensureActiveCard()
 
-    const cardWithMergedContent = activeCard.undoLastAdd().addKMarkdownText(merged)
+    const cardWithMergedContent = this.removingWaitingText(activeCard).addKMarkdownText(merged)
     const serializedLength = cardWithMergedContent.serializedLength
     if (serializedLength < MessageLengthUpperBound) {
       await this.updateActiveCard(cardWithMergedContent, merged)
@@ -86,19 +139,44 @@ export class Dialogue {
     }
 
     const excess = serializedLength - MessageLengthUpperBound
-    const truncatedContent = content.slice(0, content.length - excess)
+    let truncatedContent = content.slice(0, content.length - excess)
+    let remainingContent = content.slice(truncatedContent.length)
+
+    if (containsUnpairedCodeBlocks(truncatedContent)) {
+      truncatedContent += '```'
+    }
+
+    if (containsUnpairedCodeBlocks(remainingContent)) {
+      remainingContent = '```' + remainingContent
+    }
+
     if (truncatedContent.length > 0) {
       const truncatedMerged = this.activeAccumulatedContent + truncatedContent
-      const cardWithTruncatedContent = activeCard.undoLastAdd().addKMarkdownText(truncatedMerged)
+      const cardWithTruncatedContent = this.removingWaitingText(activeCard).addKMarkdownText(truncatedMerged)
       await this.updateActiveCard(cardWithTruncatedContent, truncatedMerged)
     }
     this.finalizeCurrentCard()
 
-    const remainingContent = content.slice(truncatedContent.length)
-    await this.appendContent(remainingContent)
+    await this.createNonAtomicTextMessage(remainingContent)
   }
 
-  async finalize() {
+  async finalize(activeCardPostProcessor: (card: CardBuilder) => CardBuilder = null) {
+    if (!this.activeCard || !activeCardPostProcessor) {
+      return
+    }
+    this.createTransaction((session) => {
+      session.update(activeCardPostProcessor, this.activeAccumulatedContent)
+      session.commit()
+    })
     this.finalizeCurrentCard()
   }
+}
+
+function containsUnpairedCodeBlocks(text: string) {
+  const matches = text.matchAll(/```/g)
+  let balance = 0
+  for (const match of matches) {
+    balance += match.length
+  }
+  return balance % 2 !== 0
 }

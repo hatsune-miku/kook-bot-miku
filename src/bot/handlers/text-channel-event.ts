@@ -123,7 +123,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     if (message === '') {
       return
     }
-    await dialogue.appendContent(message)
+    await dialogue.createNonAtomicTextMessage(message)
   }
 
   const onMessageEnd = async (_message: string, tokens: number, reasoningSummary: string | null) => {
@@ -132,7 +132,13 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
     }
     const tokenUsage = tokens > 0 ? formatNumber(tokens) : 'N/A'
     const backendName = channelConfig.backend
-    info(`[${backendName}] Token usage: ${tokenUsage}`)
+    await dialogue.finalize((card) => {
+      if (reasoningSummary) {
+        card.addDivider().addKMarkdownText('**思考过程**').addContext(reasoningSummary).addDivider()
+      }
+      card.addContext(`${backendName} | ${tokenUsage}`)
+      return card
+    })
   }
 
   const onMessageError = async (message: string) => {

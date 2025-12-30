@@ -89,7 +89,7 @@ function makeContext(context: ContextUnit[]): ChatCompletionMessageParam[] {
   return [
     {
       role: 'system',
-      content: makeInitialSystemPrompt('ChatGPT'),
+      content: makeInitialSystemPrompt({ modelBrandName: 'ChatGPT', overseas: false }),
     },
     ...(units as ChatCompletionMessageParam[]),
   ]

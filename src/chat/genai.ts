@@ -116,14 +116,6 @@ function mapContextUnit(unit: ContextUnit): Content {
   }
 }
 
-function makeContext(context: ContextUnit[]): { systemInstruction?: string; contents: Content[] } {
-  const contents = context.map(mapContextUnit)
-  return {
-    systemInstruction: makeInitialSystemPrompt('Google Gemini'),
-    contents,
-  }
-}
-
 export async function chatCompletionStreamed(
   toolFunctionContext: ToolFunctionContext,
   context: ContextUnit[],
@@ -144,7 +136,7 @@ export async function chatCompletionStreamed(
     },
   })
 
-  const { systemInstruction, contents } = makeContext(context)
+  const contents = context.map(mapContextUnit)
   const toolInvoker = new ToolFunctionInvoker(toolFunctionContext)
 
   // Convert OpenAI-style tools to Gemini tools
@@ -166,7 +158,13 @@ export async function chatCompletionStreamed(
   // It uses ai.models.generateContentStream directly or similar
 
   let functionsFulfilled = false
-  let currentContents = [...contents]
+  let currentContents = [
+    {
+      role: 'user',
+      parts: [{ text: makeInitialSystemPrompt({ modelBrandName: 'Google Gemini', overseas: false }) }],
+    } as Content,
+    ...contents,
+  ]
   let responseMessage = ''
   let reasoningSummary = ''
   let totalTokens = 0
@@ -177,7 +175,6 @@ export async function chatCompletionStreamed(
     const result = await ai.models.generateContentStream({
       model,
       config: {
-        systemInstruction,
         tools: geminiTools,
       },
       contents: currentContents,

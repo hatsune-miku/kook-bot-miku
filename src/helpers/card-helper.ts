@@ -1,6 +1,12 @@
+import { cloneDeep } from 'lodash'
+
 import { CardBuilderTemplateOptions, ICardBuilder } from './types'
 
 import { KCardMessage, KCardMessageElement, KCardSize } from '../events'
+
+export interface CardSnapshot {
+  card: KCardMessage
+}
 
 export class CardBuilder implements ICardBuilder {
   private card: KCardMessage = [
@@ -27,6 +33,13 @@ export class CardBuilder implements ICardBuilder {
     }
   ) {
     return new CardBuilder(options)
+  }
+
+  restore(snapshot: CardSnapshot) {
+    this.card = snapshot.card
+    this.main = this.card[0]
+    this.modules = this.card[0].modules
+    return this
   }
 
   size(size: KCardSize) {
@@ -149,8 +162,18 @@ export class CardBuilder implements ICardBuilder {
     return JSON.stringify(this.card).length
   }
 
+  get lastModule() {
+    return this.modules[this.modules.length - 1]
+  }
+
   build() {
     return JSON.stringify(this.card)
+  }
+
+  createSnapshot(): CardSnapshot {
+    return {
+      card: cloneDeep(this.card),
+    }
   }
 }
 
