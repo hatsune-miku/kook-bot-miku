@@ -123,3 +123,27 @@ export const ContextUnitModel: Model = {
     },
   ],
 }
+
+export const WorkLogModel: Model = {
+  name: 'kbm_work_log',
+  version: '1',
+  primaryKey: 'uid',
+  fields: [
+    {
+      name: 'uid',
+      dataType: 'string',
+    },
+    {
+      name: 'userId',
+      dataType: 'string',
+    },
+    {
+      name: 'content',
+      dataType: 'string',
+    },
+    {
+      name: 'createdAt',
+      dataType: 'int64',
+    },
+  ],
+}

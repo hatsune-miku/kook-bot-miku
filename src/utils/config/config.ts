@@ -5,12 +5,14 @@ import { createContextUnitHelper } from './helpers/context-unit'
 import { createUserDefinedScriptHelper } from './helpers/user-defined-script'
 import { createUserRoleHelper } from './helpers/user-role'
 import { createWhitelistedGuildHelper } from './helpers/whitelisted-guild'
+import { createWorkLogHelper } from './helpers/work-log'
 import {
   ChannelConfigModel,
   ContextUnitModel,
   UserDefinedScriptModel,
   UserRoleModel,
   WhitelistedGuildModel,
+  WorkLogModel,
 } from './models'
 import { getExternalConfigPath } from './utils'
 
@@ -24,6 +26,7 @@ export interface Config {
   userDefinedScripts: ReturnType<typeof createUserDefinedScriptHelper>
   userRoles: ReturnType<typeof createUserRoleHelper>
   contextUnits: ReturnType<typeof createContextUnitHelper>
+  workLogs: ReturnType<typeof createWorkLogHelper>
 }
 
 export class ConfigUtils {
@@ -37,6 +40,7 @@ export class ConfigUtils {
       userDefinedScripts: [UserDefinedScriptModel, createUserDefinedScriptHelper],
       userRoles: [UserRoleModel, createUserRoleHelper],
       contextUnits: [ContextUnitModel, createContextUnitHelper],
+      workLogs: [WorkLogModel, createWorkLogHelper],
     }
 
     const keys = Object.keys(configMap)

@@ -28,3 +28,10 @@ export interface ContextUnit {
   content: string
   createdAt: number
 }
+
+export interface WorkLog {
+  uid: string
+  userId: string
+  content: string
+  createdAt: number
+}
