@@ -14,7 +14,7 @@ import { configUtils } from '../../utils/config/config'
 import { extractContent, isExplicitlyMentioningBot } from '../../utils/kevent/utils'
 import { Dialogue } from '../../utils/krequest/dialogue'
 import { Requests } from '../../utils/krequest/request'
-import { error, info } from '../../utils/logging/logger'
+import { error } from '../../utils/logging/logger'
 import { KEvent, KEventType, KTextChannelExtra } from '../../websocket/kwebsocket/types'
 
 export async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>, sn: number | undefined) {
