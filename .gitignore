@@ -6,5 +6,5 @@ node_modules
 config.json
 memory.json
 dist
-config
-plugins
+/config
+/plugins
