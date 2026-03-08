@@ -1,9 +1,10 @@
+import { KEventTypes } from '@kookapp/js-sdk'
+
 import { Events, RespondToUserParameters, botEventEmitter } from '../../events'
 import { displayNameFromUser } from '../../utils'
 import { Requests } from '../../utils/krequest/request'
 import { CreateChannelMessageResult, KResponseExt } from '../../utils/krequest/types'
 import { error } from '../../utils/logging/logger'
-import { KEventType } from '../../websocket/kwebsocket/types'
 
 export function initializeBotEvents() {
   botEventEmitter.on(Events.RespondToUser, handleRespondToUserEvent)
@@ -16,7 +17,7 @@ async function handleRespondToUserEvent(
 ) {
   const result = await Requests.createChannelMessage(
     {
-      type: KEventType.KMarkdown,
+      type: KEventTypes.KMarkdown,
       target_id: event.originalEvent.target_id,
       content: event.content,
       quote: event.originalEvent.msg_id,
@@ -36,7 +37,7 @@ async function handleRespondCardMessageToUserEvent(
 ) {
   const result = await Requests.createChannelMessage(
     {
-      type: KEventType.Card,
+      type: KEventTypes.Card,
       target_id: event.originalEvent.target_id,
       content: event.content,
       quote: event.originalEvent.msg_id,

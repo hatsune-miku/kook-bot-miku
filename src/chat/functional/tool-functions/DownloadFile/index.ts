@@ -3,11 +3,12 @@ import http from 'http'
 import https from 'https'
 import { FunctionTool } from 'openai/resources/responses/responses'
 
+import { KEventTypes } from '@kookapp/js-sdk'
+
 import { DisplayName } from '../../../../global/shared'
 import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
 import { Requests } from '../../../../utils/krequest/request'
 import { info } from '../../../../utils/logging/logger'
-import { KEventType } from '../../../../websocket/kwebsocket/types'
 import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
@@ -73,7 +74,7 @@ export class DownloadFileTool implements IFunctionTool {
           content: CardBuilder.fromTemplate().addIconWithKMarkdownText(iconUrl, content).build(),
           quote: context.event.msg_id,
           extra: {
-            type: KEventType.KMarkdown,
+            type: KEventTypes.KMarkdown,
             target_id: context.event.target_id,
           },
         },

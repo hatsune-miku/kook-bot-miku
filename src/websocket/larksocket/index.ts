@@ -8,7 +8,7 @@ import { configUtils } from '../../utils/config/config'
 import { Env } from '../../utils/env/env'
 import { Requests } from '../../utils/krequest/request'
 import { info } from '../../utils/logging/logger'
-import { KEventType } from '../kwebsocket/types'
+import { KEventTypes } from '@kookapp/js-sdk'
 
 let lastChatSessionId: string | null = null
 
@@ -148,7 +148,7 @@ export async function initializeLarkBot() {
           const [branch] = parameters
           Requests.createChannelMessage(
             {
-              type: KEventType.KMarkdown,
+              type: KEventTypes.KMarkdown,
               target_id: '9881678244960302',
               content: `(met)1211389071(met) /打包 ${branch}`,
             },

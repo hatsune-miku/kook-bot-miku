@@ -8,7 +8,7 @@ import { ToolFunctionContext } from './functional/types'
 import { makeInitialSystemPrompt } from './shared'
 import { isReasonerBackend } from './types'
 
-import { KCardMessageElement, KCardMessageSubElement } from '../events'
+import { KCardElement, KCardModule } from '@kookapp/js-sdk'
 import { TaskQueue } from '../utils/algorithm/task-queue'
 import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
@@ -68,7 +68,7 @@ function mapContextUnit(unit: ContextUnit): Content {
     return normalUnit
   }
 
-  const message = parsed as KCardMessageElement
+  const message = parsed as KCardElement
   const isCardMessage = message.type === 'card' && message.theme?.length > 1
   if (!isCardMessage) {
     return normalUnit
@@ -79,7 +79,7 @@ function mapContextUnit(unit: ContextUnit): Content {
     return normalUnit
   }
 
-  const processModules = (modules: KCardMessageSubElement[], onImageFound: (src: string) => void) => {
+  const processModules = (modules: KCardModule[], onImageFound: (src: string) => void) => {
     for (const m of modules) {
       if (m.type === 'container') {
         processModules(m.elements || [], onImageFound)

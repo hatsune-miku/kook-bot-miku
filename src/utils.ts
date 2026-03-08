@@ -1,4 +1,4 @@
-import { KUser } from './websocket/kwebsocket/types'
+import { KUser } from '@kookapp/js-sdk'
 
 export function displayNameFromUser(user: KUser) {
   return `${user.username}#${user.identify_num}`

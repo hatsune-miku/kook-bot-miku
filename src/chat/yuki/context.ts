@@ -1,4 +1,5 @@
-import { KUser } from '../../websocket/kwebsocket/types'
+import { KUser } from '@kookapp/js-sdk'
+
 import { ParseEventResultValid } from '../directives/types'
 
 export interface YukiContext {

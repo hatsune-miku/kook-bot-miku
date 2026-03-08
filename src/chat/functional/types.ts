@@ -1,4 +1,4 @@
-import { KEvent, KTextChannelExtra } from '../../websocket/kwebsocket/types'
+import { KEvent, KTextChannelExtra } from '@kookapp/js-sdk'
 
 export interface ToolFunctionContext {
   event: KEvent<KTextChannelExtra>

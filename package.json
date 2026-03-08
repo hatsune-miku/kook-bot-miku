@@ -5,12 +5,13 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/src/server.js",
+    "start": "node dist/server.js",
     "daemon": "while true; do yarn start; done",
     "test": "jest"
   },
   "dependencies": {
     "@a1knla/likely": "^1.0.1",
+    "@kookapp/js-sdk": "file:./kook-js-sdk",
     "@google/genai": "^1.34.0",
     "@kookapp/klee-core": "0.1.22",
     "@kookapp/klee-node-toolkit": "0.1.22",

@@ -19,12 +19,20 @@ import { info, warn } from '../utils/logging/logger'
 export class PluginLoader {
   private _plugins: IKbmPlugin[] = []
 
+  async getDirectoryEntries(path: string): Promise<fs.Dirent<string>[]> {
+    try {
+      return await fs.promises.readdir(path, {
+        withFileTypes: true,
+        recursive: false,
+      })
+    } catch (_: any) {
+      return []
+    }
+  }
+
   async initialize() {
     const pluginsPath = getExternalPluginsPath()
-    const directoryEntries = await fs.promises.readdir(pluginsPath, {
-      withFileTypes: true,
-      recursive: false,
-    })
+    const directoryEntries = await this.getDirectoryEntries(pluginsPath)
 
     const absolutePaths = directoryEntries
       .filter((entry) => {

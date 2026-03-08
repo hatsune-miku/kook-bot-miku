@@ -1,5 +1,6 @@
+import { KEvent, KTextChannelExtra, KUser } from '@kookapp/js-sdk'
+
 import { RespondToUserParameters } from '../../events'
-import { KEvent, KTextChannelExtra, KUser } from '../../websocket/kwebsocket/types'
 
 export type ParseEventResult = ParseEventResultDontIntercept | ParseEventResultValid
 

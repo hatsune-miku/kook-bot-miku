@@ -28,7 +28,8 @@
     "declaration": true,
     "declarationMap": true,
     "experimentalDecorators": true,
+    "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

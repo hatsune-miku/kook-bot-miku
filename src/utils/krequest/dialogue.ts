@@ -2,8 +2,9 @@ import { sleep } from 'radash'
 
 import { Requests } from './request'
 
+import { KEventTypes } from '@kookapp/js-sdk'
+
 import { CardBuilder, CardIcons } from '../../helpers/card-helper'
-import { KEventType } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound } from '../config/config'
 import { die } from '../server/die'
 
@@ -37,7 +38,7 @@ export class Dialogue {
       .addKMarkdownText('Miku打字中...')
     const { success, data, code } = await Requests.createChannelMessage(
       {
-        type: KEventType.Card,
+        type: KEventTypes.Card,
         target_id: this.targetId,
         content: this.activeCard.build(),
         reply_msg_id: this.triggerMessageId || undefined,
@@ -72,7 +73,7 @@ export class Dialogue {
         content: this.activeCard.build(),
         reply_msg_id: this.triggerMessageId || undefined,
         extra: {
-          type: KEventType.Card,
+          type: KEventTypes.Card,
           target_id: this.targetId,
         },
       },

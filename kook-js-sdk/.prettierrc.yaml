@@ -1,0 +1,25 @@
+printWidth: 120
+tabWidth: 2
+useTabs: false
+singleQuote: true
+semi: false
+trailingComma: es5
+bracketSpacing: true
+arrowParens: always
+endOfLine: auto
+plugins:
+  - '@trivago/prettier-plugin-sort-imports'
+importOrder:
+  - ^[a-zA-Z]
+  - ^@
+  - ^@[a-zA-Z]
+  - ^\.\/(?!.*\.(less|css|sass|scss)$).*
+  - ^\.\.\/(?!.*\.(less|css|sass|scss)$).*
+importOrderSeparation: true
+importOrderSortSpecifiers: true
+importOrderParserPlugins:
+  - typescript
+overrides:
+  - files: '*.{ts,tsx}'
+    options:
+      parser: typescript

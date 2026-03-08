@@ -1,7 +1,8 @@
+import { KEvent, KTextChannelExtra } from '@kookapp/js-sdk'
+
 import { kookUserStore } from '../../../cached-store/kook-user'
 import { Events, RespondToUserParameters, botEventEmitter } from '../../../events'
 import { CreateChannelMessageResult, KResponseExt } from '../../../utils/krequest/types'
-import { KEvent, KTextChannelExtra } from '../../../websocket/kwebsocket/types'
 import { ParseEventResult } from '../types'
 
 export function respondToUser(params: RespondToUserParameters): Promise<KResponseExt<CreateChannelMessageResult>> {

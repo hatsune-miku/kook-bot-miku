@@ -18,9 +18,10 @@ import {
   WhoAmIExtendResult as QueryUserResult,
 } from './types'
 
+import { KEventTypes, OpenGatewayProps } from '@kookapp/js-sdk'
+
 import { botKookUserStore } from '../../cached-store/bot-kook-user'
 import { DisplayName } from '../../global/shared'
-import { KEventType, OpenGatewayProps } from '../../websocket/kwebsocket/types'
 import { MessageLengthUpperBound, configUtils } from '../config/config'
 import { Env, reloadConfig } from '../env/env'
 import { error } from '../logging/logger'
@@ -187,7 +188,7 @@ export class Requests {
       .addKMarkdownText(`(met)${targetUserId}(met)(font)，这条消息仅你可见。(font)[secondary]`)
       .build()
     return this.createChannelMessage({
-      type: KEventType.Card,
+      type: KEventTypes.Card,
       target_id: channelId,
       temp_target_id: targetUserId,
       content: cardContent,

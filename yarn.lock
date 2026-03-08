@@ -557,6 +557,13 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@kookapp/js-sdk@file:./kook-js-sdk":
+  version "0.1.0"
+  dependencies:
+    pako "^2.1.0"
+    radash "^12.1.0"
+    ws "^8.18.0"
+
 "@kookapp/klee-core@0.1.22":
   version "0.1.22"
   resolved "https://registry.npmjs.org/@kookapp/klee-core/-/klee-core-0.1.22.tgz#4a0193838452167ba0531cc691dc36464efe7dc3"

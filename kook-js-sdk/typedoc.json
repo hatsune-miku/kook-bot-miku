@@ -1,0 +1,9 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "@kookapp/js-sdk",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "tsconfig": "tsconfig.json"
+}

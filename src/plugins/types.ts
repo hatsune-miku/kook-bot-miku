@@ -1,3 +1,5 @@
+import { KEvent, KSystemEventExtra, KTextChannelExtra } from '@kookapp/js-sdk'
+
 import { BotKookUserStore } from '../cached-store/bot-kook-user'
 import { KookUserStore } from '../cached-store/kook-user'
 import { ChatDirectiveItem, ParseEventResultValid } from '../chat/directives/types'
@@ -8,7 +10,6 @@ import { ICardBuilderStatic } from '../helpers/types'
 import { ConfigUtils } from '../utils/config/config'
 import { Env } from '../utils/env/env'
 import { Requests } from '../utils/krequest/request'
-import { KWSHelperOptions } from '../websocket/kwebsocket/kws-helper'
 
 export interface IKbmPluginContext {
   dispatchDirectives: (event: ParseEventResultValid, onContextReady?: () => void) => Promise<boolean>
@@ -25,9 +26,13 @@ export interface IKbmPluginContext {
   kookUserStore: KookUserStore
 }
 
-export interface IKbmPluginLifeCycle extends Omit<KWSHelperOptions, 'autoReconnect'> {
+export interface IKbmPluginLifeCycle {
   onLoad?: (context: IKbmPluginContext) => Promise<void>
   onUnload?: () => void
+  onSevereError?: (message: string) => void
+  onTextChannelEvent?: (event: KEvent<KTextChannelExtra>, sn: number | undefined) => Promise<void>
+  onSystemEvent?: (event: KEvent<KSystemEventExtra>, sn: number | undefined) => Promise<void>
+  onReset?: () => void
   onParsedTextChannelEvent?: (event: ParseEventResultValid) => Promise<void>
 }
 

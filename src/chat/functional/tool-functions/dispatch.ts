@@ -6,7 +6,6 @@ import { DownloadFileTool } from './DownloadFile'
 import { EvaluateJavaScriptTool } from './EvaluateJavaScript'
 import { EvaluatePythonTool } from './EvaluatePython'
 import { GetStandardTimeTool } from './GetStandardTime'
-import { QWeatherTool } from './QWeather'
 import { RunLinuxCommandTool } from './RunLinuxCommand'
 import { SendFileTool } from './SendFile'
 import { SetCountdownTool } from './SetCountdown'
@@ -23,7 +22,6 @@ export const toolFunctions: IFunctionTool[] = [
   SetCountdownTool,
   EvaluateJavaScriptTool,
   GetStandardTimeTool,
-  QWeatherTool,
   RunLinuxCommandTool,
   DownloadFileTool,
   EvaluatePythonTool,

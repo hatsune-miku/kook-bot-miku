@@ -1,3 +1,5 @@
+import { KEvent, KEventTypes, KTextChannelExtra } from '@kookapp/js-sdk'
+
 import { botKookUserStore } from '../../cached-store/bot-kook-user'
 import { chatCompletionStreamed as chatCompletionDeepSeek } from '../../chat/deepseek'
 import { dispatchDirectives } from '../../chat/directives'
@@ -15,22 +17,21 @@ import { extractContent, isExplicitlyMentioningBot } from '../../utils/kevent/ut
 import { Dialogue } from '../../utils/krequest/dialogue'
 import { Requests } from '../../utils/krequest/request'
 import { error } from '../../utils/logging/logger'
-import { KEvent, KEventType, KTextChannelExtra } from '../../websocket/kwebsocket/types'
 
 export async function handleTextChannelEvent(event: KEvent<KTextChannelExtra>, sn: number | undefined) {
   await Promise.all(pluginLoader.plugins.map((p) => p.onTextChannelEvent?.(event, sn)))
 
   switch (event.type) {
-    case KEventType.KMarkdown:
-    case KEventType.Card:
-    case KEventType.Text: {
+    case KEventTypes.KMarkdown:
+    case KEventTypes.Card:
+    case KEventTypes.Text: {
       return await handleTextChannelTextMessage(event)
     }
 
-    case KEventType.Image:
-    case KEventType.File:
-    case KEventType.Video:
-    case KEventType.Audio: {
+    case KEventTypes.Image:
+    case KEventTypes.File:
+    case KEventTypes.Video:
+    case KEventTypes.Audio: {
       return await handleTextChannelMultimediaMessage(event)
     }
 
@@ -64,7 +65,7 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   if (isMentioningMe && !whitelisted && !trusted) {
     await Requests.createChannelMessage({
-      type: KEventType.KMarkdown,
+      type: KEventTypes.KMarkdown,
       target_id: event.target_id,
       content: `${DisplayName}机器人还在内测中，当前服务器 (${guildId}) 未在白名单。有意请联系 (met)3553226959(met)~`,
       quote: event.msg_id,

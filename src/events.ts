@@ -1,6 +1,6 @@
 import { EventEmitter } from 'stream'
 
-import { KEvent, KTextChannelExtra } from './websocket/kwebsocket/types'
+import { KEvent, KTextChannelExtra } from '@kookapp/js-sdk'
 
 export const Events = {
   RespondToUser: 'respond-to-user',
@@ -15,42 +15,5 @@ export interface RespondToUserParameters {
     originalTextContent: string
   }
 }
-
-export type KCardSize = 'sm' | 'md' | 'lg'
-
-export interface KCardMessageSubTextElement {
-  // TODO
-  type: 'kmarkdown' | 'plain-text'
-  content: string
-}
-
-export interface KCardMessageContainedElement {
-  // TODO
-  type: 'image' | 'file' | 'plain-text'
-  title?: string
-  src?: string
-  size?: KCardSize | string
-  content?: string
-}
-export interface KCardMessageSubElement {
-  // TODO
-  type: string
-  text?: KCardMessageSubTextElement
-  mode?: string
-  accessory?: KCardMessageContainedElement
-  elements?: KCardMessageContainedElement[]
-  [key: string]: any
-}
-
-export interface KCardMessageElement {
-  // TODO
-  type: 'card' | 'container' | 'context'
-  theme: 'primary' | 'secondary' | 'invisible'
-  size: KCardSize
-  color?: string
-  modules: KCardMessageSubElement[]
-}
-
-export type KCardMessage = [KCardMessageElement]
 
 export const botEventEmitter = new EventEmitter()

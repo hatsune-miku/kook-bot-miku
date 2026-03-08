@@ -1,5 +1,6 @@
+import { KCardButtonExtra, KCardButtonValue, KEvent } from '@kookapp/js-sdk'
+
 import { warn } from '../../utils/logging/logger'
-import { KCardButtonExtra, KCardButtonValue, KEvent } from '../../websocket/kwebsocket/types'
 
 export async function dispatchCardButtonEvent(event: KEvent<KCardButtonExtra>) {
   let value: KCardButtonValue

@@ -1,5 +1,6 @@
 import { CardBuilder } from '../../helpers/card-helper'
-import { KEventType } from '../../websocket/kwebsocket/types'
+
+import type { KEventType } from '@kookapp/js-sdk'
 
 /**
  * 仅Bot内部使用的扩展类型，其中 `success` 等价于 `code === 0`
