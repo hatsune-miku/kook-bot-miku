@@ -29,7 +29,11 @@
     "declarationMap": true,
     "experimentalDecorators": true,
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@kookapp/js-sdk": ["./kook-js-sdk/dist/index.d.ts"],
+      "@kookapp/js-sdk/*": ["./kook-js-sdk/dist/*"]
+    }
   },
   "include": ["src/**/*.ts"]
 }
