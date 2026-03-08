@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "cd kook-js-sdk && tsc && cd .. && tsc",
     "start": "node dist/server.js",
     "daemon": "while true; do yarn start; done",
     "test": "jest"
