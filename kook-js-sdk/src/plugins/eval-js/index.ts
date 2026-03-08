@@ -41,7 +41,7 @@ export class EvalJsPlugin implements KookPlugin {
             quote: context.event.msg_id,
           })
         } catch {
-          // API call failed — silently ignore
+          // API 调用失败，静默忽略
         }
       },
     },

@@ -33,7 +33,7 @@ export class SetCountdownPlugin implements KookPlugin {
             content: card,
           })
         } catch {
-          // API call failed — silently ignore
+          // API 调用失败，静默忽略
         }
       },
     },

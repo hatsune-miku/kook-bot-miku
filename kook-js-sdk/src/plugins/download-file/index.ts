@@ -44,7 +44,7 @@ export class DownloadFilePlugin implements KookPlugin {
               quote: context.event.msg_id,
             })
           } catch {
-            // API call failed — silently ignore
+            // API 调用失败，静默忽略
           }
 
           const stream = createWriteStream(targetPath)
@@ -68,7 +68,7 @@ export class DownloadFilePlugin implements KookPlugin {
                       content: `下载完成: ${targetPath}`,
                     })
                   } catch {
-                    // silently ignore
+                    // 静默忽略
                   }
                   resolve()
                 })
@@ -83,7 +83,7 @@ export class DownloadFilePlugin implements KookPlugin {
               })
           })
         } catch {
-          // createWriteStream or other failure — silently ignore
+          // 创建写入流或其他错误，静默忽略
         }
       },
     },

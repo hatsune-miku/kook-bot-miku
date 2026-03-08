@@ -58,7 +58,7 @@ export class SendFilePlugin implements KookPlugin {
             content: card,
           })
         } catch {
-          // readFile or API call failed — silently ignore
+          // 读取文件或 API 调用失败，静默忽略
         }
       },
     },

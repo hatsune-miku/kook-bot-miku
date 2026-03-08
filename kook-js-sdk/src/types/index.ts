@@ -1,4 +1,4 @@
-// Types
+// 类型定义
 export type { KMessage, KMessageKind } from './message-kind'
 export { KMessageKinds } from './message-kind'
 
@@ -47,7 +47,7 @@ export type {
   KUnknownSystemEventExtra,
 } from './system-event'
 
-// Backward-compatible aliases
+// 向后兼容别名
 export type { KDeletedMessageEventExtra as KDeletedMessageSystemEventExtra } from './system-event'
 export type { KMessageBtnClickEventExtra as KCardButtonExtra } from './system-event'
 
@@ -95,6 +95,9 @@ export type {
   ListGuildMemberProps,
   SetGuildNicknameProps,
   KickoutGuildMemberProps,
+  GuildChannelType,
+  VoiceQuality,
+  GuildPermission,
   ListChannelProps,
   ViewChannelProps,
   CreateChannelProps,
@@ -116,4 +119,4 @@ export type {
   DeleteUserChatProps,
   PaginatedData,
 } from './http'
-export { RequestMethods } from './http'
+export { RequestMethods, GuildChannelTypes, VoiceQualities, GuildPermissions } from './http'

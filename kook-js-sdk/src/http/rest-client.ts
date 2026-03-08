@@ -1,4 +1,4 @@
-import { extractRateLimitHeader, RateLimiter } from './rate-limiter'
+import { RateLimiter, extractRateLimitHeader } from './rate-limiter'
 
 import {
   AddReactionProps,
@@ -44,7 +44,7 @@ import {
   ViewMessageProps,
   ViewUserChatProps,
 } from '../types'
-import { createLogger, Logger } from '../utils/logger'
+import { Logger, createLogger } from '../utils/logger'
 import { queryFromObject } from '../utils/query'
 
 /**
@@ -105,7 +105,7 @@ export class RestClient {
         try {
           requestInit.body = JSON.stringify(data ?? {})
         } catch {
-          return fail(1145, 'Failed to serialize request body')
+          return fail(1145, '序列化请求体失败')
         }
       }
     } else if (data) {
@@ -124,7 +124,7 @@ export class RestClient {
         this.rateLimiter.update(bucket, rateLimitHeader)
 
         if (rateLimitHeader.rateLimit.didTriggeredGlobalRateLimit) {
-          return fail(429, 'Global rate limit reached')
+          return fail(429, '已触发全局限速')
         }
       }
 
@@ -132,21 +132,21 @@ export class RestClient {
         return failureFromStatusCode(response.status)
       }
     } catch (e) {
-      this.logger.error('Network error:', e)
-      return fail(1145, 'Network error')
+      this.logger.error('网络错误:', e)
+      return fail(1145, '网络错误')
     }
 
     try {
       responseObject = JSON.parse(responseText)
     } catch {
-      this.logger.error('Invalid JSON response')
-      return fail(1145, 'Invalid JSON response')
+      this.logger.error('返回数据不是有效的 JSON')
+      return fail(1145, '返回数据不是有效的 JSON')
     }
 
     return { success: responseObject.code === 0, ...responseObject }
   }
 
-  // --- Gateway ---
+  // --- Gateway 网关 ---
 
   async openGateway(props: OpenGatewayProps): Promise<KResponseExt<KGatewayResult>> {
     const queryParams: Record<string, any> = {
@@ -162,7 +162,7 @@ export class RestClient {
     return this.request('/api/v3/gateway/index', 'GET', queryParams)
   }
 
-  // --- Message ---
+  // --- 频道消息 ---
 
   async createMessage(props: CreateMessageProps): Promise<KResponseExt<CreateMessageResult>> {
     return this.request('/api/v3/message/create', 'POST', props)
@@ -192,13 +192,13 @@ export class RestClient {
     return this.request('/api/v3/message/view', 'GET', props)
   }
 
-  // --- Asset ---
+  // --- 媒体资源 ---
 
   async uploadAsset(formData: FormData): Promise<KResponseExt<CreateAssetResult>> {
     return this.request('/api/v3/asset/create', 'POST', formData, true)
   }
 
-  // --- User ---
+  // --- 用户 ---
 
   async getSelfUser(): Promise<KResponseExt<KSelfUser>> {
     return this.request('/api/v3/user/me', 'GET')
@@ -208,7 +208,7 @@ export class RestClient {
     return this.request('/api/v3/user/view', 'GET', props)
   }
 
-  // --- Guild ---
+  // --- 服务器 ---
 
   async listGuilds(props: ListGuildProps = {}): Promise<KResponseExt<PaginatedData<any>>> {
     return this.request('/api/v3/guild/list', 'GET', props)
@@ -234,7 +234,7 @@ export class RestClient {
     return this.request('/api/v3/guild/kickout', 'POST', props)
   }
 
-  // --- Channel ---
+  // --- 频道 ---
 
   async listChannels(props: ListChannelProps): Promise<KResponseExt<PaginatedData<any>>> {
     return this.request('/api/v3/channel/list', 'GET', props)
@@ -256,7 +256,7 @@ export class RestClient {
     return this.request('/api/v3/channel/move-user', 'POST', props)
   }
 
-  // --- Guild Role ---
+  // --- 服务器角色 ---
 
   async listGuildRoles(props: ListGuildRoleProps): Promise<KResponseExt<PaginatedData<any>>> {
     return this.request('/api/v3/guild-role/list', 'GET', props)
@@ -282,7 +282,7 @@ export class RestClient {
     return this.request('/api/v3/guild-role/revoke', 'POST', props)
   }
 
-  // --- Direct Message ---
+  // --- 私信 ---
 
   async listDirectMessages(props: ListDirectMessageProps): Promise<KResponseExt<any>> {
     return this.request('/api/v3/direct-message/list', 'GET', props)
@@ -308,7 +308,7 @@ export class RestClient {
     return this.request('/api/v3/direct-message/delete-reaction', 'POST', props)
   }
 
-  // --- User Chat ---
+  // --- 私聊会话 ---
 
   async listUserChats(props: ListUserChatProps = {}): Promise<KResponseExt<PaginatedData<any>>> {
     return this.request('/api/v3/user-chat/list', 'GET', props)
@@ -334,13 +334,13 @@ function fail(code: number, message: string): KResponseExt<any> {
 function failureFromStatusCode(statusCode: number): KResponseExt<any> {
   switch (statusCode) {
     case 401:
-      return fail(401, 'Unauthorized')
+      return fail(401, '未授权')
     case 403:
-      return fail(403, 'Forbidden')
+      return fail(403, '禁止访问')
     case 404:
-      return fail(404, 'Not found')
+      return fail(404, '找不到资源')
     case 500:
-      return fail(500, 'Server error')
+      return fail(500, '服务器错误')
     default:
       return fail(statusCode, `HTTP ${statusCode}`)
   }

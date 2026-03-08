@@ -42,7 +42,7 @@ export function extractContent(event: KEvent<KTextChannelExtra>): string {
       const regex = new RegExp(`\\(${label}\\).+?\\(${label}\\)`, 'g')
       content = content.replace(regex, '')
     } catch {
-      // invalid regex from label — skip
+      // 无效的正则表达式，跳过
     }
   }
 
