@@ -1,7 +1,8 @@
+import { CardBuilder } from './card-builder'
+
 import { RestClient } from '../http/rest-client'
 import { KEventTypes } from '../types/event-type'
-import { CardBuilder } from './card-builder'
-import { createLogger, Logger } from '../utils/logger'
+import { Logger, createLogger } from '../utils/logger'
 
 export interface StreamingCardConfig {
   /** RestClient 实例 */

@@ -1,13 +1,11 @@
 import { KEvent, KEventTypes, KTextChannelExtra } from '@kookapp/js-sdk'
 
 import { botKookUserStore } from '../../cached-store/bot-kook-user'
-import { chatCompletionStreamed as chatCompletionDeepSeek } from '../../chat/deepseek'
+import { chatCompletionStreamed } from '../../chat/ai-sdk'
 import { dispatchDirectives } from '../../chat/directives'
 import { tryParseEvent } from '../../chat/directives/utils/events'
 import { ToolFunctionContext } from '../../chat/functional/types'
-import { chatCompletionStreamed as chatCompletionGoogleGemini } from '../../chat/genai'
 import { chatCompletionStreamed as chatCompletionLyk } from '../../chat/lyk'
-import { chatCompletionStreamed as chatCompletionChatGpt } from '../../chat/openai'
 import { DisplayName } from '../../global/shared'
 import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
@@ -147,13 +145,9 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const toolFunctionContext: ToolFunctionContext = { event, onMessage }
-  const backendImpl = channelConfig.backend.startsWith('deepseek')
-    ? chatCompletionDeepSeek
-    : channelConfig.backend.startsWith('gemini')
-      ? chatCompletionGoogleGemini
-      : channelConfig.backend.startsWith('hidden')
-        ? chatCompletionLyk
-        : chatCompletionChatGpt
+  const backendImpl = channelConfig.backend.startsWith('hidden')
+    ? chatCompletionLyk
+    : chatCompletionStreamed
 
   try {
     await backendImpl(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
