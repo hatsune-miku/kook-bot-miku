@@ -18,8 +18,8 @@ export interface StreamingCardConfig {
   initialCard?: (card: CardBuilder) => CardBuilder
   /** 每次更新前的卡片预处理（例如移除"打字中"文本） */
   cardPreprocessor?: (card: CardBuilder) => CardBuilder
-  /** 创建消息后的回调（可用于存储 context 等） */
-  onMessageCreated?: (msgId: string, content: string) => void
+  /** 创建消息后的回调（可用于存储 context 等），会被 await */
+  onMessageCreated?: (msgId: string, content: string) => void | Promise<void>
   /** 更新消息后的回调 */
   onMessageUpdated?: (msgId: string, content: string) => void
   /** 自定义日志器 */
@@ -48,7 +48,7 @@ export class StreamingCard {
   private readonly quoteMessageId: string | undefined
   private readonly initialCard: ((card: CardBuilder) => CardBuilder) | undefined
   private readonly cardPreprocessor: ((card: CardBuilder) => CardBuilder) | undefined
-  private readonly onMessageCreated: ((msgId: string, content: string) => void) | undefined
+  private readonly onMessageCreated: ((msgId: string, content: string) => void | Promise<void>) | undefined
   private readonly onMessageUpdated: ((msgId: string, content: string) => void) | undefined
   private readonly logger: Logger
 
@@ -196,7 +196,7 @@ export class StreamingCard {
     })
     if (success && data) {
       this.activeMessageId = data.msg_id
-      this.onMessageCreated?.(data.msg_id, this.accumulatedContent)
+      await this.onMessageCreated?.(data.msg_id, this.accumulatedContent)
     }
 
     return this.activeCard
@@ -214,6 +214,7 @@ export class StreamingCard {
     if (!this.activeMessageId) {
       return
     }
+    // fire-and-forget：不等 API 返回，由 sleep 节流控制频率
     this.api.updateMessage({
       msg_id: this.activeMessageId,
       content: this.activeCard.build(),
