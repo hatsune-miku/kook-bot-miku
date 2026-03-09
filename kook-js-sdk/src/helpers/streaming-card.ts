@@ -79,13 +79,24 @@ export class StreamingCard {
     const merged = this.accumulatedContent + content
     const activeCard = await this.ensureActiveCard()
 
-    const cardWithMergedContent = this.preprocess(activeCard).addKMarkdownText(merged)
+    // 首次追加：用预处理器移除占位模块（如"打字中"）
+    // 后续追加：移除上一次追加的文本模块
+    if (this.accumulatedContent === '') {
+      this.preprocess(activeCard)
+    } else {
+      activeCard.undoLastAdd()
+    }
+
+    const cardWithMergedContent = activeCard.addKMarkdownText(merged)
     const serializedLength = cardWithMergedContent.serializedLength
     if (serializedLength < this.maxLength) {
       await this.updateActiveCard(cardWithMergedContent, merged)
       this.accumulatedContent += content
       return
     }
+
+    // 超长，先撤回刚加的 merged 文本
+    activeCard.undoLastAdd()
 
     const excess = serializedLength - this.maxLength
     let truncatedContent = content.slice(0, content.length - excess)
@@ -101,8 +112,8 @@ export class StreamingCard {
 
     if (truncatedContent.length > 0) {
       const truncatedMerged = this.accumulatedContent + truncatedContent
-      const cardWithTruncatedContent = this.preprocess(activeCard).addKMarkdownText(truncatedMerged)
-      await this.updateActiveCard(cardWithTruncatedContent, truncatedMerged)
+      activeCard.addKMarkdownText(truncatedMerged)
+      await this.updateActiveCard(activeCard, truncatedMerged)
     }
     this.finalizeCurrentCard()
 
