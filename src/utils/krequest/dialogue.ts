@@ -32,8 +32,8 @@ export class Dialogue {
         }
         return card
       },
-      onMessageCreated: (msgId, content) => {
-        configUtils.main.contextUnits.createContextUnit({
+      onMessageCreated: async (msgId, content) => {
+        await configUtils.main.contextUnits.createContextUnit({
           guildId: this.guildId,
           channelId: this.targetId,
           authorUserId: botKookUserStore.me.id,
