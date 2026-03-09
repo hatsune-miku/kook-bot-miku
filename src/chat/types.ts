@@ -9,13 +9,3 @@ export const ChatBotBackends = {
 } as const
 
 export type ChatBotBackend = (typeof ChatBotBackends)[keyof typeof ChatBotBackends]
-
-export function isReasonerBackend(backend: ChatBotBackend) {
-  return [
-    ChatBotBackends.gpt52,
-    ChatBotBackends.gpt53,
-    ChatBotBackends.gpt54,
-    ChatBotBackends.gemini3flash,
-    ChatBotBackends.gemini3pro,
-  ].includes(backend as any)
-}

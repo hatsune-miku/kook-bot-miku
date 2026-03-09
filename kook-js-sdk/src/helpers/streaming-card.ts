@@ -123,7 +123,7 @@ export class StreamingCard {
   /**
    * 事务式更新（快照/回退机制）
    */
-  createTransaction(processor: (session: StreamingCardSession) => void): void {
+  async createTransaction(processor: (session: StreamingCardSession) => Promise<void> | void): Promise<void> {
     const session: StreamingCardSession = {
       update: async (atomicUpdateProcedure) => {
         let card = await this.ensureActiveCard()
@@ -158,7 +158,7 @@ export class StreamingCard {
         this.finalizeCurrentCard()
       },
     }
-    processor(session)
+    await processor(session)
   }
 
   /**
@@ -168,8 +168,8 @@ export class StreamingCard {
     if (!this.activeCard || !postProcessor) {
       return
     }
-    this.createTransaction((session) => {
-      session.update(postProcessor)
+    await this.createTransaction(async (session) => {
+      await session.update(postProcessor)
       session.commit()
     })
     this.finalizeCurrentCard()

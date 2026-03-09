@@ -3,13 +3,13 @@ import OpenAI from 'openai'
 import { ChatCompletionContentPart, ChatCompletionMessageParam } from 'openai/resources'
 import { draw } from 'radash'
 
+import { KCardElement, KCardModule } from '@kookapp/js-sdk'
+
 import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionTools } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
 import { makeInitialSystemPrompt } from './shared'
-import { isReasonerBackend } from './types'
 
-import { KCardElement, KCardModule } from '@kookapp/js-sdk'
 import { TaskQueue } from '../utils/algorithm/task-queue'
 import { ContextUnit } from '../utils/config/types'
 import { Env } from '../utils/env/env'
@@ -121,7 +121,6 @@ export async function chatCompletionStreamed(
   let responseMessage = ''
   let reasoningSummary = ''
   let totalTokens = 0
-  const isReasoner = isReasonerBackend(model as any)
 
   // Use Responses API for reasoning models
   const conversationInput: any[] = [...messages]
@@ -222,9 +221,7 @@ export async function chatCompletionStreamed(
     const content = mergedChunks.join('')
     queue.submit(() => onMessage(content))
   }
-  queue.submit(async () =>
-    onMessageEnd(responseMessage, totalTokens, isReasoner && reasoningSummary ? reasoningSummary : null)
-  )
+  queue.submit(async () => onMessageEnd(responseMessage, totalTokens, reasoningSummary || null))
   messages.push({
     content: responseMessage,
     role: 'assistant',

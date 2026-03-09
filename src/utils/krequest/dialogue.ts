@@ -65,8 +65,8 @@ export class Dialogue {
     await this.streaming.appendText(content)
   }
 
-  createTransaction(processor: (session: IDialogueSession) => void) {
-    this.streaming.createTransaction((session: StreamingCardSession) => {
+  async createTransaction(processor: (session: IDialogueSession) => Promise<void> | void) {
+    await this.streaming.createTransaction(async (session: StreamingCardSession) => {
       const dialogueSession: IDialogueSession = {
         update: async (atomicProcedure, _contextToAppend) => {
           await session.update(atomicProcedure)
@@ -75,7 +75,7 @@ export class Dialogue {
           session.commit()
         },
       }
-      processor(dialogueSession)
+      await processor(dialogueSession)
     })
   }
 
