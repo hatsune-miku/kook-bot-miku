@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "baseUrl": "./",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /** 使参数不写类型时，默认any */
+    "noImplicitAny": false,
+    "strict": false,
+
+    "forceConsistentCasingInFileNames": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "isolatedModules": false,
+    "noEmit": false,
+    "strictNullChecks": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+
+    /** 允许在 switch 里面 fallthrough */
+    "noFallthroughCasesInSwitch": false,
+
+    "noImplicitReturns": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "experimentalDecorators": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@kookapp/js-sdk": ["./kook-js-sdk/dist/index.d.ts"],
+      "@kookapp/js-sdk/*": ["./kook-js-sdk/dist/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,34 @@
+import { dispatchCardButtonEvent } from './shared'
+
+import { KCardButtonExtra, KEvent, KSystemEventExtra } from '@kookapp/js-sdk'
+
+import { pluginLoader } from '../../plugins/loader'
+import { configUtils } from '../../utils/config/config'
+
+export async function handleSystemEvent(event: KEvent<KSystemEventExtra>, sn: number | undefined) {
+  await Promise.all(pluginLoader.plugins.map((p) => p.onSystemEvent?.(event, sn)))
+
+  const extra = event.extra
+  const guildId = event.target_id
+
+  if (!guildId) {
+    return
+  }
+
+  switch (extra.type) {
+    case 'deleted_message': {
+      if (extra.body.channel_id && extra.body.msg_id) {
+        configUtils.main.contextUnits.deleteContextUnit({
+          guildId,
+          channelId: extra.body.channel_id,
+          messageId: extra.body.msg_id,
+        })
+      }
+      break
+    }
+
+    case 'message_btn_click': {
+      dispatchCardButtonEvent(event as KEvent<KCardButtonExtra>)
+    }
+  }
+}
