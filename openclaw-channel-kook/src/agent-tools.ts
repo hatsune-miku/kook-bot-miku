@@ -31,6 +31,7 @@ const ACTION_MAP: Record<string, ActionHandler> = {
   revoke_role: (api, p) => api.revokeRole(p),
 
   // 用户
+  get_self_user: (api) => api.getSelfUser(),
   get_user: (api, p) => api.getUser(p),
 
   // 频道消息
@@ -48,7 +49,27 @@ const ACTION_MAP: Record<string, ActionHandler> = {
   create_user_chat: (api, p) => api.createUserChat(p),
 }
 
-const AVAILABLE_ACTIONS = Object.keys(ACTION_MAP).join(', ')
+// upload_asset is special — needs to fetch a URL and build FormData
+async function handleUploadAsset(
+  api: RestClient,
+  params: { url: string; filename?: string },
+): Promise<any> {
+  if (!params.url) throw new Error('params.url is required for upload_asset')
+
+  const response = await fetch(params.url)
+  if (!response.ok) throw new Error(`Failed to fetch ${params.url}: HTTP ${response.status}`)
+
+  const blob = await response.blob()
+  const filename = params.filename
+    || new URL(params.url).pathname.split('/').pop()
+    || 'file'
+
+  const formData = new FormData()
+  formData.append('file', blob, filename)
+  return api.uploadAsset(formData as any)
+}
+
+const AVAILABLE_ACTIONS = [...Object.keys(ACTION_MAP), 'upload_asset'].join(', ')
 
 const kookPlatformSchema = Type.Object({
   action: Type.String({
@@ -89,7 +110,7 @@ export function createKookPlatformToolFactory(): ToolFactory {
         }
 
         const handler = ACTION_MAP[args.action]
-        if (!handler) {
+        if (!handler && args.action !== 'upload_asset') {
           return {
             content: [{
               type: 'text' as const,
@@ -100,7 +121,9 @@ export function createKookPlatformToolFactory(): ToolFactory {
         }
 
         try {
-          const result = await handler(client.api, args.params ?? {})
+          const result = args.action === 'upload_asset'
+            ? await handleUploadAsset(client.api, args.params ?? {})
+            : await handler(client.api, args.params ?? {})
 
           if (!result.success) {
             return {
