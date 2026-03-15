@@ -1,0 +1,9 @@
+{
+  "id": "openclaw-channel-kook",
+  "channels": ["kook"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

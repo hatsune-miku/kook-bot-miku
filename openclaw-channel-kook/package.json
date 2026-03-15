@@ -1,0 +1,33 @@
+{
+  "name": "openclaw-channel-kook",
+  "version": "0.1.0",
+  "description": "KOOK messaging channel for OpenClaw",
+  "main": "src/index.ts",
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "format": "prettier --write 'src/**/*.ts' 'test/**/*.ts'"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.2.3"
+  },
+  "dependencies": {
+    "@kookapp/js-sdk": "file:../kook-js-sdk"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "prettier": "^3.4.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.0"
+  },
+  "license": "MIT"
+}

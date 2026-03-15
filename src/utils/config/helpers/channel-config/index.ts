@@ -1,6 +1,5 @@
 import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 
-import { ChatBotBackends } from '../../../../chat/types'
 import { error } from '../../../logging/logger'
 import { die } from '../../../server/die'
 import { ChannelConfig } from '../../types'
@@ -9,7 +8,7 @@ function makeDefaults(channelId: string): ChannelConfig {
   return {
     channelId,
     allowOmittingMentioningMe: false,
-    backend: ChatBotBackends.deepseekv31volc,
+    backend: 'deepseek-v3-1-250821',
   }
 }
 

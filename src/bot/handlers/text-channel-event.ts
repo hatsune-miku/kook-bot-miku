@@ -6,6 +6,7 @@ import { dispatchDirectives } from '../../chat/directives'
 import { tryParseEvent } from '../../chat/directives/utils/events'
 import { ToolFunctionContext } from '../../chat/functional/types'
 import { chatCompletionStreamed as chatCompletionLyk } from '../../chat/lyk'
+import { ChatBotBackends } from '../../chat/types'
 import { DisplayName } from '../../global/shared'
 import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
@@ -145,12 +146,14 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const toolFunctionContext: ToolFunctionContext = { event, onMessage }
-  const backendImpl = channelConfig.backend.startsWith('hidden')
-    ? chatCompletionLyk
-    : chatCompletionStreamed
+  const backend = ChatBotBackends[channelConfig.backend]
 
   try {
-    await backendImpl(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
+    if (backend?.provider === 'hidden') {
+      await chatCompletionLyk(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
+    } else if (backend) {
+      await chatCompletionStreamed(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd, backend)
+    }
   } catch (e) {
     await onMessageError(e.message)
   }

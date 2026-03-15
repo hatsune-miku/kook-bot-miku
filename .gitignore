@@ -8,3 +8,7 @@ memory.json
 dist
 /config
 /plugins
+
+**/ARCHITECTURE.md
+**/CONVENTIONS.md
+**/agent-docs/

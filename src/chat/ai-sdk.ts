@@ -10,50 +10,44 @@ import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionTools } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
 import { makeInitialSystemPrompt } from './shared'
+import { Backend } from './types'
 
 import { TaskQueue } from '../utils/algorithm/task-queue'
 import { ContextUnit } from '../utils/config/types'
-import { Env } from '../utils/env/env'
 
-function getModelBrandName(model: string): string {
-  if (model.startsWith('deepseek')) return 'DeepSeek'
-  if (model.startsWith('gemini')) return 'Google Gemini'
-  return 'ChatGPT'
-}
+function createLanguageModel(model: string, backend: Backend): LanguageModel {
+  const apiKey = draw(backend.apiKeys)!
 
-function createLanguageModel(model: string): LanguageModel {
-  if (model.startsWith('deepseek')) {
-    const provider = createOpenAICompatible({
-      name: 'volcengine',
-      baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-      apiKey: draw(Env.VolcKeys)!,
-    })
-    return provider.chatModel(model)
-  }
-
-  if (model.startsWith('gemini')) {
-    let baseURL = Env.GoogleGeminiBaseUrl || undefined
-    if (baseURL) {
-      baseURL = baseURL.replace(/\/v1$/, '').replace(/\/v1beta$/, '')
+  switch (backend.provider) {
+    case 'volcengine': {
+      const provider = createOpenAICompatible({
+        name: 'volcengine',
+        baseURL: backend.baseUrl,
+        apiKey,
+      })
+      return provider.chatModel(model)
     }
-    const provider = createGoogleGenerativeAI({
-      apiKey: draw(Env.GoogleGeminiKeys)!,
-      baseURL,
-    })
-    return provider(model)
+    case 'google': {
+      const provider = createGoogleGenerativeAI({
+        apiKey,
+        baseURL: backend.baseUrl || undefined,
+      })
+      return provider(model)
+    }
+    case 'openai':
+    default: {
+      const provider = createOpenAI({
+        apiKey,
+        baseURL: backend.baseUrl || undefined,
+      })
+      return provider(model)
+    }
   }
-
-  // Default: OpenAI
-  const provider = createOpenAI({
-    apiKey: draw(Env.OpenAIKeys)!,
-    baseURL: Env.OpenAIBaseUrl || undefined,
-  })
-  return provider(model)
 }
 
 type UserContentPart = { type: 'text'; text: string } | { type: 'image'; image: URL }
 
-function mapContextUnit(unit: ContextUnit, model: string): ModelMessage {
+function mapContextUnit(unit: ContextUnit, backend: Backend): ModelMessage {
   const normalText = `${unit.authorName}(id=${unit.authorUserId})说: ${unit.content}`
   const normalUnit: ModelMessage = { role: 'user', content: normalText }
 
@@ -93,17 +87,16 @@ function mapContextUnit(unit: ContextUnit, model: string): ModelMessage {
     }
   }
 
+  const supportsImageParts = backend.provider === 'openai'
   const parts: UserContentPart[] = []
 
   try {
     processModules(modules, (src) => {
-      if (model.startsWith('deepseek') || model.startsWith('gemini')) {
-        // DeepSeek and Gemini: pass image URLs as text
-        parts.push({ type: 'text', text: `[Image: ${src}]` })
-      } else {
-        // OpenAI: pass as image part
+      if (supportsImageParts) {
         parts.push({ type: 'image', image: new URL(src) })
         parts.push({ type: 'text', text: 'url of image above: ' + src })
+      } else {
+        parts.push({ type: 'text', text: `[Image: ${src}]` })
       }
     })
     if (parts.length === 0) {
@@ -115,8 +108,8 @@ function mapContextUnit(unit: ContextUnit, model: string): ModelMessage {
   }
 }
 
-function makeContext(context: ContextUnit[], model: string): ModelMessage[] {
-  return context.map((unit) => mapContextUnit(unit, model))
+function makeContext(context: ContextUnit[], backend: Backend): ModelMessage[] {
+  return context.map((unit) => mapContextUnit(unit, backend))
 }
 
 async function makeTools(toolFunctionContext: ToolFunctionContext) {
@@ -141,28 +134,27 @@ export async function chatCompletionStreamed(
   context: ContextUnit[],
   model: string,
   onMessage: (message: string) => Promise<void>,
-  onMessageEnd: (message: string, tokens: number, reasoningSummary: string | null) => void
+  onMessageEnd: (message: string, tokens: number, reasoningSummary: string | null) => void,
+  backend: Backend
 ) {
-  const languageModel = createLanguageModel(model)
-  const messages = makeContext(context, model)
+  const languageModel = createLanguageModel(model, backend)
+  const messages = makeContext(context, backend)
   const tools = await makeTools(toolFunctionContext)
   const queue = new TaskQueue()
 
-  const isOpenAI = !model.startsWith('deepseek') && !model.startsWith('gemini')
-
   const result = streamText({
     model: languageModel,
-    system: makeInitialSystemPrompt({ modelBrandName: getModelBrandName(model), overseas: false }),
+    system: makeInitialSystemPrompt({ modelBrandName: backend.name, overseas: false }),
     messages,
     tools,
     stopWhen: stepCountIs(5),
-    providerOptions: isOpenAI ? { openai: { reasoningSummary: 'auto' } } : undefined,
+    providerOptions: backend.provider === 'openai' ? { openai: { reasoningSummary: 'auto' } } : undefined,
   })
 
   let responseMessage = ''
   let mergedChunks: string[] = []
   let reasoningSummary = ''
-  const chunkBatchSize = model.startsWith('deepseek') ? 50 : 10
+  const chunkBatchSize = backend.provider === 'volcengine' ? 50 : 10
 
   for await (const part of result.fullStream) {
     if (part.type === 'text-delta') {
