@@ -75,5 +75,5 @@ Button example (in action-group): \`{ "type":"button", "theme":"primary", "value
 - \`create_user_chat\` — params: target_id (required)
 
 **Asset (资源)**
-- \`upload_asset\` — params: url (required, URL of file to upload), filename? — returns { url } (KOOK CDN URL)
+- \`upload_asset\` — params: path (required, local file path), filename? — returns { url } (KOOK CDN URL)
 `

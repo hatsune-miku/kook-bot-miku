@@ -1,4 +1,6 @@
 import { Type } from '@sinclair/typebox'
+import { readFile } from 'fs/promises'
+import { basename } from 'path'
 import type { AnyAgentTool } from 'openclaw/plugin-sdk'
 
 import type { RestClient } from '@kookapp/js-sdk'
@@ -49,21 +51,17 @@ const ACTION_MAP: Record<string, ActionHandler> = {
   create_user_chat: (api, p) => api.createUserChat(p),
 }
 
-// upload_asset is special — needs to fetch a URL and build FormData
+// upload_asset is special — reads a local file and builds FormData
 async function handleUploadAsset(
   api: RestClient,
-  params: { url: string; filename?: string },
+  params: { path: string; filename?: string },
 ): Promise<any> {
-  if (!params.url) throw new Error('params.url is required for upload_asset')
+  if (!params.path) throw new Error('params.path is required for upload_asset')
 
-  const response = await fetch(params.url)
-  if (!response.ok) throw new Error(`Failed to fetch ${params.url}: HTTP ${response.status}`)
+  const buffer = await readFile(params.path)
+  const filename = params.filename || basename(params.path)
 
-  const blob = await response.blob()
-  const filename = params.filename
-    || new URL(params.url).pathname.split('/').pop()
-    || 'file'
-
+  const blob = new Blob([buffer])
   const formData = new FormData()
   formData.append('file', blob, filename)
   return api.uploadAsset(formData as any)
