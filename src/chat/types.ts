@@ -53,8 +53,7 @@ function buildProviders(): Record<ChatProvider, Backend> {
 export const ChatProviders: Record<ChatProvider, Backend> = buildProviders()
 const firstAvailableProvider = (Object.keys(ChatProviders)[0] || '') as ChatProvider
 
-export const DefaultChatProvider =
-  firstAvailableProvider || die('环境配置错误：chat.providers 不能为空')
+export const DefaultChatProvider = firstAvailableProvider || die('环境配置错误：chat.providers 不能为空')
 
 export function normalizeBackendInput(input: string): string {
   const raw = (input || '').trim()
@@ -63,7 +62,10 @@ export function normalizeBackendInput(input: string): string {
     return raw
   }
   const model = raw.slice(0, atIndex).trim()
-  const provider = raw.slice(atIndex + 1).trim().toLowerCase()
+  const provider = raw
+    .slice(atIndex + 1)
+    .trim()
+    .toLowerCase()
   return `${model}@${provider}`
 }
 
@@ -79,7 +81,10 @@ export function resolveBackendSelection(input: string): BackendSelection {
   }
 
   const model = raw.slice(0, atIndex).trim()
-  const provider = raw.slice(atIndex + 1).trim().toLowerCase() as ChatProvider
+  const provider = raw
+    .slice(atIndex + 1)
+    .trim()
+    .toLowerCase() as ChatProvider
   const backend = ChatProviders[provider]
 
   if (!backend) {

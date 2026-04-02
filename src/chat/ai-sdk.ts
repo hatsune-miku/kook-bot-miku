@@ -28,6 +28,7 @@ function createLanguageModel(model: string, backend: Backend): LanguageModel {
   }
   const apiKey = supplier.apiKey
   const baseUrl = supplier.baseUrl || undefined
+  const normalizedAnthropicBaseUrl = normalizeAnthropicBaseUrl(baseUrl)
 
   switch (backend.provider) {
     case 'volcengine': {
@@ -48,7 +49,7 @@ function createLanguageModel(model: string, backend: Backend): LanguageModel {
     case 'anthropic': {
       const provider = createAnthropic({
         apiKey,
-        baseURL: baseUrl,
+        baseURL: normalizedAnthropicBaseUrl,
       })
       return provider(model)
     }
@@ -61,6 +62,17 @@ function createLanguageModel(model: string, backend: Backend): LanguageModel {
       return provider(model)
     }
   }
+}
+
+function normalizeAnthropicBaseUrl(baseUrl?: string): string | undefined {
+  if (!baseUrl) {
+    return undefined
+  }
+  const trimmed = baseUrl.replace(/\/+$/, '')
+  if (/\/v1$/i.test(trimmed)) {
+    return trimmed
+  }
+  return `${trimmed}/v1`
 }
 
 type UserContentPart = { type: 'text'; text: string } | { type: 'image'; image: URL }
