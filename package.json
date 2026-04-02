@@ -4,8 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "start": "bun dist/server.js",
+    "start": "bun src/server.ts",
     "daemon": "while true; do bun run start; done",
     "test": "jest"
   },

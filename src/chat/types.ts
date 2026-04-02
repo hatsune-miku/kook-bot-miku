@@ -68,9 +68,9 @@ export function normalizeBackendInput(input: string): string {
 }
 
 export function resolveBackendSelection(input: string): BackendSelection {
-  const raw = (input || '').trim()
+  const raw = ((input || '').trim() || (Env.DefaultChatModel || '').trim()).trim()
   if (!raw) {
-    throw new Error('模型标识为空，请使用 /set-backend <model>@<provider>')
+    throw new Error('模型标识为空，请先在 config.yaml 中设置 chat.defaultModel 或使用 /set-backend <model>@<provider>')
   }
 
   const atIndex = raw.lastIndexOf('@')

@@ -15,6 +15,10 @@ runtime:
   publicArchivePath: ""
 
 chat:
+  # 默认模型标识（用于新频道，或频道未设置 backend 时兜底）
+  # 格式: <model>@<provider>
+  defaultModel: "MiniMax-M2.7@anthropic"
+
   # 全局禁用能力（语义取反：未禁用即默认开启）
   disableCapabilities:
     # 在这些 provider 上禁用 vision；其余 provider 默认 vision=true

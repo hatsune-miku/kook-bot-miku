@@ -24,7 +24,6 @@ bun install
 ### 运行
 
 ```bash
-bun run build
 bun run start
 ```
 
@@ -34,6 +33,7 @@ bun run start
 
 - 先复制 `config.yaml.example` 为 `config.yaml`
 - 支持的 provider: `openai`、`google`、`anthropic`、`volcengine`
+- 可通过 `chat.defaultModel` 设置默认模型（如 `MiniMax-M2.7@anthropic`）
 - 可通过 `chat.disableCapabilities.vision` 全局禁用指定 provider 的视觉能力（未禁用默认开启）
 - 每个 provider 可配置多个 `suppliers`（`baseUrl + apiKey + matches`）
 - `matches` 基于 `String.includes`，用于按模型名路由 supplier

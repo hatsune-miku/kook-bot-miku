@@ -28,6 +28,7 @@ export interface EnvType {
   ProxyUrl?: string
   PublicArchivePath: string
   LogLevel: string
+  DefaultChatModel: string
   ChatProviders: Partial<Record<ChatProvider, ChatProviderConfig>>
   ChatDisableCapabilities: ChatDisableCapabilitiesConfig
 }
@@ -50,6 +51,7 @@ export function reloadConfig() {
     ProxyUrl: runtime.proxyUrl,
     PublicArchivePath: runtime.publicArchivePath || '',
     LogLevel: runtime.logLevel || 'info',
+    DefaultChatModel: chat.defaultModel || '',
     ChatProviders: chat.providers || {},
     ChatDisableCapabilities: chat.disableCapabilities || {},
     raw: parsed,

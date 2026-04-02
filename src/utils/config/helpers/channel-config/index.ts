@@ -3,12 +3,13 @@ import { NodeGenericExternalStorage } from '@kookapp/klee-node-toolkit'
 import { error } from '../../../logging/logger'
 import { die } from '../../../server/die'
 import { ChannelConfig } from '../../types'
+import { Env } from '../../../env/env'
 
 function makeDefaults(channelId: string): ChannelConfig {
   return {
     channelId,
     allowOmittingMentioningMe: false,
-    backend: '',
+    backend: Env.DefaultChatModel || '',
   }
 }
 
