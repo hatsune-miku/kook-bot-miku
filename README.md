@@ -37,6 +37,7 @@ bun run start
 - 可通过 `chat.disableCapabilities.vision` 全局禁用指定 provider 的视觉能力（未禁用默认开启）
 - 每个 provider 可配置多个 `suppliers`（`baseUrl + apiKey + matches`）
 - `matches` 基于 `String.includes`，用于按模型名路由 supplier
+- 涉及 KOOK 开发/API 的问题会按需注入平台技能提示，并可调用 `kook_platform` 工具
 
 切换模型命令（管理员）：
 

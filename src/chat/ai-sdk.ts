@@ -10,6 +10,7 @@ import { KCardElement, KCardModule } from '@kookapp/js-sdk'
 import { ToolFunctionInvoker } from './functional/tool-function'
 import { getChatCompletionTools } from './functional/tool-functions/dispatch'
 import { ToolFunctionContext } from './functional/types'
+import { KOOK_PLATFORM_SKILL_GUIDANCE, shouldInjectKookPlatformGuidance } from './kook-platform-guidance'
 import { makeInitialSystemPrompt } from './shared'
 import { Backend } from './types'
 
@@ -161,6 +162,16 @@ function selectContextUnitsForPrompt(context: ContextUnit[]): ContextUnit[] {
   return applyContextBudget(merged)
 }
 
+function extractLatestUserText(context: ContextUnit[]): string {
+  for (let i = context.length - 1; i >= 0; i--) {
+    const unit = context[i]
+    if (unit.role === 'user') {
+      return extractSearchText(unit.content || '')
+    }
+  }
+  return ''
+}
+
 function mapContextUnit(unit: ContextUnit, backend: Backend, supportsImageParts: boolean): ModelMessage {
   const normalText = `${unit.authorName}(id=${unit.authorUserId})说: ${unit.content}`
   const normalUnit: ModelMessage = { role: 'user', content: normalText }
@@ -259,6 +270,11 @@ export async function chatCompletionStreamed(
   backend: Backend
 ) {
   const selectedContext = selectContextUnitsForPrompt(context)
+  const latestUserText = extractLatestUserText(selectedContext)
+  const enableKookGuidance = shouldInjectKookPlatformGuidance(latestUserText)
+  const systemPrompt =
+    makeInitialSystemPrompt({ modelBrandName: backend.provider, overseas: false }) +
+    (enableKookGuidance ? `\n\n${KOOK_PLATFORM_SKILL_GUIDANCE}` : '')
   const languageModel = createLanguageModel(model, backend)
   const tools = await makeTools(toolFunctionContext)
   const queue = new TaskQueue()
@@ -267,7 +283,7 @@ export async function chatCompletionStreamed(
     const { messages, usedImageParts } = makeContext(selectedContext, backend, supportsImageParts)
     const result = streamText({
       model: languageModel,
-      system: makeInitialSystemPrompt({ modelBrandName: backend.provider, overseas: false }),
+      system: systemPrompt,
       messages,
       tools,
       stopWhen: stepCountIs(5),

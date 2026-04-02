@@ -44,9 +44,11 @@ export function reloadConfig() {
   const kook = parsed.kook || {}
   const runtime = parsed.runtime || {}
   const chat = parsed.chat || {}
+  const rawKookBaseUrl = kook.baseUrl || die('环境配置错误：kook.baseUrl')
+  const normalizedKookBaseUrl = String(rawKookBaseUrl).replace(/\/api\/v3\/?$/, '')
 
   Object.assign(Env, {
-    KOOKBaseUrl: kook.baseUrl || die('环境配置错误：kook.baseUrl'),
+    KOOKBaseUrl: normalizedKookBaseUrl,
     BotToken: kook.botToken || die('环境配置错误：kook.botToken'),
     ProxyUrl: runtime.proxyUrl,
     PublicArchivePath: runtime.publicArchivePath || '',
