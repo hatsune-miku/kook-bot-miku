@@ -4,9 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "cd kook-js-sdk && tsc && cd .. && tsc",
-    "start": "node dist/server.js",
-    "daemon": "while true; do yarn start; done",
+    "build": "tsc",
+    "start": "bun dist/server.js",
+    "daemon": "while true; do bun run start; done",
     "test": "jest"
   },
   "dependencies": {
@@ -15,7 +15,7 @@
     "@ai-sdk/openai": "^3.0.41",
     "@ai-sdk/openai-compatible": "^2.0.35",
     "@google/genai": "^1.34.0",
-    "@kookapp/js-sdk": "file:./kook-js-sdk",
+    "@kookapp/js-sdk": "^0.1.2",
     "@kookapp/klee-core": "0.1.22",
     "@kookapp/klee-node-toolkit": "0.1.22",
     "@kookapp/klee-sqlite3": "0.1.22",
