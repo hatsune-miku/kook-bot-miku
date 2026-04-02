@@ -10,6 +10,8 @@ function makeDefaults(channelId: string): ChannelConfig {
     channelId,
     allowOmittingMentioningMe: false,
     backend: Env.DefaultChatModel || '',
+    showReasoningProcess: false,
+    showModelTokenUsage: false,
   }
 }
 

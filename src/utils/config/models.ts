@@ -33,6 +33,14 @@ export const ChannelConfigModel: Model = {
       name: 'allowOmittingMentioningMe',
       dataType: 'bool',
     },
+    {
+      name: 'showReasoningProcess',
+      dataType: 'bool',
+    },
+    {
+      name: 'showModelTokenUsage',
+      dataType: 'bool',
+    },
   ],
 }
 

@@ -2,6 +2,8 @@ export interface ChannelConfig {
   channelId: string
   backend: string
   allowOmittingMentioningMe: boolean
+  showReasoningProcess: boolean
+  showModelTokenUsage: boolean
 }
 
 export interface UserDefinedScript {

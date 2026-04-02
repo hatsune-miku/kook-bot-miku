@@ -6,6 +6,8 @@ import query from './query'
 import reloadPlugins from './reload-plugins'
 import revoke from './revoke'
 import setBackend from './set-backend'
+import showModelUsage from './show-model-usage'
+import showReasoning from './show-reasoning'
 import showWhitelist from './show-whitelist'
 import unwhitelist from './unwhitelist'
 import usingNamespace from './using-namespace'
@@ -19,6 +21,8 @@ export const builtinDirectives = [
   deleteContext,
   revoke,
   setBackend,
+  showModelUsage,
+  showReasoning,
   showWhitelist,
   unwhitelist,
   whitelist,

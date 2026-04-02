@@ -54,6 +54,20 @@ bun run start
 
 `@` 前面的模型名会原样透传；`@` 后面的 provider 会自动转小写。
 
+显示思考过程开关（频道级，管理员）：
+
+```bash
+@机器人 /show-reasoning on
+@机器人 /show-reasoning off
+```
+
+显示模型与 token 消耗开关（频道级，管理员）：
+
+```bash
+@机器人 /show-model-usage on
+@机器人 /show-model-usage off
+```
+
 ## 功能
 
 - 群聊模式

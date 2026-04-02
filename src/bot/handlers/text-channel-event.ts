@@ -126,16 +126,15 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
   }
 
   const onMessageEnd = async (_message: string, tokens: number, reasoningSummary: string | null) => {
-    if (reasoningSummary) {
-      console.log('xx', 'reasoningSummary', reasoningSummary)
-    }
     const tokenUsage = tokens > 0 ? formatNumber(tokens) : 'N/A'
     const backendName = channelConfig.backend
     await dialogue.finalize((card) => {
-      if (reasoningSummary) {
+      if (reasoningSummary && channelConfig.showReasoningProcess) {
         card.addDivider().addKMarkdownText('**思考过程**').addContext(reasoningSummary).addDivider()
       }
-      card.addContext(`${backendName} | ${tokenUsage}`)
+      if (channelConfig.showModelTokenUsage) {
+        card.addContext(`${backendName} | ${tokenUsage}`)
+      }
       return card
     })
   }
