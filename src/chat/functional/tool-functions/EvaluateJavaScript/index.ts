@@ -24,21 +24,9 @@ export class EvaluateJavaScriptTool implements IFunctionTool {
     }
   }
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    const { expression, showCommand: _ = true } = params
-
-    // if (showCommand && context.event?.extra?.guild_id && context.event?.target_id) {
-    //   createCodeBlock({
-    //     guildId: context.event.extra.guild_id,
-    //     channelId: context.event.target_id,
-    //     code: expression,
-    //     language: 'JavaScript',
-    //     markdownCodeLanguage: 'js',
-    //   })
-    //   await sleep(100)
-    // }
+    const { expression } = params
 
     try {
-      context.onMessage(' <已执行 JavaScript 代码> ')
       // eslint-disable-next-line no-eval
       const result = eval(expression)
       return result

@@ -6,10 +6,12 @@ import { DownloadFileTool } from './DownloadFile'
 import { EvaluateJavaScriptTool } from './EvaluateJavaScript'
 import { EvaluatePythonTool } from './EvaluatePython'
 import { GetStandardTimeTool } from './GetStandardTime'
+import { HttpRequestTool } from './HttpRequest'
 import { KookPlatformTool } from './KookPlatform'
 import { RunLinuxCommandTool } from './RunLinuxCommand'
 import { SendFileTool } from './SendFile'
 import { SetCountdownTool } from './SetCountdown'
+import { WebFetchTool } from './WebFetch'
 
 import { pluginLoader } from '../../../plugins/loader'
 import { ToolFunctionContext } from '../types'
@@ -28,6 +30,8 @@ export const toolFunctions: IFunctionTool[] = [
   EvaluatePythonTool,
   SendFileTool,
   KookPlatformTool,
+  WebFetchTool,
+  HttpRequestTool,
 ].map((Tool) => new Tool())
 
 export const toolDefinitionCache: Record<string, [IFunctionTool, FunctionTool]> = {}

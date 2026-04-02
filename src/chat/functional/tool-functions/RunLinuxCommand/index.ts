@@ -1,9 +1,6 @@
 import { execSync } from 'child_process'
 import { FunctionTool } from 'openai/resources/responses/responses'
-import { sleep } from 'radash'
 
-// import { CardBuilder, CardIcons } from '../../../../helpers/card-helper'
-// import { respondCardMessageToUser } from '../../../directives/utils/events'
 import { ToolFunctionContext } from '../../types'
 import { IFunctionTool } from '../dispatch'
 
@@ -29,19 +26,7 @@ export class RunLinuxCommandTool implements IFunctionTool {
   }
 
   async invoke(context: ToolFunctionContext, params: any): Promise<string> {
-    const { expression, showCommand = true } = params
-
-    if (showCommand) {
-      context.onMessage(' <已执行 Linux 命令> ')
-      // const card = CardBuilder.fromTemplate()
-      //   .addIconWithKMarkdownText(CardIcons.IconCute, `已执行:\n\`\`\`bash\n${expression}\n\`\`\``)
-      //   .build()
-      // respondCardMessageToUser({
-      //   originalEvent: context.event,
-      //   content: card,
-      // })
-      await sleep(100)
-    }
+    const { expression } = params
     try {
       return execSync(expression).toString()
     } catch (e: any) {
