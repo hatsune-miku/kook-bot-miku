@@ -1,49 +1,58 @@
-import dotenv from 'dotenv'
-
-import { likely } from '@a1knla/likely'
+import fs from 'fs'
+import path from 'path'
+import yaml from 'js-yaml'
 
 import { die } from '../server/die'
 
 export const Env: EnvType = {} as any
 
+export type ChatProvider = 'openai' | 'google' | 'anthropic' | 'volcengine'
+
+export interface ChatSupplierConfig {
+  baseUrl?: string
+  apiKey?: string
+  matches?: string[]
+}
+
+export interface ChatProviderConfig {
+  suppliers?: ChatSupplierConfig[]
+}
+
+export interface ChatDisableCapabilitiesConfig {
+  vision?: ChatProvider[]
+}
+
 export interface EnvType {
   KOOKBaseUrl: string
   BotToken: string
-  OpenAIKeys: string[]
-  OpenAIBaseUrl: string
-  GoogleGeminiKeys: string[]
-  GoogleGeminiBaseUrl: string
-  ProxyUrl: string
-  DeepSeekKeys: string[]
-  StableDiffusionKeys: string[]
-  VolcKeys: string[]
-  LarkAppId: string
-  LarkAppSecret: string
+  ProxyUrl?: string
   PublicArchivePath: string
   LogLevel: string
-  LarkBotEnable: boolean
+  ChatProviders: Partial<Record<ChatProvider, ChatProviderConfig>>
+  ChatDisableCapabilities: ChatDisableCapabilitiesConfig
 }
 
 export function reloadConfig() {
-  const result = dotenv.config({ path: '.env' })
-  const config = result.parsed || {}
+  const configPath = path.resolve(process.cwd(), 'config.yaml')
+  if (!fs.existsSync(configPath)) {
+    die('环境配置错误：未找到 config.yaml，请复制 config.yaml.example 并填写')
+  }
+
+  const raw = fs.readFileSync(configPath, 'utf8')
+  const parsed = (yaml.load(raw) || {}) as any
+  const kook = parsed.kook || {}
+  const runtime = parsed.runtime || {}
+  const chat = parsed.chat || {}
 
   Object.assign(Env, {
-    KOOKBaseUrl: config.KOOK_BASE_URL || die('环境配置错误：KOOK_BASE_URL'),
-    BotToken: config.BOT_TOKEN || die('环境配置错误：BOT_TOKEN'),
-    GoogleGeminiKeys: config.GOOGLE_GEMINI_API_KEYS?.split(',') || [],
-    GoogleGeminiBaseUrl: config.GOOGLE_GEMINI_API_BASE_URL,
-    OpenAIKeys: config.OPENAI_API_KEYS?.split(',') || [],
-    OpenAIBaseUrl: config.OPENAI_API_BASE_URL,
-    ProxyUrl: config.PROXY_URL,
-    DeepSeekKeys: config.DEEPSEEK_API_KEYS?.split(',') || [],
-    VolcKeys: config.VOLC_API_KEYS?.split(',') || [],
-    LarkAppId: config.LARK_APP_ID,
-    LarkAppSecret: config.LARK_APP_SECRET,
-    PublicArchivePath: config.PUBLIC_ARCHIVE_PATH,
-    LogLevel: config.LOG_LEVEL || 'info',
-    LarkBotEnable: likely.truthy(config.LARK_BOT_ENABLE),
-    raw: config,
+    KOOKBaseUrl: kook.baseUrl || die('环境配置错误：kook.baseUrl'),
+    BotToken: kook.botToken || die('环境配置错误：kook.botToken'),
+    ProxyUrl: runtime.proxyUrl,
+    PublicArchivePath: runtime.publicArchivePath || '',
+    LogLevel: runtime.logLevel || 'info',
+    ChatProviders: chat.providers || {},
+    ChatDisableCapabilities: chat.disableCapabilities || {},
+    raw: parsed,
   })
 }
 

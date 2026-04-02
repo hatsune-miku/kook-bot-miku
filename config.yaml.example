@@ -1,0 +1,56 @@
+# 复制本文件为 config.yaml，并填写真实值。
+
+kook:
+  # KOOK API 基础地址，例如: https://www.kookapp.cn/api/v3
+  baseUrl: "https://www.kookapp.cn/api/v3"
+  # KOOK 机器人 Token（必填）
+  botToken: "your-kook-bot-token"
+
+runtime:
+  # 日志级别: debug | info | warn | error
+  logLevel: "info"
+  # 代理 URL（可选）
+  proxyUrl: ""
+  # 公共归档目录（可选）
+  publicArchivePath: ""
+
+chat:
+  # 全局禁用能力（语义取反：未禁用即默认开启）
+  disableCapabilities:
+    # 在这些 provider 上禁用 vision；其余 provider 默认 vision=true
+    # 可选 provider: openai | google | anthropic | volcengine
+    vision: ["volcengine"]
+
+  providers:
+    # provider 名必须是: openai | google | anthropic | volcengine
+    openai:
+      # 同一规范可配置多个供应商，每个是 (baseUrl, apiKey) 二元组
+      suppliers:
+        - baseUrl: "https://api.openai.com/v1"
+          apiKey: "sk-..."
+          # 用于匹配 model，按 includes 判断（自动小写比较）
+          matches: ["gpt", "codex"]
+        - baseUrl: "https://your-openai-proxy.example/v1"
+          apiKey: "sk-..."
+          matches: ["o1", "o3", "o4"]
+
+    google:
+      suppliers:
+        - baseUrl: ""
+          apiKey: "AIza..."
+          matches: ["gemini"]
+
+    anthropic:
+      suppliers:
+        - baseUrl: "https://api.anthropic.com"
+          apiKey: "sk-ant-..."
+          matches: ["opus", "sonnet", "haiku"]
+        - baseUrl: "https://api.minimax.io/anthropic"
+          apiKey: "sk-..."
+          matches: ["minimax"]
+
+    volcengine:
+      suppliers:
+        - baseUrl: "https://ark.cn-beijing.volces.com/api/v3"
+          apiKey: "sk-..."
+          matches: ["glm", "deepseek", "ark", "doubao"]

@@ -28,6 +28,31 @@ bun run build
 bun run start
 ```
 
+### 配置模型
+
+配置集中在根目录 `config.yaml`（本地私有）：
+
+- 先复制 `config.yaml.example` 为 `config.yaml`
+- 支持的 provider: `openai`、`google`、`anthropic`、`volcengine`
+- 可通过 `chat.disableCapabilities.vision` 全局禁用指定 provider 的视觉能力（未禁用默认开启）
+- 每个 provider 可配置多个 `suppliers`（`baseUrl + apiKey + matches`）
+- `matches` 基于 `String.includes`，用于按模型名路由 supplier
+
+切换模型命令（管理员）：
+
+```bash
+@机器人 /set-backend <model>@<provider>
+```
+
+其中 provider 来自 `chat.providers`，model 可以自由填写，不需要在配置里预登记，例如：
+
+- `gpt-5.3@openai`
+- `Claude-3-7-Sonnet@anthropic`
+- `MiniMax-M2.7@anthropic`
+- `deepseek-v3-1-250821@volcengine`
+
+`@` 前面的模型名会原样透传；`@` 后面的 provider 会自动转小写。
+
 ## 功能
 
 - 群聊模式

@@ -1,8 +1,5 @@
 node_modules
-.env
-.env-ttt
-.env-tttt
-.env-b
+config.yaml
 config.json
 memory.json
 dist

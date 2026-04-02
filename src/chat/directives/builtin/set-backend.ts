@@ -1,24 +1,24 @@
 import { configUtils } from '../../../utils/config/config'
-import { ChatBotBackends } from '../../types'
+import { ChatProviders, DefaultChatProvider, normalizeBackendInput } from '../../types'
 import { ChatDirectiveItem, ParseEventResultValid } from '../types'
 import { respondToUser } from '../utils/events'
 
-const backendKeys = Object.keys(ChatBotBackends)
+const providerKeys = Object.keys(ChatProviders)
 
 export default {
   triggerWord: 'set-backend',
-  parameterDescription: backendKeys.join('|'),
-  description: `更换当前频道 AI 实现，可选范围：${backendKeys.join(', ')}`,
+  parameterDescription: '<model>@<provider>',
+  description: `更换当前频道 AI 实现。格式: model@provider（provider 自动小写）。已配置 provider: ${providerKeys.join(', ')}`,
   defaultValue: undefined,
   permissionGroups: ['admin'],
   withContext: false,
   async handler(event: ParseEventResultValid) {
-    const backend = event.parameter
+    const backend = normalizeBackendInput(event.parameter || '')
     const channelId = event.originalEvent.target_id
     const channelName = event.originalEvent.extra.channel_name
     const channelConfig = await configUtils.main.channelConfigs.getChannelConfig({ channelId })
 
-    if (backend && backend in ChatBotBackends) {
+    if (backend) {
       configUtils.main.channelConfigs.updateChannelConfig({
         channelId,
         backend,
@@ -30,9 +30,10 @@ export default {
     } else {
       respondToUser({
         originalEvent: event.originalEvent,
-        content: `当前频道: ${channelName} (${channelId}) 所用的模型是 ${
-          channelConfig.backend
-        }，可选: ${backendKeys.join(', ')}`,
+        content: `当前频道: ${channelName} (${channelId}) 所用模型标识是 ${channelConfig.backend}。` +
+          `\n输入格式: /set-backend model@provider` +
+          `\n例如: /set-backend gpt-5.3@${DefaultChatProvider}` +
+          `\n已配置 provider: ${providerKeys.join(', ')}`,
       })
     }
   },

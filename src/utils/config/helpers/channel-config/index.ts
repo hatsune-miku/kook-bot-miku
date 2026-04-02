@@ -8,7 +8,7 @@ function makeDefaults(channelId: string): ChannelConfig {
   return {
     channelId,
     allowOmittingMentioningMe: false,
-    backend: 'deepseek-v3-1-250821',
+    backend: '',
   }
 }
 

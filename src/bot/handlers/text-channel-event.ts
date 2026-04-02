@@ -5,8 +5,7 @@ import { chatCompletionStreamed } from '../../chat/ai-sdk'
 import { dispatchDirectives } from '../../chat/directives'
 import { tryParseEvent } from '../../chat/directives/utils/events'
 import { ToolFunctionContext } from '../../chat/functional/types'
-import { chatCompletionStreamed as chatCompletionLyk } from '../../chat/lyk'
-import { ChatBotBackends } from '../../chat/types'
+import { resolveBackendSelection } from '../../chat/types'
 import { DisplayName } from '../../global/shared'
 import { pluginLoader } from '../../plugins/loader'
 import { displayNameFromUser, isTrustedUser } from '../../utils'
@@ -143,17 +142,22 @@ async function handleTextChannelTextMessage(event: KEvent<KTextChannelExtra>) {
 
   const onMessageError = async (message: string) => {
     error(`Failed to respond to ${displayName} reason: ${message}`)
+    await onMessage(`请求失败：${message}`)
+    await dialogue.finalize()
   }
 
   const toolFunctionContext: ToolFunctionContext = { event, onMessage }
-  const backend = ChatBotBackends[channelConfig.backend]
 
   try {
-    if (backend?.provider === 'hidden') {
-      await chatCompletionLyk(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd)
-    } else if (backend) {
-      await chatCompletionStreamed(toolFunctionContext, contextUnits, channelConfig.backend, onMessage, onMessageEnd, backend)
-    }
+    const selection = resolveBackendSelection(channelConfig.backend)
+    await chatCompletionStreamed(
+      toolFunctionContext,
+      contextUnits,
+      selection.model,
+      onMessage,
+      onMessageEnd,
+      selection.backend
+    )
   } catch (e) {
     await onMessageError(e.message)
   }
