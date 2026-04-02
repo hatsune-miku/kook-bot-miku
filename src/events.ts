@@ -1,4 +1,4 @@
-import { EventEmitter } from 'stream'
+import { EventEmitter } from 'node:events'
 
 import { KEvent, KTextChannelExtra } from '@kookapp/js-sdk'
 
